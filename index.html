@@ -235,8 +235,9 @@
                 wrapper.innerHTML = `
                     <!-- HEADER -->
                     <div class="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700 header-area">
-                        <div class="flex items-center space-x-3 flex-1">
-                            <input type="text" class="title-input font-bold text-xl bg-transparent border-none focus:ring-0 outline-none w-full text-gray-900 dark:text-gray-100" value="${this.title}" placeholder="Wheel Title">
+                        <div class="flex items-center space-x-2 flex-1 group">
+                            <input type="text" class="title-input font-bold text-xl bg-transparent border-none focus:ring-0 outline-none w-full max-w-[200px] text-gray-900 dark:text-gray-100" value="${this.title}" placeholder="Wheel Title">
+                            <i data-lucide="pen" class="w-4 h-4 text-gray-400 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"></i>
                         </div>
                         <div class="flex space-x-2 shrink-0">
                             <button class="btn-settings p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
