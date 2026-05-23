@@ -203,7 +203,7 @@
                 id: 'default', title: 'Main Giveaway', 
                 rawText: 'Alice\nBob\nCharlie\nDave\nEve\nFrank', 
                 palette: 'rainbow', seed: generateSeed(), centerImage: '',
-                spinSpeed: 'normal', spinSound: true,
+                spinSpeed: 'normal', spinDuration: 'medium', spinSound: true,
                 countdownEnabled: false, countdownSeconds: 60
             }];
         }
@@ -222,6 +222,7 @@
                 this.palette = config.palette || 'rainbow';
                 this.centerImage = config.centerImage || '';
                 this.spinSpeed = config.spinSpeed || 'normal';
+                this.spinDuration = config.spinDuration || 'medium';
                 this.spinSound = config.spinSound !== undefined ? config.spinSound : true;
                 this.countdownEnabled = config.countdownEnabled || false;
                 this.countdownSeconds = config.countdownSeconds || 60;
@@ -273,6 +274,7 @@
                     conf.palette = this.palette;
                     conf.centerImage = this.centerImage;
                     conf.spinSpeed = this.spinSpeed;
+                    conf.spinDuration = this.spinDuration;
                     conf.spinSound = this.spinSound;
                     conf.countdownEnabled = this.countdownEnabled;
                     conf.countdownSeconds = this.countdownSeconds;
@@ -323,6 +325,14 @@
                                 <option value="slow" ${this.spinSpeed === 'slow' ? 'selected' : ''}>Slow</option>
                                 <option value="normal" ${this.spinSpeed === 'normal' ? 'selected' : ''}>Normal</option>
                                 <option value="fast" ${this.spinSpeed === 'fast' ? 'selected' : ''}>Fast</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Spin Duration</label>
+                            <select class="duration-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                <option value="short" ${this.spinDuration === 'short' ? 'selected' : ''}>Short</option>
+                                <option value="medium" ${this.spinDuration === 'medium' ? 'selected' : ''}>Medium</option>
+                                <option value="long" ${this.spinDuration === 'long' ? 'selected' : ''}>Long</option>
                             </select>
                         </div>
                         <div class="flex items-center mt-6">
@@ -405,6 +415,7 @@
                     btnImageUpload: wrapper.querySelector('.btn-image-upload'),
                     imageUploadInput: wrapper.querySelector('.image-upload-input'),
                     speedSelect: wrapper.querySelector('.speed-select'),
+                    durationSelect: wrapper.querySelector('.duration-select'),
                     soundCheckbox: wrapper.querySelector('.sound-checkbox'),
                     countdownCheckbox: wrapper.querySelector('.countdown-checkbox'),
                     countdownInput: wrapper.querySelector('.countdown-input'),
@@ -488,6 +499,7 @@
                     e.target.value = '';
                 });
                 this.dom.speedSelect.addEventListener('change', (e) => { this.spinSpeed = e.target.value; this.saveConfig(); });
+                this.dom.durationSelect.addEventListener('change', (e) => { this.spinDuration = e.target.value; this.saveConfig(); });
                 this.dom.soundCheckbox.addEventListener('change', (e) => { this.spinSound = e.target.checked; this.saveConfig(); });
                 this.dom.countdownCheckbox.addEventListener('change', (e) => { this.countdownEnabled = e.target.checked; this.saveConfig(); });
                 this.dom.countdownInput.addEventListener('input', (e) => { this.countdownSeconds = parseInt(e.target.value) || 60; this.saveConfig(); });
@@ -781,16 +793,20 @@
                 this.dom.seedDisplay.innerText = this.seed;
                 this.saveConfig();
 
-                let durationStr = this.spinSpeed || 'normal';
-                let minDuration = 5000; let maxDurationRange = 2000;
+                let speedStr = this.spinSpeed || 'normal';
                 let minSpins = 5; let maxSpinsRange = 5;
-
-                if (durationStr === 'slow') {
-                    minDuration = 8000; maxDurationRange = 3000;
+                if (speedStr === 'slow') {
                     minSpins = 3; maxSpinsRange = 3;
-                } else if (durationStr === 'fast') {
-                    minDuration = 2000; maxDurationRange = 1000;
+                } else if (speedStr === 'fast') {
                     minSpins = 8; maxSpinsRange = 4;
+                }
+
+                let durationStr = this.spinDuration || 'medium';
+                let minDuration = 5000; let maxDurationRange = 2000;
+                if (durationStr === 'short') {
+                    minDuration = 2000; maxDurationRange = 1000;
+                } else if (durationStr === 'long') {
+                    minDuration = 8000; maxDurationRange = 3000;
                 }
 
                 const duration = minDuration + Math.random() * maxDurationRange;
@@ -976,7 +992,7 @@
             const newWheel = {
                 id: 'wheel_' + Date.now(), title: 'New Wheel', rawText: '',
                 palette: 'neon', seed: generateSeed(), centerImage: '',
-                spinSpeed: 'normal', spinSound: true,
+                spinSpeed: 'normal', spinDuration: 'medium', spinSound: true,
                 countdownEnabled: false, countdownSeconds: 60
             };
             appState.wheelsConfig.push(newWheel);
