@@ -20,7 +20,7 @@
         }
     </script>
     <style>
-        /* Custom scrollbar for textareas */
+        /* Custom scrollbar */
         textarea::-webkit-scrollbar { width: 8px; }
         textarea::-webkit-scrollbar-track { background: transparent; }
         textarea::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 10px; }
@@ -30,7 +30,7 @@
         .wheel-container { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .theater-mode {
             position: fixed !important; inset: 0 !important; z-index: 50 !important;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
             border-radius: 0 !important; height: 100vh !important; width: 100vw !important;
         }
     </style>
@@ -138,12 +138,8 @@
             container.appendChild(toast);
             lucide.createIcons({ root: toast });
 
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            });
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
 
-            // Remove after 3s
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => toast.remove(), 300);
@@ -169,7 +165,6 @@
         const saveState = () => {
             localStorage.setItem('appTheme', appState.theme);
             localStorage.setItem('winnersData', JSON.stringify(appState.winners));
-            // Wheel config is saved individually by instances
         };
 
         // --- WHEEL INSTANCE CLASS ---
@@ -195,7 +190,6 @@
                 this.bindEvents();
                 this.draw();
                 
-                // Handle Resize for canvas
                 this.resizeObserver = new ResizeObserver(() => this.handleResize());
                 this.resizeObserver.observe(this.dom.canvasContainer);
             }
@@ -307,4 +301,587 @@
                 this.dom = {
                     wrapper,
                     titleInput: wrapper.querySelector('.title-input'),
-                    btnSettings: wrapper.querySelecto
+                    btnSettings: wrapper.querySelector('.btn-settings'),
+                    btnTheater: wrapper.querySelector('.btn-theater'),
+                    btnDelete: wrapper.querySelector('.btn-delete'),
+                    settingsPanel: wrapper.querySelector('.settings-panel'),
+                    paletteSelect: wrapper.querySelector('.palette-select'),
+                    imageInput: wrapper.querySelector('.image-input'),
+                    canvasContainer: wrapper.querySelector('.canvas-container'),
+                    canvas: wrapper.querySelector('.wheel-canvas'),
+                    seedDisplay: wrapper.querySelector('.seed-display'),
+                    winnerOverlay: wrapper.querySelector('.winner-overlay'),
+                    winnerText: wrapper.querySelector('.winner-text'),
+                    btnRemoveWinner: wrapper.querySelector('.btn-remove-winner'),
+                    btnKeepWinner: wrapper.querySelector('.btn-keep-winner'),
+                    entriesCount: wrapper.querySelector('.entries-count'),
+                    btnDedupe: wrapper.querySelector('.btn-dedupe'),
+                    btnClear: wrapper.querySelector('.btn-clear'),
+                    entriesInput: wrapper.querySelector('.entries-input'),
+                    btnShuffle: wrapper.querySelector('.btn-shuffle'),
+                    autoShuffleInput: wrapper.querySelector('.auto-shuffle-input'),
+                    btnAutoShuffle: wrapper.querySelector('.btn-auto-shuffle'),
+                    btnSpin: wrapper.querySelector('.btn-spin'),
+                    hideInTheater: wrapper.querySelector('.hide-in-theater'),
+                    controlsArea: wrapper.querySelector('.controls-area'),
+                    headerArea: wrapper.querySelector('.header-area'),
+                    theaterIcon: wrapper.querySelector('.theater-icon'),
+                    shuffleGrid: wrapper.querySelector('.shuffle-grid'),
+                    spinVisual: wrapper.querySelector('.spin-btn-visual')
+                };
+
+                lucide.createIcons({ root: wrapper });
+                this.updateUIState();
+            }
+
+            bindEvents() {
+                this.dom.titleInput.addEventListener('input', (e) => { this.title = e.target.value; this.saveConfig(); });
+                
+                this.dom.btnSettings.addEventListener('click', () => {
+                    this.showSettings = !this.showSettings;
+                    this.dom.settingsPanel.classList.toggle('hidden', !this.showSettings);
+                });
+                
+                this.dom.paletteSelect.addEventListener('change', (e) => { this.palette = e.target.value; this.saveConfig(); this.draw(); });
+                this.dom.imageInput.addEventListener('input', (e) => { this.centerImage = e.target.value; this.saveConfig(); this.draw(); });
+                this.dom.btnDelete.addEventListener('click', () => deleteWheel(this.id));
+                this.dom.btnTheater.addEventListener('click', () => toggleTheaterMode(this.id));
+                
+                this.dom.entriesInput.addEventListener('input', (e) => {
+                    this.rawText = e.target.value;
+                    this.entries = this.parseEntries(this.rawText);
+                    this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+                    this.saveConfig(); this.draw(); this.updateUIState();
+                });
+
+                this.dom.btnClear.addEventListener('click', () => {
+                    this.rawText = ''; this.entries = []; this.dom.entriesInput.value = '';
+                    this.dom.entriesCount.innerText = `Entries (0)`;
+                    this.saveConfig(); this.draw(); this.updateUIState();
+                });
+
+                this.dom.btnDedupe.addEventListener('click', () => {
+                    const seenLower = new Set();
+                    const unique = this.entries.filter(entry => {
+                        const lower = entry.toLowerCase();
+                        if (seenLower.has(lower)) return false;
+                        seenLower.add(lower); return true;
+                    });
+                    const removed = this.entries.length - unique.length;
+                    this.rawText = unique.join('\n');
+                    this.entries = unique;
+                    this.dom.entriesInput.value = this.rawText;
+                    this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+                    this.saveConfig(); this.draw();
+                    showToast(`Removed ${removed} duplicates!`, 'success');
+                });
+
+                this.dom.btnShuffle.addEventListener('click', () => this.shuffle());
+                this.dom.autoShuffleInput.addEventListener('change', (e) => this.autoShuffleCount = parseInt(e.target.value) || 1);
+                this.dom.btnAutoShuffle.addEventListener('click', () => this.autoShuffle());
+
+                this.dom.btnSpin.addEventListener('click', () => this.spin());
+                this.dom.canvas.addEventListener('click', () => {
+                    if (!this.isSpinning && this.entries.length >= 2) this.spin();
+                });
+
+                this.dom.btnKeepWinner.addEventListener('click', () => this.closeWinner());
+                this.dom.btnRemoveWinner.addEventListener('click', () => {
+                    const idx = this.entries.indexOf(this.winnerName);
+                    if (idx !== -1) {
+                        this.entries.splice(idx, 1);
+                        this.rawText = this.entries.join('\n');
+                        this.dom.entriesInput.value = this.rawText;
+                        this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+                        this.saveConfig(); this.draw();
+                        showToast(`${this.winnerName} removed!`, 'success');
+                    }
+                    this.closeWinner();
+                });
+            }
+
+            updateUIState() {
+                const canSpin = this.entries.length >= 2 && !this.isSpinning;
+                this.dom.btnSpin.disabled = !canSpin;
+                this.dom.btnShuffle.disabled = this.isSpinning;
+                this.dom.btnAutoShuffle.disabled = this.isSpinning;
+                this.dom.entriesInput.disabled = this.isSpinning;
+                
+                if (this.isSpinning) {
+                    this.dom.spinVisual.classList.replace('bg-gradient-to-r', 'bg-gray-600');
+                    this.dom.spinVisual.classList.remove('from-blue-600', 'to-indigo-600', 'hover:from-blue-500', 'hover:to-indigo-500');
+                    this.dom.btnSpin.innerHTML = this.isShuffling ? 'SHUFFLING...' : 'SPINNING...';
+                } else {
+                    this.dom.spinVisual.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-indigo-600', 'hover:from-blue-500', 'hover:to-indigo-500');
+                    this.dom.spinVisual.classList.remove('bg-gray-600');
+                    this.dom.btnSpin.innerHTML = '<i data-lucide="play" class="w-6 h-6 mr-2 fill-current"></i> SPIN';
+                    lucide.createIcons({ root: this.dom.btnSpin });
+                }
+
+                if (!this.isSpinning && this.entries.length >= 2) {
+                    this.dom.canvas.classList.add('cursor-pointer', 'hover:scale-[1.02]');
+                } else {
+                    this.dom.canvas.classList.remove('cursor-pointer', 'hover:scale-[1.02]');
+                }
+            }
+
+            shuffle() {
+                if (this.isSpinning || this.entries.length < 2) return;
+                this.entries.sort(() => getCryptoRandom() - 0.5);
+                this.rawText = this.entries.join('\n');
+                this.dom.entriesInput.value = this.rawText;
+                this.seed = generateSeed();
+                this.dom.seedDisplay.innerText = this.seed;
+                this.saveConfig();
+                this.draw();
+            }
+
+            async autoShuffle() {
+                if (this.isSpinning || this.entries.length < 2) return;
+                
+                this.isSpinning = true; 
+                this.isShuffling = true; 
+                this.updateUIState();
+                
+                for (let i = 0; i < this.autoShuffleCount; i++) {
+                    this.entries.sort(() => getCryptoRandom() - 0.5);
+                    this.rawText = this.entries.join('\n');
+                    this.dom.entriesInput.value = this.rawText;
+                    this.seed = generateSeed();
+                    this.dom.seedDisplay.innerText = this.seed;
+                    this.draw();
+                    await new Promise(r => setTimeout(r, 80));
+                }
+                
+                this.saveConfig();
+                this.isSpinning = false; 
+                this.isShuffling = false; 
+                this.updateUIState();
+                showToast(`Shuffled ${this.autoShuffleCount} times!`, 'success');
+            }
+
+            handleResize() {
+                if (!this.dom.canvasContainer) return;
+                const rect = this.dom.canvasContainer.getBoundingClientRect();
+                const size = Math.min(rect.width, rect.height || rect.width, 800);
+                this.canvasSize = size;
+                this.dom.canvas.style.width = `${size}px`;
+                this.dom.canvas.style.height = `${size}px`;
+                this.draw();
+            }
+
+            draw(angleOffset = this.currentAngle) {
+                const canvas = this.dom.canvas;
+                if (!canvas || !this.canvasSize) return;
+                const ctx = canvas.getContext('2d');
+                const size = this.canvasSize;
+                
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = size * dpr;
+                canvas.height = size * dpr;
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, size, size);
+                
+                const centerX = size / 2;
+                const centerY = size / 2;
+                const radius = Math.min(centerX, centerY) - 30;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.shadowColor = "rgba(0,0,0,0.15)";
+                ctx.shadowBlur = 24;
+                ctx.shadowOffsetY = 10;
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                ctx.restore();
+
+                if (this.entries.length === 0) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = appState.theme === 'dark' ? '#1f2937' : '#e5e7eb';
+                    ctx.fill();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#9CA3AF';
+                    ctx.font = '600 20px system-ui, sans-serif';
+                    ctx.fillText('No Entries', centerX, centerY);
+                    return;
+                }
+
+                const sliceAngle = (2 * Math.PI) / this.entries.length;
+                const colors = PALETTES[this.palette] || PALETTES.rainbow;
+
+                for (let i = 0; i < this.entries.length; i++) {
+                    const startAngle = i * sliceAngle + angleOffset;
+                    const endAngle = startAngle + sliceAngle;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fill();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+                    ctx.stroke();
+                }
+
+                for (let i = 0; i < this.entries.length; i++) {
+                    const startAngle = i * sliceAngle + angleOffset;
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(startAngle + sliceAngle / 2);
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    
+                    const maxFontSize = 30;
+                    const arcLength = radius * sliceAngle;
+                    const fontSize = Math.max(12, Math.min(maxFontSize, arcLength * 0.7));
+                    ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`;
+                    
+                    const text = this.entries[i];
+                    const hubRadius = radius * 0.12;
+                    const rightMargin = 25;
+                    const availableWidth = radius - hubRadius - rightMargin - 10;
+                    
+                    let displayString = text;
+                    if (ctx.measureText(displayString).width > availableWidth) {
+                        while (displayString.length > 0 && ctx.measureText(displayString + '...').width > availableWidth) {
+                            displayString = displayString.slice(0, -1);
+                        }
+                        displayString = displayString.length > 0 ? displayString + '...' : '';
+                    }
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = "rgba(0,0,0,0.4)";
+                    ctx.shadowBlur = 4;
+                    ctx.shadowOffsetY = 1;
+                    ctx.fillText(displayString, radius - rightMargin, 0);
+                    ctx.restore();
+                }
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.stroke();
+
+                const hubRadius = radius * 0.12;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.stroke();
+
+                if (this.centerImage) {
+                    const img = new window.Image();
+                    img.src = this.centerImage;
+                    if(img.complete && img.naturalWidth !== 0) {
+                       ctx.save();
+                       ctx.beginPath();
+                       ctx.arc(centerX, centerY, hubRadius - 2, 0, 2 * Math.PI);
+                       ctx.clip();
+                       ctx.drawImage(img, centerX - hubRadius, centerY - hubRadius, hubRadius*2, hubRadius*2);
+                       ctx.restore();
+                    } else if (!img.dataset.loading) {
+                       img.dataset.loading = 'true';
+                       img.onload = () => this.draw();
+                    }
+                }
+
+                const rightEdge = centerX + radius;
+                ctx.save();
+                ctx.translate(rightEdge + 8, centerY);
+                ctx.shadowColor = "rgba(0,0,0,0.2)";
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = -2;
+                ctx.shadowOffsetY = 2;
+
+                ctx.beginPath();
+                ctx.moveTo(-35, 0); ctx.lineTo(10, -18); ctx.lineTo(10, 18);
+                ctx.closePath();
+                ctx.fillStyle = '#ffffff'; ctx.fill();
+
+                ctx.shadowColor = "transparent";
+                ctx.beginPath();
+                ctx.moveTo(-25, 0); ctx.lineTo(6, -12); ctx.lineTo(6, 12);
+                ctx.closePath();
+                ctx.fillStyle = '#3b82f6'; ctx.fill();
+                ctx.restore();
+            }
+
+            spin() {
+                if (this.entries.length < 2 || this.isSpinning) return;
+                
+                this.isSpinning = true;
+                this.updateUIState();
+                this.seed = generateSeed();
+                this.dom.seedDisplay.innerText = this.seed;
+                this.saveConfig();
+
+                const duration = 5000 + Math.random() * 2000;
+                const startAngle = this.currentAngle;
+                
+                const randomValue = getCryptoRandom();
+                const extraSpins = 5 + Math.floor(randomValue * 5);
+                const targetAngle = startAngle + (extraSpins * 2 * Math.PI) + (randomValue * 2 * Math.PI);
+                
+                let startTime = null;
+
+                const animate = (time) => {
+                    if (!startTime) startTime = time;
+                    const elapsed = time - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    const easedProgress = easeOutQuart(progress);
+                    this.currentAngle = startAngle + (targetAngle - startAngle) * easedProgress;
+                    
+                    this.draw();
+
+                    if (progress < 1) {
+                        this.animationRef = requestAnimationFrame(animate);
+                    } else {
+                        this.isSpinning = false;
+                        this.updateUIState();
+                        
+                        const normalizedAngle = this.currentAngle % (2 * Math.PI);
+                        const sliceAngle = (2 * Math.PI) / this.entries.length;
+                        let winningIndex = Math.floor(((2 * Math.PI) - normalizedAngle) / sliceAngle) % this.entries.length;
+                        
+                        this.winnerName = this.entries[winningIndex];
+                        this.showWinner();
+                    }
+                };
+
+                this.animationRef = requestAnimationFrame(animate);
+            }
+
+            showWinner() {
+                this.dom.winnerText.innerText = this.winnerName;
+                this.dom.winnerOverlay.style.display = 'flex';
+                void this.dom.winnerOverlay.offsetWidth;
+                this.dom.winnerOverlay.classList.remove('opacity-0');
+                
+                addWinner(this.title, this.winnerName);
+            }
+
+            closeWinner() {
+                this.dom.winnerOverlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    this.dom.winnerOverlay.style.display = 'none';
+                }, 300);
+            }
+
+            setTheaterMode(isActive) {
+                if (isActive) {
+                    this.dom.wrapper.classList.add('theater-mode');
+                    this.dom.headerArea.classList.replace('border-b', 'bg-black/40');
+                    this.dom.headerArea.classList.add('shadow-lg', 'text-white');
+                    this.dom.titleInput.classList.remove('text-gray-900', 'dark:text-gray-100');
+                    this.dom.titleInput.classList.add('text-white');
+                    
+                    this.dom.hideInTheater.style.display = 'none';
+                    this.dom.controlsArea.className = 'controls-area flex flex-col p-4 shrink-0 bg-black/30 backdrop-blur-md max-w-4xl mx-auto w-full rounded-t-3xl border-t border-white/10 pb-8 transition-all duration-300';
+                    this.dom.shuffleGrid.className = 'grid grid-cols-2 gap-2 mt-2 max-w-2xl mx-auto w-full shuffle-grid';
+                    this.dom.btnSpin.classList.add('max-w-2xl', 'mx-auto', 'text-3xl', 'py-5');
+                    
+                    this.dom.theaterIcon.setAttribute('data-lucide', 'minimize');
+                } else {
+                    this.dom.wrapper.classList.remove('theater-mode');
+                    this.dom.headerArea.classList.replace('bg-black/40', 'border-b');
+                    this.dom.headerArea.classList.remove('shadow-lg', 'text-white');
+                    this.dom.titleInput.classList.remove('text-white');
+                    this.dom.titleInput.classList.add('text-gray-900', 'dark:text-gray-100');
+                    
+                    this.dom.hideInTheater.style.display = 'block';
+                    this.dom.controlsArea.className = 'controls-area flex flex-col p-4 shrink-0 border-t border-gray-300 dark:border-gray-700 transition-all duration-300';
+                    this.dom.shuffleGrid.className = 'grid grid-cols-2 gap-2 mt-4 shuffle-grid';
+                    this.dom.btnSpin.classList.remove('max-w-2xl', 'mx-auto', 'text-3xl', 'py-5');
+                    
+                    this.dom.theaterIcon.setAttribute('data-lucide', 'maximize');
+                }
+                lucide.createIcons({ root: this.dom.headerArea });
+                this.handleResize();
+            }
+
+            destroy() {
+                if(this.resizeObserver) this.resizeObserver.disconnect();
+                if(this.animationRef) cancelAnimationFrame(this.animationRef);
+                this.dom.wrapper.remove();
+            }
+        }
+
+        // --- APP MANAGER ---
+        const workspace = document.getElementById('workspace');
+        let wheelInstances = [];
+
+        const renderWheels = () => {
+            workspace.className = `p-4 md:p-6 w-full max-w-[1920px] mx-auto grid gap-6 flex-1 ${appState.theaterModeId ? 'p-0 m-0 !block' : ''}`;
+            if (!appState.theaterModeId) {
+                if (appState.wheelsConfig.length === 1) workspace.classList.add('grid-cols-1');
+                else if (appState.wheelsConfig.length === 2) workspace.classList.add('lg:grid-cols-2');
+                else workspace.classList.add('md:grid-cols-2', 'xl:grid-cols-3');
+            }
+
+            appState.wheelsConfig.forEach(conf => {
+                let inst = wheelInstances.find(w => w.id === conf.id);
+                if (!inst) {
+                    inst = new WheelApp(conf, workspace);
+                    wheelInstances.push(inst);
+                }
+                
+                if (appState.theaterModeId && appState.theaterModeId !== conf.id) {
+                    inst.dom.wrapper.style.display = 'none';
+                } else {
+                    inst.dom.wrapper.style.display = 'flex';
+                }
+                
+                inst.setTheaterMode(appState.theaterModeId === conf.id);
+            });
+        };
+
+        const deleteWheel = (id) => {
+            if (appState.wheelsConfig.length <= 1) return;
+            appState.wheelsConfig = appState.wheelsConfig.filter(w => w.id !== id);
+            localStorage.setItem('wheelsData', JSON.stringify(appState.wheelsConfig));
+            
+            const inst = wheelInstances.find(w => w.id === id);
+            if(inst) {
+                inst.destroy();
+                wheelInstances = wheelInstances.filter(w => w.id !== id);
+            }
+            renderWheels();
+        };
+
+        const toggleTheaterMode = (id) => {
+            appState.theaterModeId = appState.theaterModeId === id ? null : id;
+            document.getElementById('navbar').style.display = appState.theaterModeId ? 'none' : 'flex';
+            
+            const footer = document.getElementById('main-footer');
+            if (footer) footer.style.display = appState.theaterModeId ? 'none' : 'block';
+            
+            document.body.style.overflow = appState.theaterModeId ? 'hidden' : 'auto';
+            renderWheels();
+        };
+
+        document.getElementById('btn-add-wheel').addEventListener('click', () => {
+            const newWheel = {
+                id: 'wheel_' + Date.now(), title: 'New Wheel', rawText: '',
+                palette: 'neon', seed: generateSeed(), centerImage: ''
+            };
+            appState.wheelsConfig.push(newWheel);
+            localStorage.setItem('wheelsData', JSON.stringify(appState.wheelsConfig));
+            renderWheels();
+        });
+
+        // --- THEME ---
+        const applyTheme = () => {
+            if (appState.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').innerText = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').innerText = '🌙';
+            }
+            wheelInstances.forEach(w => w.draw());
+        };
+        document.getElementById('btn-theme').addEventListener('click', () => {
+            appState.theme = appState.theme === 'dark' ? 'light' : 'dark';
+            saveState(); applyTheme();
+        });
+
+        // --- WINNERS TRACKING ---
+        const updateWinnersUI = () => {
+            const badge = document.getElementById('winners-badge');
+            if (appState.winners.length > 0) {
+                badge.innerText = appState.winners.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const list = document.getElementById('winners-list');
+            if (appState.winners.length === 0) {
+                list.innerHTML = `<div class="text-center p-8 text-gray-500 font-medium">No winners recorded yet. Spin the wheel!</div>`;
+                document.getElementById('btn-clear-winners').disabled = true;
+                document.getElementById('btn-export-winners').disabled = true;
+            } else {
+                list.innerHTML = `<ul class="space-y-2 p-3">
+                    ${appState.winners.map((w, idx) => `
+                        <li class="flex items-center justify-between p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-lg">${w.winnerName}</span>
+                                <span class="text-sm opacity-70 flex items-center">
+                                    <span class="font-mono text-xs mr-2 opacity-70">${w.timestamp}</span> 
+                                    ${w.wheelTitle}
+                                </span>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-bold text-xs shadow">
+                                #${appState.winners.length - idx}
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>`;
+                document.getElementById('btn-clear-winners').disabled = false;
+                document.getElementById('btn-export-winners').disabled = false;
+            }
+        };
+
+        const addWinner = (wheelTitle, winnerName) => {
+            appState.winners.unshift({
+                id: Date.now().toString(),
+                wheelTitle: wheelTitle || 'Unnamed Wheel',
+                winnerName: winnerName,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            saveState(); updateWinnersUI();
+        };
+
+        const toggleWinnersModal = (show) => {
+            const modal = document.getElementById('winners-modal');
+            const content = document.getElementById('winners-modal-content');
+            if (show) {
+                modal.classList.remove('hidden');
+                updateWinnersUI();
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        };
+
+        document.getElementById('btn-winners').addEventListener('click', () => toggleWinnersModal(true));
+        document.getElementById('btn-close-winners').addEventListener('click', () => toggleWinnersModal(false));
+        
+        document.getElementById('btn-clear-winners').addEventListener('click', () => {
+            if (confirm('Clear all winners history?')) {
+                appState.winners = [];
+                saveState(); updateWinnersUI();
+            }
+        });
+
+        document.getElementById('btn-export-winners').addEventListener('click', () => {
+            if (appState.winners.length === 0) return;
+            const csv = "Time,Wheel,Winner\n" + appState.winners.map(w => `"${w.timestamp}","${w.wheelTitle}","${w.winnerName}"`).join("\n");
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'hypewheel_winners.csv';
+            link.click();
+        });
+
+        // --- INIT ---
+        applyTheme();
+        renderWheels();
+        updateWinnersUI();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
