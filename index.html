@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -184,6 +183,7 @@
                 this.animationRef = null;
                 this.autoShuffleCount = 10;
                 this.showSettings = false;
+                this.isTheater = false;
                 
                 this.container = container;
                 this.buildDOM();
@@ -463,7 +463,11 @@
             handleResize() {
                 if (!this.dom.canvasContainer) return;
                 const rect = this.dom.canvasContainer.getBoundingClientRect();
-                const size = Math.min(rect.width, rect.height || rect.width, 800);
+                
+                // Restrict to 380px in normal mode, allow up to 900px in theater mode
+                const maxAllowedSize = this.isTheater ? 900 : 380; 
+                
+                const size = Math.min(rect.width, rect.height || rect.width, maxAllowedSize);
                 this.canvasSize = size;
                 this.dom.canvas.style.width = `${size}px`;
                 this.dom.canvas.style.height = `${size}px`;
@@ -675,6 +679,7 @@
             }
 
             setTheaterMode(isActive) {
+                this.isTheater = isActive;
                 if (isActive) {
                     this.dom.wrapper.classList.add('theater-mode');
                     this.dom.headerArea.classList.replace('border-b', 'bg-black/40');
