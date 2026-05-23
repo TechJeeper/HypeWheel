@@ -251,6 +251,20 @@
                 return text.split('\n').map(e => e.trim()).filter(e => e !== '');
             }
 
+            getWheelEntries() {
+                let wheelEntries = [...this.entries];
+                if (wheelEntries.length > 0 && wheelEntries.length < 8) {
+                    const originalLength = wheelEntries.length;
+                    const multiplier = Math.ceil(8 / originalLength);
+                    let newEntries = [];
+                    for (let i = 0; i < multiplier; i++) {
+                        newEntries = newEntries.concat(wheelEntries);
+                    }
+                    wheelEntries = newEntries;
+                }
+                return wheelEntries;
+            }
+
             saveConfig() {
                 const conf = appState.wheelsConfig.find(w => w.id === this.id);
                 if (conf) {
@@ -633,7 +647,9 @@
                 ctx.fill();
                 ctx.restore();
 
-                if (this.entries.length === 0) {
+                const wheelEntries = this.getWheelEntries();
+
+                if (wheelEntries.length === 0) {
                     ctx.beginPath();
                     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
                     ctx.fillStyle = appState.theme === 'dark' ? '#1f2937' : '#e5e7eb';
@@ -646,10 +662,10 @@
                     return;
                 }
 
-                const sliceAngle = (2 * Math.PI) / this.entries.length;
+                const sliceAngle = (2 * Math.PI) / wheelEntries.length;
                 const colors = PALETTES[this.palette] || PALETTES.rainbow;
 
-                for (let i = 0; i < this.entries.length; i++) {
+                for (let i = 0; i < wheelEntries.length; i++) {
                     const startAngle = i * sliceAngle + angleOffset;
                     const endAngle = startAngle + sliceAngle;
                     ctx.beginPath();
@@ -663,7 +679,7 @@
                     ctx.stroke();
                 }
 
-                for (let i = 0; i < this.entries.length; i++) {
+                for (let i = 0; i < wheelEntries.length; i++) {
                     const startAngle = i * sliceAngle + angleOffset;
                     ctx.save();
                     ctx.translate(centerX, centerY);
@@ -676,7 +692,7 @@
                     const fontSize = Math.max(12, Math.min(maxFontSize, arcLength * 0.7));
                     ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`;
                     
-                    const text = this.entries[i];
+                    const text = wheelEntries[i];
                     const hubRadius = radius * 0.12;
                     const rightMargin = 25;
                     const availableWidth = radius - hubRadius - rightMargin - 10;
@@ -750,9 +766,10 @@
             }
 
             getWinningIndex(angle) {
+                const wheelEntries = this.getWheelEntries();
                 const normalizedAngle = angle % (2 * Math.PI);
-                const sliceAngle = (2 * Math.PI) / this.entries.length;
-                return Math.floor(((2 * Math.PI) - normalizedAngle) / sliceAngle) % this.entries.length;
+                const sliceAngle = (2 * Math.PI) / wheelEntries.length;
+                return Math.floor(((2 * Math.PI) - normalizedAngle) / sliceAngle) % wheelEntries.length;
             }
 
             spin() {
@@ -810,7 +827,8 @@
                         this.isSpinning = false;
                         this.updateUIState();
                         
-                        this.winnerName = this.entries[currentIndex];
+                        const wheelEntries = this.getWheelEntries();
+                        this.winnerName = wheelEntries[currentIndex];
                         this.showWinner();
                     }
                 };
