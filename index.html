@@ -33,6 +33,15 @@
             border-radius: 0 !important; height: 100vh !important; width: 100vw !important;
         }
     </style>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YSLWJE18SW"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-YSLWJE18SW');
+    </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300 flex flex-col">
 
@@ -68,8 +77,16 @@
     </main>
 
     <!-- FOOTER -->
-    <footer id="main-footer" class="w-full text-center p-6 text-sm text-gray-500 dark:text-gray-400">
-        Provided free by <a href="https://TechJeeper.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors">TechJeeper Designs</a>
+    <footer id="main-footer" class="w-full p-6 text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center space-y-4">
+        <div>
+            Provided free by <a href="https://TechJeeper.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors">TechJeeper Designs</a>
+        </div>
+        <div>
+            <a href="https://github.com/TechJeeper/HypeWheel/issues" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors">Submit Issues to GitHub</a>
+        </div>
+        <div>
+            <a href="https://www.buymeacoffee.com/printventory" target="_blank" rel="noopener noreferrer"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=printventory&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" /></a>
+        </div>
     </footer>
 
     <!-- WINNERS MODAL -->
