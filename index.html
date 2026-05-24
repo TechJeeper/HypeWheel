@@ -238,7 +238,10 @@
           class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700"
         >
           <h2 class="text-xl font-bold flex items-center">
-            <i data-lucide="folder-sync" class="w-5 h-5 text-indigo-500 mr-2"></i>
+            <i
+              data-lucide="folder-sync"
+              class="w-5 h-5 text-indigo-500 mr-2"
+            ></i>
             Import / Export Settings
           </h2>
           <button
@@ -250,8 +253,10 @@
         </div>
         <div class="p-6 flex-1 overflow-y-auto">
           <p class="text-gray-600 dark:text-gray-300 mb-6">
-            Export your current wheels, winners, and settings to a JSON file for backup, or import an existing JSON file to restore settings.
-            <strong class="text-red-500 dark:text-red-400">Warning:</strong> Importing will overwrite your current settings and data!
+            Export your current wheels, winners, and settings to a JSON file for
+            backup, or import an existing JSON file to restore settings.
+            <strong class="text-red-500 dark:text-red-400">Warning:</strong>
+            Importing will overwrite your current settings and data!
           </p>
           <div class="flex flex-col space-y-4">
             <button
@@ -697,12 +702,12 @@
                             <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Spin Sound</label>
                         </div>
                         <div class="flex items-center mt-6">
-                            <input type="checkbox" class="countdown-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.countdownEnabled ? "checked" : ""}>
-                            <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Countdown Timer</label>
-                        </div>
-                        <div class="flex items-center mt-6">
                             <input type="checkbox" class="confetti-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.confettiEnabled ? "checked" : ""}>
                             <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Confetti Effect</label>
+                        </div>
+                        <div class="flex items-center mt-6">
+                            <input type="checkbox" class="countdown-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.countdownEnabled ? "checked" : ""}>
+                            <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Countdown Timer</label>
                         </div>
                         <div>
                             <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Countdown Seconds</label>
