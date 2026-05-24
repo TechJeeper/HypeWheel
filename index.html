@@ -1176,14 +1176,23 @@
           if (!this.dom.canvasContainer) return;
           const rect = this.dom.canvasContainer.getBoundingClientRect();
 
-          // Restrict to 380px in normal mode, allow up to 900px in theater mode
-          const maxAllowedSize = this.isTheater ? 900 : 380;
+          // Optimize to largest size that fits the container
+          const maxAllowedSize = this.isTheater ? 900 : Infinity;
 
-          const size = Math.min(
-            rect.width,
-            rect.height || rect.width,
-            maxAllowedSize,
-          );
+          // By default, let's use the container's height directly
+          let availableHeight = rect.height;
+
+          // If the container is flex-1 and there is no height yet, fallback to a sensible default or the bounding box height
+          if (!availableHeight || availableHeight < 50) {
+              const workspaceArea = this.dom.wrapper.querySelector(".workspace-area");
+              if (workspaceArea) {
+                  availableHeight = workspaceArea.getBoundingClientRect().height;
+              }
+          }
+
+          const padding = 32; // Account for container padding (p-4 = 16px * 2)
+          const size = Math.min(rect.width - padding, availableHeight - padding, maxAllowedSize);
+
           this.canvasSize = size;
           this.dom.canvas.style.width = `${size}px`;
           this.dom.canvas.style.height = `${size}px`;
