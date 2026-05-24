@@ -107,18 +107,11 @@
           <span class="hidden md:inline">Add Wheel</span>
         </button>
         <button
-          id="btn-export-settings"
+          id="btn-open-import-export-modal"
           class="flex items-center p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all"
-          title="Export Settings"
+          title="Import / Export Settings"
         >
-          <i data-lucide="download" class="w-4 h-4"></i>
-        </button>
-        <button
-          id="btn-import-settings"
-          class="flex items-center p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all"
-          title="Import Settings"
-        >
-          <i data-lucide="upload" class="w-4 h-4"></i>
+          <i data-lucide="folder-sync" class="w-4 h-4"></i>
         </button>
         <input
           type="file"
@@ -228,6 +221,52 @@
           >
             <i data-lucide="download" class="w-4 h-4 mr-2"></i> Export CSV
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT/EXPORT MODAL -->
+    <div
+      id="import-export-modal"
+      class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300"
+    >
+      <div
+        class="w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[80vh] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 transform scale-95 transition-transform duration-300"
+        id="import-export-modal-content"
+      >
+        <div
+          class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700"
+        >
+          <h2 class="text-xl font-bold flex items-center">
+            <i data-lucide="folder-sync" class="w-5 h-5 text-indigo-500 mr-2"></i>
+            Import / Export Settings
+          </h2>
+          <button
+            id="btn-close-import-export"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-6 flex-1 overflow-y-auto">
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Export your current wheels, winners, and settings to a JSON file for backup, or import an existing JSON file to restore settings.
+            <strong class="text-red-500 dark:text-red-400">Warning:</strong> Importing will overwrite your current settings and data!
+          </p>
+          <div class="flex flex-col space-y-4">
+            <button
+              id="btn-export-settings-modal"
+              class="flex items-center justify-center px-4 py-3 rounded-lg font-bold transition-all bg-green-600 hover:bg-green-700 text-white shadow"
+            >
+              <i data-lucide="download" class="w-5 h-5 mr-2"></i> Export Data
+            </button>
+            <button
+              id="btn-import-settings-modal"
+              class="flex items-center justify-center px-4 py-3 rounded-lg font-bold transition-all bg-indigo-600 hover:bg-indigo-700 text-white shadow"
+            >
+              <i data-lucide="upload" class="w-5 h-5 mr-2"></i> Import Data
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1684,8 +1723,37 @@
       });
 
       // --- EXPORT / IMPORT SETTINGS ---
+      const toggleImportExportModal = (show) => {
+        const modal = document.getElementById("import-export-modal");
+        const content = document.getElementById("import-export-modal-content");
+        if (show) {
+          modal.classList.remove("hidden");
+          void modal.offsetWidth; // trigger reflow
+          modal.classList.remove("opacity-0");
+          content.classList.remove("scale-95");
+          content.classList.add("scale-100");
+        } else {
+          modal.classList.add("opacity-0");
+          content.classList.remove("scale-100");
+          content.classList.add("scale-95");
+          setTimeout(() => modal.classList.add("hidden"), 300);
+        }
+      };
+
       document
-        .getElementById("btn-export-settings")
+        .getElementById("btn-open-import-export-modal")
+        .addEventListener("click", () => {
+          toggleImportExportModal(true);
+        });
+
+      document
+        .getElementById("btn-close-import-export")
+        .addEventListener("click", () => {
+          toggleImportExportModal(false);
+        });
+
+      document
+        .getElementById("btn-export-settings-modal")
         .addEventListener("click", () => {
           const data = {
             appTheme: appState.theme,
@@ -1703,7 +1771,7 @@
         });
 
       document
-        .getElementById("btn-import-settings")
+        .getElementById("btn-import-settings-modal")
         .addEventListener("click", () => {
           document.getElementById("import-settings-input").click();
         });
@@ -1747,6 +1815,7 @@
               renderWheels();
 
               showToast("Settings imported successfully!", "success");
+              toggleImportExportModal(false);
             } catch (error) {
               showToast("Failed to parse settings file.", "error");
             }
