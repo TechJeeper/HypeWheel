@@ -209,7 +209,7 @@
             appState.wheelsConfig = [{
                 id: 'default', title: 'Main Giveaway', 
                 rawText: 'Alice\nBob\nCharlie\nDave\nEve\nFrank', 
-                palette: 'rainbow', seed: generateSeed(), centerImage: '', customImage: '',
+                palette: 'rainbow', seed: generateSeed(), centerImage: '', customImage: '', customImageTextColor: '#ffffff',
                 spinSpeed: 'normal', spinDuration: 'medium', spinSound: true,
                 countdownEnabled: false, countdownSeconds: 60
             }];
@@ -229,6 +229,7 @@
                 this.palette = config.palette || 'rainbow';
                 this.centerImage = config.centerImage || '';
                 this.customImage = config.customImage || '';
+                this.customImageTextColor = config.customImageTextColor || '#ffffff';
                 this.spinSpeed = config.spinSpeed || 'normal';
                 this.spinDuration = config.spinDuration || 'medium';
                 this.spinSound = config.spinSound !== undefined ? config.spinSound : true;
@@ -282,6 +283,7 @@
                     conf.palette = this.palette;
                     conf.centerImage = this.centerImage;
                     conf.customImage = this.customImage;
+                    conf.customImageTextColor = this.customImageTextColor;
                     conf.spinSpeed = this.spinSpeed;
                     conf.spinDuration = this.spinDuration;
                     conf.spinSound = this.spinSound;
@@ -327,6 +329,13 @@
                                 <input type="text" class="custom-image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${this.customImage}">
                                 <button class="btn-custom-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                 <input type="file" class="custom-image-upload-input hidden" accept="image/*">
+                            </div>
+                            <div class="mt-4">
+                                <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Name Text Color</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="color" class="custom-image-text-color-input h-8 w-8 cursor-pointer rounded border border-gray-300 dark:border-gray-600 p-0 outline-none" value="${this.customImageTextColor}">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Choose text color for custom image wheels</span>
+                                </div>
                             </div>
                         </div>
                         <div>
@@ -435,6 +444,7 @@
                     customImageInput: wrapper.querySelector('.custom-image-input'),
                     btnCustomImageUpload: wrapper.querySelector('.btn-custom-image-upload'),
                     customImageUploadInput: wrapper.querySelector('.custom-image-upload-input'),
+                    customImageTextColorInput: wrapper.querySelector('.custom-image-text-color-input'),
                     imageInput: wrapper.querySelector('.image-input'),
                     btnImageUpload: wrapper.querySelector('.btn-image-upload'),
                     imageUploadInput: wrapper.querySelector('.image-upload-input'),
@@ -492,6 +502,7 @@
                 });
 
                 this.dom.customImageInput.addEventListener('input', (e) => { this.customImage = e.target.value; this.saveConfig(); this.draw(); });
+                this.dom.customImageTextColorInput.addEventListener('input', (e) => { this.customImageTextColor = e.target.value; this.saveConfig(); this.draw(); });
                 this.dom.btnCustomImageUpload.addEventListener('click', () => this.dom.customImageUploadInput.click());
                 this.dom.customImageUploadInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
@@ -851,7 +862,7 @@
                         displayString = displayString.length > 0 ? displayString + '...' : '';
                     }
 
-                    ctx.fillStyle = '#ffffff';
+                    ctx.fillStyle = this.palette === 'image' ? this.customImageTextColor : '#ffffff';
                     ctx.shadowColor = "rgba(0,0,0,0.4)";
                     ctx.shadowBlur = 4;
                     ctx.shadowOffsetY = 1;
@@ -1125,7 +1136,7 @@
         document.getElementById('btn-add-wheel').addEventListener('click', () => {
             const newWheel = {
                 id: 'wheel_' + Date.now(), title: 'New Wheel', rawText: '',
-                palette: 'neon', seed: generateSeed(), centerImage: '', customImage: '',
+                palette: 'neon', seed: generateSeed(), centerImage: '', customImage: '', customImageTextColor: '#ffffff',
                 spinSpeed: 'normal', spinDuration: 'medium', spinSound: true,
                 countdownEnabled: false, countdownSeconds: 60
             };
