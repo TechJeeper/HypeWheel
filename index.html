@@ -489,6 +489,15 @@
                 this.dom.btnSettings.addEventListener('click', () => {
                     this.showSettings = !this.showSettings;
                     this.dom.settingsPanel.classList.toggle('hidden', !this.showSettings);
+
+                    if (this.showSettings) {
+                        this.dom.btnSettings.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i>';
+                        this.dom.btnSettings.title = 'Save Settings';
+                    } else {
+                        this.dom.btnSettings.innerHTML = '<i data-lucide="settings" class="w-4 h-4"></i>';
+                        this.dom.btnSettings.title = 'Settings';
+                    }
+                    lucide.createIcons({ root: this.dom.btnSettings });
                 });
                 
                 this.dom.paletteSelect.addEventListener('change', (e) => {
