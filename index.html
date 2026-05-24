@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -257,22 +259,52 @@
           class="p-5 flex-1 overflow-y-auto text-gray-700 dark:text-gray-300 space-y-4"
         >
           <p>
-            Welcome to <strong>HypeWheel</strong>! A highly customizable, performant spinning wheel app for picking random names or options.
+            Welcome to <strong>HypeWheel</strong>! A highly customizable,
+            performant spinning wheel app for picking random names or options.
           </p>
           <ul class="list-disc list-inside space-y-2">
-            <li><strong>Add Options:</strong> Click on a wheel's text area to enter names, one per line.</li>
-            <li><strong>Customize:</strong> Use the gear icon (<i data-lucide="settings" class="inline w-4 h-4"></i>) on a wheel to change colors, add custom images, and set spin speed/duration.</li>
-            <li><strong>Spin:</strong> Click the "SPIN" button in the center of a wheel to pick a random option.</li>
-            <li><strong>Multiple Wheels:</strong> Click "+ Add New Wheel" in the top header to run multiple wheels simultaneously.</li>
-            <li><strong>Theater Mode:</strong> Click the maximize icon (<i data-lucide="maximize" class="inline w-4 h-4"></i>) to expand a wheel to full screen.</li>
-            <li><strong>Winners:</strong> View past winners by clicking the trophy icon in the top header.</li>
+            <li>
+              <strong>Add Options:</strong> Click on a wheel's text area to
+              enter names, one per line.
+            </li>
+            <li>
+              <strong>Customize:</strong> Use the gear icon (<i
+                data-lucide="settings"
+                class="inline w-4 h-4"
+              ></i
+              >) on a wheel to change colors, add custom images, and set spin
+              speed/duration.
+            </li>
+            <li>
+              <strong>Spin:</strong> Click the "SPIN" button in the center of a
+              wheel to pick a random option.
+            </li>
+            <li>
+              <strong>Multiple Wheels:</strong> Click "+ Add New Wheel" in the
+              top header to run multiple wheels simultaneously.
+            </li>
+            <li>
+              <strong>Theater Mode:</strong> Click the maximize icon (<i
+                data-lucide="maximize"
+                class="inline w-4 h-4"
+              ></i
+              >) to expand a wheel to full screen.
+            </li>
+            <li>
+              <strong>Winners:</strong> View past winners by clicking the trophy
+              icon in the top header.
+            </li>
           </ul>
         </div>
         <div
           class="p-5 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <label class="flex items-center space-x-2 text-sm cursor-pointer">
-            <input type="checkbox" id="cb-never-show-quickstart" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            <input
+              type="checkbox"
+              id="cb-never-show-quickstart"
+              class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            />
             <span>Never show again</span>
           </label>
           <button
@@ -454,6 +486,7 @@
             spinSound: true,
             countdownEnabled: false,
             countdownSeconds: 60,
+            confettiEnabled: true,
           },
         ];
       }
@@ -479,6 +512,10 @@
             config.spinSound !== undefined ? config.spinSound : true;
           this.countdownEnabled = config.countdownEnabled || false;
           this.countdownSeconds = config.countdownSeconds || 60;
+          this.confettiEnabled =
+            config.confettiEnabled !== undefined
+              ? config.confettiEnabled
+              : true;
           this.seed = config.seed || generateSeed();
 
           this.entries = this.parseEntries(this.rawText);
@@ -536,6 +573,7 @@
             conf.spinSound = this.spinSound;
             conf.countdownEnabled = this.countdownEnabled;
             conf.countdownSeconds = this.countdownSeconds;
+            conf.confettiEnabled = this.confettiEnabled;
             conf.seed = this.seed;
             localStorage.setItem(
               "wheelsData",
@@ -622,6 +660,10 @@
                         <div class="flex items-center mt-6">
                             <input type="checkbox" class="countdown-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.countdownEnabled ? "checked" : ""}>
                             <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Countdown Timer</label>
+                        </div>
+                        <div class="flex items-center mt-6">
+                            <input type="checkbox" class="confetti-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.confettiEnabled ? "checked" : ""}>
+                            <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Confetti Effect</label>
                         </div>
                         <div>
                             <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Countdown Seconds</label>
@@ -712,6 +754,7 @@
             durationSelect: wrapper.querySelector(".duration-select"),
             soundCheckbox: wrapper.querySelector(".sound-checkbox"),
             countdownCheckbox: wrapper.querySelector(".countdown-checkbox"),
+            confettiCheckbox: wrapper.querySelector(".confetti-checkbox"),
             countdownInput: wrapper.querySelector(".countdown-input"),
             canvasContainer: wrapper.querySelector(".canvas-container"),
             canvas: wrapper.querySelector(".wheel-canvas"),
@@ -901,6 +944,10 @@
           });
           this.dom.countdownCheckbox.addEventListener("change", (e) => {
             this.countdownEnabled = e.target.checked;
+            this.saveConfig();
+          });
+          this.dom.confettiCheckbox.addEventListener("change", (e) => {
+            this.confettiEnabled = e.target.checked;
             this.saveConfig();
           });
           this.dom.countdownInput.addEventListener("input", (e) => {
@@ -1434,6 +1481,15 @@
           void this.dom.winnerOverlay.offsetWidth;
           this.dom.winnerOverlay.classList.remove("opacity-0");
 
+          if (this.confettiEnabled && typeof confetti !== "undefined") {
+            confetti({
+              particleCount: 150,
+              spread: 70,
+              origin: { y: 0.6 },
+              zIndex: 99999,
+            });
+          }
+
           if (this.countdownEnabled) {
             this.dom.countdownDisplay.classList.remove("hidden");
             let remaining = this.countdownSeconds;
@@ -1495,8 +1551,10 @@
               "py-5",
             );
 
-            this.dom.btnTheater.innerHTML = '<i data-lucide="minimize" class="w-4 h-4 theater-icon"></i>';
-            this.dom.theaterIcon = this.dom.btnTheater.querySelector(".theater-icon");
+            this.dom.btnTheater.innerHTML =
+              '<i data-lucide="minimize" class="w-4 h-4 theater-icon"></i>';
+            this.dom.theaterIcon =
+              this.dom.btnTheater.querySelector(".theater-icon");
           } else {
             this.dom.wrapper.classList.remove("theater-mode");
             this.dom.headerArea.classList.replace("bg-black/40", "border-b");
@@ -1519,8 +1577,10 @@
               "py-5",
             );
 
-            this.dom.btnTheater.innerHTML = '<i data-lucide="maximize" class="w-4 h-4 theater-icon"></i>';
-            this.dom.theaterIcon = this.dom.btnTheater.querySelector(".theater-icon");
+            this.dom.btnTheater.innerHTML =
+              '<i data-lucide="maximize" class="w-4 h-4 theater-icon"></i>';
+            this.dom.theaterIcon =
+              this.dom.btnTheater.querySelector(".theater-icon");
           }
           lucide.createIcons({ root: this.dom.headerArea });
           this.handleResize();
@@ -1613,6 +1673,7 @@
           spinSound: true,
           countdownEnabled: false,
           countdownSeconds: 60,
+          confettiEnabled: true,
         };
         appState.wheelsConfig.push(newWheel);
         localStorage.setItem(
@@ -1849,21 +1910,27 @@
         }
       };
 
-      document.getElementById("btn-quickstart").addEventListener("click", () => {
-        toggleQuickStartModal(true);
-      });
+      document
+        .getElementById("btn-quickstart")
+        .addEventListener("click", () => {
+          toggleQuickStartModal(true);
+        });
 
-      document.getElementById("btn-close-quickstart").addEventListener("click", () => {
-        toggleQuickStartModal(false);
-      });
+      document
+        .getElementById("btn-close-quickstart")
+        .addEventListener("click", () => {
+          toggleQuickStartModal(false);
+        });
 
-      document.getElementById("btn-dismiss-quickstart").addEventListener("click", () => {
-        const cb = document.getElementById("cb-never-show-quickstart");
-        if (cb.checked) {
-          localStorage.setItem("hideQuickStart", "true");
-        }
-        toggleQuickStartModal(false);
-      });
+      document
+        .getElementById("btn-dismiss-quickstart")
+        .addEventListener("click", () => {
+          const cb = document.getElementById("cb-never-show-quickstart");
+          if (cb.checked) {
+            localStorage.setItem("hideQuickStart", "true");
+          }
+          toggleQuickStartModal(false);
+        });
 
       // --- INIT ---
       applyTheme();
