@@ -809,11 +809,11 @@
                 }
 
                 let durationStr = this.spinDuration || 'medium';
-                let minDuration = 5000; let maxDurationRange = 2000;
+                let minDuration = 10000; let maxDurationRange = 4000;
                 if (durationStr === 'short') {
-                    minDuration = 2000; maxDurationRange = 1000;
+                    minDuration = 4000; maxDurationRange = 2000;
                 } else if (durationStr === 'long') {
-                    minDuration = 8000; maxDurationRange = 3000;
+                    minDuration = 16000; maxDurationRange = 6000;
                 }
 
                 const duration = minDuration + Math.random() * maxDurationRange;
