@@ -1426,7 +1426,8 @@
               "py-5",
             );
 
-            this.dom.theaterIcon.setAttribute("data-lucide", "minimize");
+            this.dom.btnTheater.innerHTML = '<i data-lucide="minimize" class="w-4 h-4 theater-icon"></i>';
+            this.dom.theaterIcon = this.dom.btnTheater.querySelector(".theater-icon");
           } else {
             this.dom.wrapper.classList.remove("theater-mode");
             this.dom.headerArea.classList.replace("bg-black/40", "border-b");
@@ -1449,7 +1450,8 @@
               "py-5",
             );
 
-            this.dom.theaterIcon.setAttribute("data-lucide", "maximize");
+            this.dom.btnTheater.innerHTML = '<i data-lucide="maximize" class="w-4 h-4 theater-icon"></i>';
+            this.dom.theaterIcon = this.dom.btnTheater.querySelector(".theater-icon");
           }
           lucide.createIcons({ root: this.dom.headerArea });
           this.handleResize();
