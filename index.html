@@ -1156,9 +1156,21 @@
             }
         });
 
+        function sanitizeCsvField(field) {
+            if (field === null || field === undefined) return '""';
+            let str = String(field);
+            if (/^[=+\-@]/.test(str)) {
+                str = "'" + str;
+            }
+            str = str.replace(/"/g, '""');
+            return '"' + str + '"';
+        }
+
         document.getElementById('btn-export-winners').addEventListener('click', () => {
             if (appState.winners.length === 0) return;
-            const csv = "Time,Wheel,Winner\n" + appState.winners.map(w => `"${w.timestamp}","${w.wheelTitle}","${w.winnerName}"`).join("\n");
+            const csv = "Time,Wheel,Winner\n" + appState.winners.map(w => {
+                return [w.timestamp, w.wheelTitle, w.winnerName].map(sanitizeCsvField).join(",");
+            }).join("\n");
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
