@@ -7,8 +7,10 @@ def main():
         page = browser.new_page()
         page.goto("http://localhost:3000")
 
-        # We need to simulate the environment or just run the page
-        # Let's wait for the wheel to render
+        # We need to dismiss the Quick Start Guide
+        page.evaluate("localStorage.setItem('hideQuickStart', 'true');")
+        page.reload()
+
         page.wait_for_selector("canvas")
 
         page.evaluate("""
@@ -19,8 +21,8 @@ def main():
             inst.draw();
         """)
 
-        page.screenshot(path="screenshot_before.png")
-        print("Screenshot saved to screenshot_before.png")
+        page.screenshot(path="screenshot_after.png")
+        print("Screenshot saved to screenshot_after.png")
         browser.close()
 
 if __name__ == "__main__":

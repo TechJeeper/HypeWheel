@@ -1359,12 +1359,12 @@
               if (ctx.measureText(displayString).width > availableWidth) {
                 while (
                   displayString.length > 0 &&
-                  ctx.measureText(displayString + "...").width > availableWidth
+                  ctx.measureText(displayString + "…").width > availableWidth
                 ) {
                   displayString = displayString.slice(0, -1);
                 }
                 displayString =
-                  displayString.length > 0 ? displayString + "..." : "";
+                  displayString.length > 0 ? displayString + "…" : "";
               }
               return displayString;
             });
