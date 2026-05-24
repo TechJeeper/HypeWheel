@@ -507,16 +507,11 @@
                 this.dom.btnTheater.addEventListener('click', () => toggleTheaterMode(this.id));
                 
                 this.dom.entriesInput.addEventListener('input', (e) => {
-                    this.rawText = e.target.value;
-                    this.entries = this.parseEntries(this.rawText);
-                    this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                    this.saveConfig(); this.draw(); this.updateUIState();
+                    this.updateEntries(e.target.value);
                 });
 
                 this.dom.btnClear.addEventListener('click', () => {
-                    this.rawText = ''; this.entries = []; this.dom.entriesInput.value = '';
-                    this.dom.entriesCount.innerText = `Entries (0)`;
-                    this.saveConfig(); this.draw(); this.updateUIState();
+                    this.updateEntries('');
                 });
 
                 this.dom.btnDedupe.addEventListener('click', () => {
@@ -527,19 +522,14 @@
                         seenLower.add(lower); return true;
                     });
                     const removed = this.entries.length - unique.length;
-                    this.rawText = unique.join('\n');
                     this.entries = unique;
-                    this.dom.entriesInput.value = this.rawText;
-                    this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                    this.saveConfig(); this.draw();
+                    this.updateEntries();
                     showToast(`Removed ${removed} duplicates!`, 'success');
                 });
 
                 this.dom.btnSort.addEventListener('click', () => {
                     this.entries.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-                    this.rawText = this.entries.join('\n');
-                    this.dom.entriesInput.value = this.rawText;
-                    this.saveConfig(); this.draw();
+                    this.updateEntries();
                 });
 
                 this.dom.btnShuffle.addEventListener('click', () => this.shuffle());
@@ -556,14 +546,25 @@
                     const idx = this.entries.indexOf(this.winnerName);
                     if (idx !== -1) {
                         this.entries.splice(idx, 1);
-                        this.rawText = this.entries.join('\n');
-                        this.dom.entriesInput.value = this.rawText;
-                        this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                        this.saveConfig(); this.draw();
+                        this.updateEntries();
                         showToast(`${this.winnerName} removed!`, 'success');
                     }
                     this.closeWinner();
                 });
+            }
+
+            updateEntries(newRawText) {
+                if (newRawText !== undefined) {
+                    this.rawText = newRawText;
+                    this.entries = this.parseEntries(this.rawText);
+                } else {
+                    this.rawText = this.entries.join('\n');
+                }
+                this.dom.entriesInput.value = this.rawText;
+                this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+                this.saveConfig();
+                this.draw();
+                this.updateUIState();
             }
 
             updateUIState() {
@@ -599,12 +600,9 @@
                     this.entries[i] = this.entries[j];
                     this.entries[j] = temp;
                 }
-                this.rawText = this.entries.join('\n');
-                this.dom.entriesInput.value = this.rawText;
                 this.seed = generateSeed();
                 this.dom.seedDisplay.innerText = this.seed;
-                this.saveConfig();
-                this.draw();
+                this.updateEntries();
             }
 
             async autoShuffle() {
