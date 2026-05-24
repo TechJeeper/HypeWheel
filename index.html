@@ -175,7 +175,16 @@
             const icon = type === 'success' ? 'check' : type === 'error' ? 'alert-circle' : 'info';
             
             toast.className = `${bg} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 translate-y-10 opacity-0`;
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${message}</span>`;
+
+            const iconEl = document.createElement('i');
+            iconEl.setAttribute('data-lucide', icon);
+            iconEl.className = 'w-5 h-5';
+
+            const messageEl = document.createElement('span');
+            messageEl.textContent = message;
+
+            toast.appendChild(iconEl);
+            toast.appendChild(messageEl);
             
             container.appendChild(toast);
             lucide.createIcons({ root: toast });
