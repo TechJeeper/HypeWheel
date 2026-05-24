@@ -238,7 +238,10 @@
           class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700"
         >
           <h2 class="text-xl font-bold flex items-center">
-            <i data-lucide="folder-sync" class="w-5 h-5 text-indigo-500 mr-2"></i>
+            <i
+              data-lucide="folder-sync"
+              class="w-5 h-5 text-indigo-500 mr-2"
+            ></i>
             Import / Export Settings
           </h2>
           <button
@@ -250,8 +253,10 @@
         </div>
         <div class="p-6 flex-1 overflow-y-auto">
           <p class="text-gray-600 dark:text-gray-300 mb-6">
-            Export your current wheels, winners, and settings to a JSON file for backup, or import an existing JSON file to restore settings.
-            <strong class="text-red-500 dark:text-red-400">Warning:</strong> Importing will overwrite your current settings and data!
+            Export your current wheels, winners, and settings to a JSON file for
+            backup, or import an existing JSON file to restore settings.
+            <strong class="text-red-500 dark:text-red-400">Warning:</strong>
+            Importing will overwrite your current settings and data!
           </p>
           <div class="flex flex-col space-y-4">
             <button
@@ -1883,14 +1888,21 @@
       };
 
       const addWinner = (wheelTitle, winnerName) => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        });
+        const timeStr = now.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         appState.winners.unshift({
           id: Date.now().toString(),
           wheelTitle: wheelTitle || "Unnamed Wheel",
           winnerName: winnerName,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          timestamp: `${dateStr} ${timeStr}`,
         });
         saveState();
         updateWinnersUI();
