@@ -667,10 +667,10 @@
                                 <button class="btn-custom-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                 <input type="file" class="custom-image-upload-input hidden" accept="image/*">
                             </div>
-                            <div class="mt-4 flex items-center space-x-2">
-                                <label class="font-semibold text-gray-900 dark:text-white">Text Color</label>
-                                <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0" value="${this.customTextColor}">
-                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center space-x-2">
+                            <label class="font-semibold text-gray-900 dark:text-white">Text Color</label>
+                            <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0" value="${this.customTextColor}">
                         </div>
                         <div>
                             <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Center Image URL (Optional)</label>
@@ -1343,11 +1343,7 @@
                 displayString.length > 0 ? displayString + "..." : "";
             }
 
-            if (this.palette === "image") {
-              ctx.fillStyle = this.customTextColor;
-            } else {
-              ctx.fillStyle = "#ffffff";
-            }
+            ctx.fillStyle = this.customTextColor;
 
             if (!this.isSpinning) {
               ctx.shadowColor = "rgba(0,0,0,0.4)";
@@ -1358,6 +1354,10 @@
               ctx.shadowBlur = 0;
               ctx.shadowOffsetY = 0;
             }
+
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1;
+            ctx.strokeText(displayString, radius - rightMargin, 0);
             ctx.fillText(displayString, radius - rightMargin, 0);
             ctx.restore();
           }
