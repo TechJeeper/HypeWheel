@@ -591,8 +591,7 @@
                 }
             }
 
-            shuffle() {
-                if (this.isSpinning || this.entries.length < 2) return;
+            _performShuffle() {
                 for (let i = this.entries.length - 1; i > 0; i--) {
                     const j = Math.floor(getCryptoRandom() * (i + 1));
                     const temp = this.entries[i];
@@ -603,6 +602,11 @@
                 this.dom.entriesInput.value = this.rawText;
                 this.seed = generateSeed();
                 this.dom.seedDisplay.innerText = this.seed;
+            }
+
+            shuffle() {
+                if (this.isSpinning || this.entries.length < 2) return;
+                this._performShuffle();
                 this.saveConfig();
                 this.draw();
             }
@@ -615,16 +619,7 @@
                 this.updateUIState();
                 
                 for (let i = 0; i < this.autoShuffleCount; i++) {
-                    for (let j = this.entries.length - 1; j > 0; j--) {
-                        const k = Math.floor(getCryptoRandom() * (j + 1));
-                        const temp = this.entries[j];
-                        this.entries[j] = this.entries[k];
-                        this.entries[k] = temp;
-                    }
-                    this.rawText = this.entries.join('\n');
-                    this.dom.entriesInput.value = this.rawText;
-                    this.seed = generateSeed();
-                    this.dom.seedDisplay.innerText = this.seed;
+                    this._performShuffle();
                     this.draw();
                     await new Promise(r => setTimeout(r, 80));
                 }
