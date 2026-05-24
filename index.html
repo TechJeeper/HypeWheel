@@ -168,6 +168,19 @@
 
         const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
 
+        const escapeHTML = (str) => {
+            if (typeof str !== 'string') return str;
+            return str.replace(/[&<>'"]/g,
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        };
+
         const showToast = (message, type = 'info') => {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -175,7 +188,7 @@
             const icon = type === 'success' ? 'check' : type === 'error' ? 'alert-circle' : 'info';
             
             toast.className = `${bg} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 translate-y-10 opacity-0`;
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${message}</span>`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${escapeHTML(message)}</span>`;
             
             container.appendChild(toast);
             lucide.createIcons({ root: toast });
@@ -290,7 +303,7 @@
                     <!-- HEADER -->
                     <div class="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700 header-area">
                         <div class="flex items-center space-x-2 flex-1 group">
-                            <input type="text" class="title-input font-bold text-xl bg-transparent border-none focus:ring-0 outline-none w-full max-w-[200px] text-gray-900 dark:text-gray-100" value="${this.title}" placeholder="Wheel Title">
+                            <input type="text" class="title-input font-bold text-xl bg-transparent border-none focus:ring-0 outline-none w-full max-w-[200px] text-gray-900 dark:text-gray-100" value="${escapeHTML(this.title)}" placeholder="Wheel Title">
                             <i data-lucide="pen" class="w-4 h-4 text-gray-400 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"></i>
                         </div>
                         <div class="flex space-x-2 shrink-0">
@@ -312,7 +325,7 @@
                             <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Center Image URL (Optional)</label>
                             <div class="flex">
                                 <span class="p-2 rounded-l-lg bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
-                                <input type="text" class="image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${this.centerImage}">
+                                <input type="text" class="image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${escapeHTML(this.centerImage)}">
                                 <button class="btn-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                 <input type="file" class="image-upload-input hidden" accept="image/*">
                             </div>
@@ -383,7 +396,7 @@
                                         <button class="btn-clear p-1.5 rounded hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline mr-1"></i> Clear</button>
                                     </div>
                                 </div>
-                                <textarea class="entries-input flex-1 w-full p-3 rounded-lg resize-none outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors min-h-[120px] font-medium leading-relaxed" placeholder="Paste your names here...\nOne name per line.">${this.rawText}</textarea>
+                                <textarea class="entries-input flex-1 w-full p-3 rounded-lg resize-none outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors min-h-[120px] font-medium leading-relaxed" placeholder="Paste your names here...\nOne name per line.">${escapeHTML(this.rawText)}</textarea>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 mt-4 shuffle-grid">
@@ -1111,10 +1124,10 @@
                     ${appState.winners.map((w, idx) => `
                         <li class="flex items-center justify-between p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                             <div class="flex flex-col">
-                                <span class="font-bold text-lg">${w.winnerName}</span>
+                                <span class="font-bold text-lg">${escapeHTML(w.winnerName)}</span>
                                 <span class="text-sm opacity-70 flex items-center">
-                                    <span class="font-mono text-xs mr-2 opacity-70">${w.timestamp}</span> 
-                                    ${w.wheelTitle}
+                                    <span class="font-mono text-xs mr-2 opacity-70">${escapeHTML(w.timestamp)}</span>
+                                    ${escapeHTML(w.wheelTitle)}
                                 </span>
                             </div>
                             <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-bold text-xs shadow">
