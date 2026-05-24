@@ -532,6 +532,7 @@
             countdownSeconds: 60,
             confettiEnabled: true,
             fontFamily: "system-ui",
+            layout: "right",
           },
         ];
       }
@@ -563,6 +564,7 @@
               : true;
           this.fontFamily = config.fontFamily || "system-ui";
           this.seed = config.seed || generateSeed();
+          this.layout = config.layout || "right";
 
           this.entries = this.parseEntries(this.rawText);
           this.isSpinning = false;
@@ -578,6 +580,7 @@
           this.container = container;
           this.buildDOM();
           this.bindEvents();
+          this.applyLayout();
           this.draw();
 
           this.resizeObserver = new ResizeObserver(() => this.handleResize());
@@ -622,11 +625,35 @@
             conf.confettiEnabled = this.confettiEnabled;
             conf.fontFamily = this.fontFamily;
             conf.seed = this.seed;
+            conf.layout = this.layout;
             localStorage.setItem(
               "wheelsData",
               JSON.stringify(appState.wheelsConfig),
             );
           }
+        }
+
+        applyLayout() {
+          if (this.isTheater) return; // Theater mode overrides layout
+
+          const workspaceClass = "flex flex-1 overflow-hidden workspace-area";
+          const controlsBase =
+            "controls-area flex flex-col p-4 shrink-0 transition-all duration-300 w-full lg:w-96";
+
+          if (this.layout === "left") {
+            this.dom.workspaceArea.className = `${workspaceClass} flex-col lg:flex-row-reverse`;
+            this.dom.controlsArea.className = `${controlsBase} border-t lg:border-t-0 lg:border-r border-gray-300 dark:border-gray-700`;
+          } else if (this.layout === "bottom") {
+            this.dom.workspaceArea.className = `${workspaceClass} flex-col`;
+            this.dom.controlsArea.className = `controls-area flex flex-col p-4 shrink-0 border-t border-gray-300 dark:border-gray-700 transition-all duration-300 w-full`;
+          } else {
+            // Default "right"
+            this.dom.workspaceArea.className = `${workspaceClass} flex-col lg:flex-row`;
+            this.dom.controlsArea.className = `${controlsBase} border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700`;
+          }
+
+          // Force a resize calculation when layout changes
+          setTimeout(() => this.handleResize(), 50);
         }
 
         buildDOM() {
@@ -726,6 +753,14 @@
                         <div>
                             <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Countdown Seconds</label>
                             <input type="number" min="1" max="3600" class="countdown-input w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" value="${this.countdownSeconds}">
+                        </div>
+                        <div>
+                            <label class="block mb-1 font-semibold text-gray-900 dark:text-white">UI Layout</label>
+                            <select class="layout-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                <option value="right" ${this.layout === "right" ? "selected" : ""}>List on Right</option>
+                                <option value="left" ${this.layout === "left" ? "selected" : ""}>List on Left</option>
+                                <option value="bottom" ${this.layout === "bottom" ? "selected" : ""}>List on Bottom</option>
+                            </select>
                         </div>
                     </div>
 
@@ -838,6 +873,8 @@
             theaterIcon: wrapper.querySelector(".theater-icon"),
             shuffleGrid: wrapper.querySelector(".shuffle-grid"),
             spinVisual: wrapper.querySelector(".spin-btn-visual"),
+            workspaceArea: wrapper.querySelector(".workspace-area"),
+            layoutSelect: wrapper.querySelector(".layout-select"),
           };
 
           lucide.createIcons({ root: wrapper });
@@ -880,6 +917,13 @@
             this.fontFamily = e.target.value;
             this.saveConfig();
             this.draw();
+          });
+
+          this.dom.layoutSelect.addEventListener("change", (e) => {
+            this.layout = e.target.value;
+            this.saveConfig();
+            this.applyLayout();
+            this.draw(); // To trigger resize if needed
           });
 
           this.dom.paletteSelect.addEventListener("change", (e) => {
@@ -1655,8 +1699,7 @@
             );
 
             this.dom.hideInTheater.style.display = "block";
-            this.dom.controlsArea.className =
-              "controls-area flex flex-col p-4 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700 transition-all duration-300 w-full lg:w-96";
+            this.applyLayout();
             this.dom.shuffleGrid.className =
               "grid grid-cols-2 gap-2 mt-4 shuffle-grid";
             this.dom.btnSpin.classList.remove(
