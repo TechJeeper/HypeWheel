@@ -188,7 +188,6 @@
             const icon = type === 'success' ? 'check' : type === 'error' ? 'alert-circle' : 'info';
             
             toast.className = `${bg} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 translate-y-10 opacity-0`;
-
             const iconEl = document.createElement('i');
             iconEl.setAttribute('data-lucide', icon);
             iconEl.className = 'w-5 h-5';
@@ -196,7 +195,6 @@
             const messageEl = document.createElement('span');
             messageEl.textContent = message;
             toast.appendChild(iconEl);
-            toast.appendChild(messageEl);
             toast.appendChild(messageEl);
             
             container.appendChild(toast);
@@ -1262,7 +1260,7 @@
                             <div class="flex flex-col">
                                 <span class="font-bold text-lg">${escapeHTML(w.winnerName)}</span>
                                 <span class="text-sm opacity-70 flex items-center">
-                                    <span class="font-mono text-xs mr-2 opacity-70">${w.timestamp}</span> 
+                                    <span class="font-mono text-xs mr-2 opacity-70">${escapeHTML(w.timestamp)}</span>
                                     ${escapeHTML(w.wheelTitle)}
                                 </span>
                             </div>
