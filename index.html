@@ -1888,14 +1888,21 @@
       };
 
       const addWinner = (wheelTitle, winnerName) => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        });
+        const timeStr = now.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         appState.winners.unshift({
           id: Date.now().toString(),
           wheelTitle: wheelTitle || "Unnamed Wheel",
           winnerName: winnerName,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          timestamp: `${dateStr} ${timeStr}`,
         });
         saveState();
         updateWinnersUI();
