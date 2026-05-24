@@ -447,6 +447,12 @@
                 this.updateUIState();
             }
 
+            refresh(updateUI = false) {
+                this.saveConfig();
+                this.draw();
+                if (updateUI) this.updateUIState();
+            }
+
             bindEvents() {
                 this.dom.titleInput.addEventListener('input', (e) => { this.title = e.target.value; this.saveConfig(); });
                 
@@ -455,8 +461,8 @@
                     this.dom.settingsPanel.classList.toggle('hidden', !this.showSettings);
                 });
                 
-                this.dom.paletteSelect.addEventListener('change', (e) => { this.palette = e.target.value; this.saveConfig(); this.draw(); });
-                this.dom.imageInput.addEventListener('input', (e) => { this.centerImage = e.target.value; this.saveConfig(); this.draw(); });
+                this.dom.paletteSelect.addEventListener('change', (e) => { this.palette = e.target.value; this.refresh(); });
+                this.dom.imageInput.addEventListener('input', (e) => { this.centerImage = e.target.value; this.refresh(); });
                 this.dom.btnImageUpload.addEventListener('click', () => this.dom.imageUploadInput.click());
                 this.dom.imageUploadInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
@@ -490,8 +496,7 @@
 
                             this.centerImage = dataUrl;
                             this.dom.imageInput.value = dataUrl;
-                            this.saveConfig();
-                            this.draw();
+                            this.refresh();
                         };
                         img.src = event.target.result;
                     };
@@ -510,13 +515,13 @@
                     this.rawText = e.target.value;
                     this.entries = this.parseEntries(this.rawText);
                     this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                    this.saveConfig(); this.draw(); this.updateUIState();
+                    this.refresh(true);
                 });
 
                 this.dom.btnClear.addEventListener('click', () => {
                     this.rawText = ''; this.entries = []; this.dom.entriesInput.value = '';
                     this.dom.entriesCount.innerText = `Entries (0)`;
-                    this.saveConfig(); this.draw(); this.updateUIState();
+                    this.refresh(true);
                 });
 
                 this.dom.btnDedupe.addEventListener('click', () => {
@@ -531,7 +536,7 @@
                     this.entries = unique;
                     this.dom.entriesInput.value = this.rawText;
                     this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                    this.saveConfig(); this.draw();
+                    this.refresh();
                     showToast(`Removed ${removed} duplicates!`, 'success');
                 });
 
@@ -539,7 +544,7 @@
                     this.entries.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
                     this.rawText = this.entries.join('\n');
                     this.dom.entriesInput.value = this.rawText;
-                    this.saveConfig(); this.draw();
+                    this.refresh();
                 });
 
                 this.dom.btnShuffle.addEventListener('click', () => this.shuffle());
@@ -559,7 +564,7 @@
                         this.rawText = this.entries.join('\n');
                         this.dom.entriesInput.value = this.rawText;
                         this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-                        this.saveConfig(); this.draw();
+                        this.refresh();
                         showToast(`${this.winnerName} removed!`, 'success');
                     }
                     this.closeWinner();
@@ -603,8 +608,7 @@
                 this.dom.entriesInput.value = this.rawText;
                 this.seed = generateSeed();
                 this.dom.seedDisplay.innerText = this.seed;
-                this.saveConfig();
-                this.draw();
+                this.refresh();
             }
 
             async autoShuffle() {
