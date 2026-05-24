@@ -303,7 +303,7 @@
                     <!-- SETTINGS -->
                     <div class="settings-panel hidden p-4 border-b border-gray-300 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                            <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Color Palette</label>
+                            <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Wheel Theme</label>
                             <select class="palette-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                 ${Object.keys(PALETTES).map(p => `<option value="${p}" ${this.palette === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}
                             </select>
