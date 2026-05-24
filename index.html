@@ -1310,6 +1310,38 @@
             }
           }
 
+          const maxFontSize = 30;
+          const arcLength = radius * sliceAngle;
+          const fontSize = Math.max(1, Math.min(maxFontSize, arcLength * 0.7));
+          ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`;
+          const hubRadius = radius * 0.12;
+          const rightMargin = 25;
+          const availableWidth = radius - hubRadius - rightMargin - 10;
+
+          if (
+            this._cacheKeyCanvasSize !== this.canvasSize ||
+            this._cacheKeyRawText !== this.rawText ||
+            this._cacheKeyWheelEntriesLength !== wheelEntries.length
+          ) {
+            this._cachedDisplayStrings = wheelEntries.map((text) => {
+              let displayString = text;
+              if (ctx.measureText(displayString).width > availableWidth) {
+                while (
+                  displayString.length > 0 &&
+                  ctx.measureText(displayString + "...").width > availableWidth
+                ) {
+                  displayString = displayString.slice(0, -1);
+                }
+                displayString =
+                  displayString.length > 0 ? displayString + "..." : "";
+              }
+              return displayString;
+            });
+            this._cacheKeyCanvasSize = this.canvasSize;
+            this._cacheKeyRawText = this.rawText;
+            this._cacheKeyWheelEntriesLength = wheelEntries.length;
+          }
+
           for (let i = 0; i < wheelEntries.length; i++) {
             const startAngle = i * sliceAngle + angleOffset;
             ctx.save();
@@ -1318,30 +1350,7 @@
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
 
-            const maxFontSize = 30;
-            const arcLength = radius * sliceAngle;
-            const fontSize = Math.max(
-              1,
-              Math.min(maxFontSize, arcLength * 0.7),
-            );
-            ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`;
-
-            const text = wheelEntries[i];
-            const hubRadius = radius * 0.12;
-            const rightMargin = 25;
-            const availableWidth = radius - hubRadius - rightMargin - 10;
-
-            let displayString = text;
-            if (ctx.measureText(displayString).width > availableWidth) {
-              while (
-                displayString.length > 0 &&
-                ctx.measureText(displayString + "...").width > availableWidth
-              ) {
-                displayString = displayString.slice(0, -1);
-              }
-              displayString =
-                displayString.length > 0 ? displayString + "..." : "";
-            }
+            const displayString = this._cachedDisplayStrings[i];
 
             ctx.fillStyle = this.customTextColor;
 
@@ -1368,7 +1377,6 @@
           ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
           ctx.stroke();
 
-          const hubRadius = radius * 0.12;
           ctx.beginPath();
           ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
           ctx.fillStyle = "#1e293b";
