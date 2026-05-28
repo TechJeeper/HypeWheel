@@ -643,34 +643,13 @@
           if (this.layout === "left") {
             this.dom.workspaceArea.className = `${workspaceClass} flex-col lg:flex-row-reverse`;
             this.dom.controlsArea.className = `${controlsBase} border-t lg:border-t-0 lg:border-r border-gray-300 dark:border-gray-700`;
-            if (this.dom.hideInTheater) {
-              this.dom.hideInTheater.classList.add(
-                "flex",
-                "flex-col",
-                "flex-1",
-              );
-            }
           } else if (this.layout === "bottom") {
             this.dom.workspaceArea.className = `${workspaceClass} flex-col`;
             this.dom.controlsArea.className = `controls-area flex flex-col p-4 shrink-0 border-t border-gray-300 dark:border-gray-700 transition-all duration-300 w-full`;
-            if (this.dom.hideInTheater) {
-              this.dom.hideInTheater.classList.remove(
-                "flex",
-                "flex-col",
-                "flex-1",
-              );
-            }
           } else {
             // Default "right"
             this.dom.workspaceArea.className = `${workspaceClass} flex-col lg:flex-row`;
             this.dom.controlsArea.className = `${controlsBase} border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700`;
-            if (this.dom.hideInTheater) {
-              this.dom.hideInTheater.classList.add(
-                "flex",
-                "flex-col",
-                "flex-1",
-              );
-            }
           }
 
           // Force a resize calculation when layout changes
@@ -832,7 +811,7 @@
                         <!-- CONTROLS -->
                         <div class="controls-area flex flex-col p-4 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700 transition-all duration-300 w-full lg:w-96">
                             
-                            <div class="hide-in-theater">
+                            <div class="hide-in-theater flex flex-col flex-1 min-h-0">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="entries-count font-semibold text-gray-900 dark:text-white">Entries (${this.entries.length})</span>
                                     <div class="flex space-x-1">
@@ -1731,7 +1710,7 @@
               "dark:text-gray-100",
             );
 
-            this.dom.hideInTheater.style.display = "block";
+            this.dom.hideInTheater.style.display = "";
             this.applyLayout();
             this.dom.shuffleGrid.className =
               "grid grid-cols-2 gap-2 mt-4 shuffle-grid";
