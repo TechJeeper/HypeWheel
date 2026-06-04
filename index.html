@@ -450,8 +450,7 @@
         return array[0];
       };
 
-      const getSecureRandomFloat = () =>
-        getSecureRandomUint32() / 0x100000000;
+      const getSecureRandomFloat = () => getSecureRandomUint32() / 0x100000000;
 
       const getSecureRandomInt = (maxExclusive) => {
         if (!Number.isSafeInteger(maxExclusive) || maxExclusive <= 0) {
@@ -1622,14 +1621,18 @@
             maxDurationRange = 6000;
           }
 
-          const duration = minDuration + getSecureRandomFloat() * maxDurationRange;
+          const duration =
+            minDuration + getSecureRandomFloat() * maxDurationRange;
           const startAngle = this.currentAngle;
           const wheelEntries = this.getWheelEntries();
           const sliceAngle = (2 * Math.PI) / wheelEntries.length;
           const winningIndex = getSecureRandomInt(wheelEntries.length);
           const targetNormalizedAngle =
             2 * Math.PI - (winningIndex + 0.5) * sliceAngle;
-          const currentNormalizedAngle = positiveModulo(startAngle, 2 * Math.PI);
+          const currentNormalizedAngle = positiveModulo(
+            startAngle,
+            2 * Math.PI,
+          );
           const angleDelta = positiveModulo(
             targetNormalizedAngle - currentNormalizedAngle,
             2 * Math.PI,
@@ -1859,6 +1862,30 @@
             "w-full h-full rounded-xl shadow-inner bg-white dark:bg-gray-800";
           this.dom.canvasContainer.appendChild(this.dom.canvas);
 
+          // WINNER OVERLAY
+          this.dom.winnerOverlay = document.createElement("div");
+          this.dom.winnerOverlay.className =
+            "winner-overlay absolute inset-0 z-20 hidden flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0 p-4";
+          this.dom.winnerOverlay.innerHTML = `
+            <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 md:p-8 rounded-3xl shadow-2xl text-center transform border-4 border-yellow-400 w-full max-w-xl max-h-full overflow-y-auto">
+                <h2 class="text-yellow-300 text-xl font-bold uppercase tracking-widest mb-4">Winners!</h2>
+                <div id="slot-winners-list" class="space-y-3 mb-6"></div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="btn-remove-all-slot" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold transition-colors w-full sm:w-auto shadow-lg flex-1 hidden">Remove All</button>
+                    <button id="btn-keep-all-slot" class="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold transition-colors w-full sm:w-auto flex-1">Keep All / Close</button>
+                </div>
+            </div>
+          `;
+          this.dom.canvasContainer.appendChild(this.dom.winnerOverlay);
+
+          this.dom.winnersList =
+            this.dom.winnerOverlay.querySelector("#slot-winners-list");
+          this.dom.btnRemoveAll = this.dom.winnerOverlay.querySelector(
+            "#btn-remove-all-slot",
+          );
+          this.dom.btnKeepAll =
+            this.dom.winnerOverlay.querySelector("#btn-keep-all-slot");
+
           this.ctx = this.dom.canvas.getContext("2d", { alpha: false });
 
           this.dom.wrapper.appendChild(this.dom.header);
@@ -1876,6 +1903,25 @@
           this.dom.exitBtn.addEventListener("click", () => {
             appState.slotMode = false;
             renderWheels();
+          });
+
+          this.dom.btnKeepAll.addEventListener("click", () => {
+            this.closeWinner();
+          });
+
+          this.dom.btnRemoveAll.addEventListener("click", () => {
+            let removedCount = 0;
+            this.currentWinners.forEach((winnerName, i) => {
+              if (this.columns[i].entries.length > 1) {
+                this.removeWinner(i, winnerName, false);
+                removedCount++;
+              }
+            });
+            if (removedCount > 0) {
+              this.draw();
+              showToast(`Removed from ${removedCount} wheels!`, "success");
+            }
+            this.closeWinner();
           });
         }
 
@@ -1966,7 +2012,8 @@
               (col.entries.length - col.resultIndex) % col.entries.length;
             const minimumTarget = Math.floor(col.position + minimumTravel);
             const adjustment = positiveModulo(
-              targetRemainder - positiveModulo(minimumTarget, col.entries.length),
+              targetRemainder -
+                positiveModulo(minimumTarget, col.entries.length),
               col.entries.length,
             );
             col.targetPosition = minimumTarget + adjustment;
@@ -2063,6 +2110,86 @@
           appState.winners.unshift(winnerObj);
           saveState();
           updateWinnersUI();
+
+          this.currentWinners = winners;
+          this.showWinner();
+        }
+
+        showWinner() {
+          this.dom.winnersList.innerHTML = "";
+
+          let anyRemovable = false;
+
+          this.currentWinners.forEach((winnerName, i) => {
+            const col = this.columns[i];
+            const itemDiv = document.createElement("div");
+            itemDiv.className =
+              "flex items-center justify-between bg-white/10 p-3 rounded-xl border border-white/20";
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className =
+              "text-white font-bold text-lg break-all truncate mr-2";
+            nameSpan.innerText = winnerName;
+            itemDiv.appendChild(nameSpan);
+
+            if (col.entries.length > 1) {
+              anyRemovable = true;
+              const removeBtn = document.createElement("button");
+              removeBtn.className =
+                "bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-colors shadow flex-shrink-0";
+              removeBtn.innerText = "Remove";
+              removeBtn.onclick = () => {
+                this.removeWinner(i, winnerName);
+                itemDiv.style.opacity = "0.5";
+                removeBtn.disabled = true;
+                removeBtn.innerText = "Removed";
+              };
+              itemDiv.appendChild(removeBtn);
+            }
+
+            this.dom.winnersList.appendChild(itemDiv);
+          });
+
+          if (anyRemovable) {
+            this.dom.btnRemoveAll.style.display = "";
+            this.dom.btnRemoveAll.classList.remove("hidden");
+          } else {
+            this.dom.btnRemoveAll.style.display = "none";
+            this.dom.btnRemoveAll.classList.add("hidden");
+          }
+
+          this.dom.winnerOverlay.style.display = "flex";
+          void this.dom.winnerOverlay.offsetWidth;
+          this.dom.winnerOverlay.classList.remove("opacity-0");
+        }
+
+        closeWinner() {
+          this.dom.winnerOverlay.classList.add("opacity-0");
+          setTimeout(() => {
+            this.dom.winnerOverlay.style.display = "none";
+          }, 300);
+        }
+
+        removeWinner(colIndex, winnerName, redraw = true) {
+          const col = this.columns[colIndex];
+          const idx = col.entries.indexOf(winnerName);
+          if (idx !== -1) {
+            col.entries.splice(idx, 1);
+            col.config.rawText = col.entries.join("\n");
+
+            // update global config
+            const globalConfig = appState.wheelsConfig.find(
+              (w) => w.id === col.config.id,
+            );
+            if (globalConfig) {
+              globalConfig.rawText = col.config.rawText;
+              saveState();
+            }
+
+            if (redraw) {
+              this.draw();
+            }
+          }
         }
 
         draw() {
