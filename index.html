@@ -109,7 +109,7 @@
         <button
           id="btn-slot-mode"
           class="hidden items-center px-3 py-2 md:px-4 md:py-2 rounded-full font-bold shadow transition-all bg-purple-600 hover:bg-purple-700 text-white text-sm md:text-base"
-          style="display: none;"
+          style="display: none"
         >
           <i data-lucide="layout-template" class="w-4 h-4 md:mr-2"></i>
           <span class="hidden md:inline">Slot Mode</span>
@@ -1287,7 +1287,14 @@
 
         handleResize() {
           if (!this.dom.canvasContainer) return;
+
+          // Temporarily hide canvas to let the flex container collapse to its natural available size
+          this.dom.canvas.style.display = "none";
+
           const rect = this.dom.canvasContainer.getBoundingClientRect();
+
+          // Restore canvas display
+          this.dom.canvas.style.display = "";
 
           // Optimize to largest size that fits the container
           const maxAllowedSize = this.isTheater ? 900 : Infinity;
@@ -1302,6 +1309,12 @@
             if (workspaceArea) {
               availableHeight = workspaceArea.getBoundingClientRect().height;
             }
+          }
+
+          // Hard cap based on window height to prevent the flex layout from overflowing endlessly
+          const maxViewportHeight = window.innerHeight - 250;
+          if (availableHeight > maxViewportHeight) {
+            availableHeight = maxViewportHeight;
           }
 
           const padding = 32; // Account for container padding (p-4 = 16px * 2)
