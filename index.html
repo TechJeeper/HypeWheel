@@ -2109,14 +2109,7 @@
           });
 
           const winnerText = winners.join(" - ");
-          const winnerObj = {
-            name: winnerText,
-            time: new Date().toLocaleString(),
-            wheelName: "Slot Machine",
-          };
-          appState.winners.unshift(winnerObj);
-          saveState();
-          updateWinnersUI();
+          addWinner("Slot Machine", winnerText);
         }
 
         draw() {
