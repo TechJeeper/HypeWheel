@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- Puter.js -->
+    <script src="https://js.puter.com/v2/"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -895,6 +897,7 @@
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="entries-count font-semibold text-gray-900 dark:text-white">Entries (${this.entries.length})</span>
                                     <div class="flex space-x-1">
+                                        <button class="btn-ai-list p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="sparkles" class="w-3.5 h-3.5 inline mr-1"></i> AI List</button>
                                         <button class="btn-sort p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="arrow-down-a-z" class="w-3.5 h-3.5 inline mr-1"></i> Sort A-Z</button>
                                         <button class="btn-dedupe p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="copy" class="w-3.5 h-3.5 inline mr-1"></i> Dedupe</button>
                                         <button class="btn-clear p-1.5 rounded hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline mr-1"></i> Clear</button>
@@ -959,6 +962,7 @@
             btnRemoveWinner: wrapper.querySelector(".btn-remove-winner"),
             btnKeepWinner: wrapper.querySelector(".btn-keep-winner"),
             entriesCount: wrapper.querySelector(".entries-count"),
+            btnAIList: wrapper.querySelector(".btn-ai-list"),
             btnSort: wrapper.querySelector(".btn-sort"),
             btnDedupe: wrapper.querySelector(".btn-dedupe"),
             btnClear: wrapper.querySelector(".btn-clear"),
@@ -1152,6 +1156,52 @@
             this.saveConfig();
             this.draw();
             showToast(`Removed ${removed} duplicates!`, "success");
+          });
+
+          this.dom.btnAIList.addEventListener("click", async () => {
+            const promptStr = prompt(
+              "Enter a topic for the list (e.g., '10 popular pizza toppings'):",
+            );
+            if (!promptStr) return;
+
+            const originalHTML = this.dom.btnAIList.innerHTML;
+            this.dom.btnAIList.disabled = true;
+            this.dom.btnAIList.innerHTML =
+              '<i data-lucide="loader-2" class="w-3.5 h-3.5 inline mr-1 animate-spin"></i> Loading...';
+            lucide.createIcons({ root: this.dom.btnAIList });
+
+            try {
+              const systemPrompt =
+                "You are a helpful assistant. Provide a plain list separated by newlines based on the user's prompt. Do NOT include markdown formatting, bullet points, numbers, introductory text, or concluding text. Just return the raw items.";
+              const response = await puter.ai.chat([
+                { role: "system", content: systemPrompt },
+                { role: "user", content: promptStr },
+              ]);
+
+              const resultText = response?.message?.content[0]?.text || "";
+
+              if (resultText.trim() === "") {
+                throw new Error("Empty response from AI");
+              }
+
+              this.rawText = resultText.trim();
+              this.entries = this.parseEntries(this.rawText);
+              this.dom.entriesInput.value = this.rawText;
+              this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+
+              this.saveConfig();
+              this.draw();
+              this.updateUIState();
+
+              showToast("AI list generated!", "success");
+            } catch (error) {
+              console.error(error);
+              showToast("Failed to generate AI list", "error");
+            } finally {
+              this.dom.btnAIList.disabled = false;
+              this.dom.btnAIList.innerHTML = originalHTML;
+              lucide.createIcons({ root: this.dom.btnAIList });
+            }
           });
 
           this.dom.btnSort.addEventListener("click", () => {
@@ -2102,14 +2152,7 @@
           });
 
           const winnerText = winners.join(" - ");
-          const winnerObj = {
-            name: winnerText,
-            time: new Date().toLocaleString(),
-            wheelName: "Slot Machine",
-          };
-          appState.winners.unshift(winnerObj);
-          saveState();
-          updateWinnersUI();
+          addWinner("Slot Machine", winnerText);
 
           this.currentWinners = winners;
           this.showWinner();
@@ -2341,6 +2384,19 @@
           btn.classList.add("hidden");
           btn.classList.remove("flex");
         }
+
+        if (appState.slotMode) {
+          btn.innerHTML = `
+            <i data-lucide="layout-grid" class="w-4 h-4 md:mr-2"></i>
+            <span class="hidden md:inline">Wheel Mode</span>
+          `;
+        } else {
+          btn.innerHTML = `
+            <i data-lucide="layout-template" class="w-4 h-4 md:mr-2"></i>
+            <span class="hidden md:inline">Slot Mode</span>
+          `;
+        }
+        lucide.createIcons({ root: btn });
       };
 
       const renderWheels = () => {
@@ -2424,7 +2480,7 @@
       };
 
       document.getElementById("btn-slot-mode").addEventListener("click", () => {
-        appState.slotMode = true;
+        appState.slotMode = !appState.slotMode;
         renderWheels();
       });
 
