@@ -759,13 +759,13 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <label class="font-semibold text-gray-900 dark:text-white">Text Color</label>
-                                    <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0" value="${this.customTextColor}">
+                                    <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0" value="${escapeHTML(this.customTextColor)}">
                                 </div>
                                 <div class="custom-image-container md:col-span-2 ${this.palette === "image" ? "" : "hidden"}">
                                     <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Custom Wheel Image</label>
                                     <div class="flex">
                                         <span class="p-2 rounded-l-lg bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
-                                        <input type="text" class="custom-image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${this.customImage}">
+                                        <input type="text" class="custom-image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${escapeHTML(this.customImage)}">
                                         <button class="btn-custom-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                         <input type="file" class="custom-image-upload-input hidden" accept="image/*">
                                     </div>
@@ -842,7 +842,7 @@
                                 </div>
                                 <div>
                                     <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Countdown Seconds</label>
-                                    <input type="number" min="1" max="3600" class="countdown-input w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" value="${this.countdownSeconds}">
+                                    <input type="number" min="1" max="3600" class="countdown-input w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" value="${escapeHTML(String(this.countdownSeconds))}">
                                 </div>
                             </div>
                         </div>
@@ -854,7 +854,7 @@
                         <div class="canvas-container flex-1 relative flex flex-col items-center justify-center p-2 md:p-4 min-h-[300px]">
                             <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono group relative">
                                 <span>Seed:</span>
-                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-20 text-center" value="${this.seed}">
+                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-20 text-center" value="${escapeHTML(this.seed)}">
                                 <div class="relative flex items-center">
                                     <button class="text-white/70 hover:text-white transition-colors" title="About Seed">
                                         <i data-lucide="help-circle" class="w-4 h-4"></i>
@@ -898,7 +898,7 @@
                             <div class="grid grid-cols-2 gap-2 mt-4 shuffle-grid">
                                 <button class="btn-shuffle flex items-center justify-center p-3 rounded-lg font-bold transition-colors bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"><i data-lucide="shuffle" class="w-4 h-4 mr-2"></i> Shuffle</button>
                                 <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700">
-                                    <input type="number" min="1" max="50" value="10" class="auto-shuffle-input w-12 text-center bg-transparent outline-none text-gray-900 dark:text-white text-sm font-bold">
+                                    <input type="number" min="1" max="50" value="${escapeHTML(String(this.autoShuffleCount))}" class="auto-shuffle-input w-12 text-center bg-transparent outline-none text-gray-900 dark:text-white text-sm font-bold">
                                     <button class="btn-auto-shuffle flex-1 flex items-center justify-center text-sm font-bold transition-colors text-gray-900 dark:text-white hover:bg-black/10 disabled:opacity-50"><i data-lucide="rotate-cw" class="w-4 h-4 mr-1"></i> Auto</button>
                                 </div>
                             </div>
