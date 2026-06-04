@@ -436,10 +436,59 @@
         synthwave: ["#ff007c", "#7928ca", "#00f0ff", "#facc15", "#ff4d4d"],
       };
 
-      const getCryptoRandom = () => {
-        const array = new Uint32Array(1);
-        window.crypto.getRandomValues(array);
-        return array[0] / (0xffffffff + 1);
+      // Seeded random functions
+      function xmur3(str) {
+          for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+              h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+              h = h << 13 | h >>> 19;
+          }
+          return function() {
+              h = Math.imul(h ^ (h >>> 16), 2246822507);
+              h = Math.imul(h ^ (h >>> 13), 3266489909);
+              return (h ^= h >>> 16) >>> 0;
+          }
+      }
+
+      function mulberry32(a) {
+          return function() {
+            var t = a += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+          }
+      }
+
+      const processImageFile = (file, maxWidth, maxHeight, format, quality, callback) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL(format, quality);
+            callback(dataUrl);
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
       };
 
       const generateSeed = () => {
@@ -788,9 +837,20 @@
                     <div class="flex flex-1 overflow-hidden flex-col lg:flex-row workspace-area">
                         <!-- CANVAS -->
                         <div class="canvas-container flex-1 relative flex flex-col items-center justify-center p-2 md:p-4 min-h-[300px]">
-                            <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono">
+                            <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono group relative">
                                 <span>Seed:</span>
-                                <span class="seed-display text-green-400 font-bold">${this.seed}</span>
+                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-20 text-center" value="${this.seed}">
+                                <button class="btn-refresh-seed p-1 rounded-full hover:bg-white/20 transition-colors" title="Generate New Seed">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                                </button>
+                                <div class="relative flex items-center">
+                                    <button class="text-white/70 hover:text-white transition-colors" title="About Seed">
+                                        <i data-lucide="help-circle" class="w-4 h-4"></i>
+                                    </button>
+                                    <div class="absolute left-full ml-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[100]">
+                                        The seed determines the sequence of random numbers used for spinning and shuffling. Using the same seed will produce the same exact results.
+                                    </div>
+                                </div>
                             </div>
                             <canvas class="wheel-canvas max-w-full transition-transform active:scale-[0.98] cursor-pointer hover:scale-[1.02]"></canvas>
                             
@@ -872,7 +932,8 @@
             countdownInput: wrapper.querySelector(".countdown-input"),
             canvasContainer: wrapper.querySelector(".canvas-container"),
             canvas: wrapper.querySelector(".wheel-canvas"),
-            seedDisplay: wrapper.querySelector(".seed-display"),
+            seedInput: wrapper.querySelector(".seed-input"),
+            btnRefreshSeed: wrapper.querySelector(".btn-refresh-seed"),
             winnerOverlay: wrapper.querySelector(".winner-overlay"),
             winnerText: wrapper.querySelector(".winner-text"),
             countdownDisplay: wrapper.querySelector(".countdown-display"),
@@ -902,6 +963,19 @@
         }
 
         bindEvents() {
+          this.dom.seedInput.addEventListener("change", (e) => {
+            this.seed = e.target.value;
+            this.saveConfig();
+            this.draw();
+          });
+
+          this.dom.btnRefreshSeed.addEventListener("click", () => {
+            this.seed = generateSeed();
+            this.dom.seedInput.value = this.seed;
+            this.saveConfig();
+            this.draw();
+          });
+
           this.dom.titleInput.addEventListener("input", (e) => {
             this.title = e.target.value;
             this.saveConfig();
@@ -972,42 +1046,12 @@
           );
           this.dom.customImageUploadInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const img = new Image();
-              img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-                const MAX_WIDTH = 500;
-                const MAX_HEIGHT = 500;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                  if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                  }
-                } else {
-                  if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                  }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-
-                this.customImage = dataUrl;
-                this.dom.customImageInput.value = dataUrl;
-                this.saveConfig();
-                this.draw();
-              };
-              img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+            processImageFile(file, 500, 500, "image/jpeg", 0.85, (dataUrl) => {
+              this.customImage = dataUrl;
+              this.dom.customImageInput.value = dataUrl;
+              this.saveConfig();
+              this.draw();
+            });
             e.target.value = "";
           });
 
@@ -1021,42 +1065,12 @@
           );
           this.dom.imageUploadInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const img = new Image();
-              img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-                const MAX_WIDTH = 150;
-                const MAX_HEIGHT = 150;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                  if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                  }
-                } else {
-                  if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                  }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                const dataUrl = canvas.toDataURL("image/png");
-
-                this.centerImage = dataUrl;
-                this.dom.imageInput.value = dataUrl;
-                this.saveConfig();
-                this.draw();
-              };
-              img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+            processImageFile(file, 150, 150, "image/png", undefined, (dataUrl) => {
+              this.centerImage = dataUrl;
+              this.dom.imageInput.value = dataUrl;
+              this.saveConfig();
+              this.draw();
+            });
             e.target.value = "";
           });
           this.dom.speedSelect.addEventListener("change", (e) => {
@@ -1218,16 +1232,19 @@
         }
 
         _performShuffle() {
+          const seedFn = xmur3(this.seed);
+          const prng = mulberry32(seedFn());
           for (let i = this.entries.length - 1; i > 0; i--) {
-            const j = Math.floor(getCryptoRandom() * (i + 1));
+            const j = Math.floor(prng() * (i + 1));
             const temp = this.entries[i];
             this.entries[i] = this.entries[j];
             this.entries[j] = temp;
           }
           this.rawText = this.entries.join("\n");
           this.dom.entriesInput.value = this.rawText;
+
           this.seed = generateSeed();
-          this.dom.seedDisplay.innerText = this.seed;
+          this.dom.seedInput.value = this.seed;
         }
 
         shuffle() {
@@ -1557,9 +1574,9 @@
 
           this.isSpinning = true;
           this.updateUIState();
-          this.seed = generateSeed();
-          this.dom.seedDisplay.innerText = this.seed;
-          this.saveConfig();
+
+          const seedFn = xmur3(this.seed);
+          const prng = mulberry32(seedFn());
 
           let speedStr = this.spinSpeed || "normal";
           let minSpins = 5;
@@ -1583,13 +1600,18 @@
             maxDurationRange = 6000;
           }
 
-          const duration = minDuration + Math.random() * maxDurationRange;
+          const duration = minDuration + prng() * maxDurationRange;
           const startAngle = this.currentAngle;
 
-          const randomValue = getCryptoRandom();
+          const randomValue = prng();
           const extraSpins = minSpins + Math.floor(randomValue * maxSpinsRange);
           const targetAngle =
             startAngle + extraSpins * 2 * Math.PI + randomValue * 2 * Math.PI;
+
+          // Generate new seed for next time
+          this.seed = generateSeed();
+          this.dom.seedInput.value = this.seed;
+          this.saveConfig();
 
           let startTime = null;
           this.lastTickIndex = this.getWinningIndex(this.currentAngle);
