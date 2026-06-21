@@ -1209,7 +1209,9 @@
               const resultText =
                 typeof response === "string"
                   ? response
-                  : response?.message?.content?.[0]?.text ||
+                  : (typeof response?.message?.content === "string"
+                      ? response.message.content
+                      : response?.message?.content?.[0]?.text) ||
                     response?.text ||
                     "";
 
