@@ -1206,7 +1206,12 @@
                 { role: "user", content: promptStr },
               ]);
 
-              const resultText = response?.message?.content[0]?.text || "";
+              const resultText =
+                typeof response === "string"
+                  ? response
+                  : response?.message?.content?.[0]?.text ||
+                    response?.text ||
+                    "";
 
               if (resultText.trim() === "") {
                 throw new Error("Empty response from AI");
