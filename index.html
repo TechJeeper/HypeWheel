@@ -935,9 +935,12 @@
 
                             <div class="grid grid-cols-2 gap-2 mt-4 shuffle-grid">
                                 <button class="btn-shuffle flex items-center justify-center p-3 rounded-lg font-bold transition-colors bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"><i data-lucide="shuffle" class="w-4 h-4 mr-2"></i> Shuffle</button>
-                                <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700">
-                                    <input type="number" min="1" max="50" value="10" class="auto-shuffle-input w-12 text-center bg-transparent outline-none text-gray-900 dark:text-white text-sm font-bold">
-                                    <button class="btn-auto-shuffle flex-1 flex items-center justify-center text-sm font-bold transition-colors text-gray-900 dark:text-white hover:bg-black/10 disabled:opacity-50"><i data-lucide="rotate-cw" class="w-4 h-4 mr-1"></i> Auto</button>
+                                <div class="relative flex flex-col justify-end w-full">
+                                    <div class="shuffle-count-display absolute -top-5 left-0 w-full text-center text-xs font-bold text-gray-500 dark:text-gray-400 hidden"></div>
+                                    <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700">
+                                        <input type="number" min="1" max="50" value="10" class="auto-shuffle-input w-12 text-center bg-transparent outline-none text-gray-900 dark:text-white text-sm font-bold">
+                                        <button class="btn-auto-shuffle flex-1 flex items-center justify-center text-sm font-bold transition-colors text-gray-900 dark:text-white hover:bg-black/10 disabled:opacity-50"><i data-lucide="rotate-cw" class="w-4 h-4 mr-1"></i> Auto</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -995,6 +998,9 @@
             btnClear: wrapper.querySelector(".btn-clear"),
             entriesInput: wrapper.querySelector(".entries-input"),
             btnShuffle: wrapper.querySelector(".btn-shuffle"),
+            shuffleCountDisplay: wrapper.querySelector(
+              ".shuffle-count-display",
+            ),
             autoShuffleInput: wrapper.querySelector(".auto-shuffle-input"),
             btnAutoShuffle: wrapper.querySelector(".btn-auto-shuffle"),
             btnSpin: wrapper.querySelector(".btn-spin"),
@@ -1371,12 +1377,22 @@
           this.isShuffling = true;
           this.updateUIState();
 
+          if (this.dom.shuffleCountDisplay) {
+            this.dom.shuffleCountDisplay.classList.remove("hidden");
+          }
+
           for (let i = 0; i < this.autoShuffleCount; i++) {
+            if (this.dom.shuffleCountDisplay) {
+              this.dom.shuffleCountDisplay.innerText = `Shuffle: ${i + 1} / ${this.autoShuffleCount}`;
+            }
             this._performShuffle();
             this.draw();
             await new Promise((r) => setTimeout(r, 80));
           }
 
+          if (this.dom.shuffleCountDisplay) {
+            this.dom.shuffleCountDisplay.classList.add("hidden");
+          }
           this.saveConfig();
           this.isSpinning = false;
           this.isShuffling = false;
