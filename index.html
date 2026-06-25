@@ -1658,19 +1658,83 @@
             ctx.restore();
           }
 
+          // Glossy overlay over the wheel (adds 3D lighting)
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          ctx.lineWidth = 6;
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+          const glossGrad = ctx.createRadialGradient(
+            centerX - radius * 0.3, centerY - radius * 0.3, 0,
+            centerX, centerY, radius
+          );
+          glossGrad.addColorStop(0, "rgba(255, 255, 255, 0.5)"); // Highlight top-left
+          glossGrad.addColorStop(0.4, "rgba(255, 255, 255, 0)");
+          glossGrad.addColorStop(1, "rgba(0, 0, 0, 0.4)"); // Shadow bottom-right
+          ctx.fillStyle = glossGrad;
+          ctx.fill();
+
+          // Outer Border
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          const outerRingGrad = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
+          if (document.documentElement.classList.contains("dark")) {
+             outerRingGrad.addColorStop(0, "#64748b");
+             outerRingGrad.addColorStop(1, "#1e293b");
+          } else {
+             outerRingGrad.addColorStop(0, "#ffffff");
+             outerRingGrad.addColorStop(1, "#cbd5e1");
+          }
+          ctx.lineWidth = 12;
+          ctx.strokeStyle = outerRingGrad;
           ctx.stroke();
 
+          // Inner ring border to give depth
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius - 6, 0, 2 * Math.PI);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "rgba(0,0,0,0.2)";
+          ctx.stroke();
+
+          // Outer ring edge
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius + 6, 0, 2 * Math.PI);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(0,0,0,0.4)";
+          ctx.stroke();
+
+          // Center Hub
+          const hubRadiusOuter = hubRadius + 6;
+
+          // Hub shadow
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
+          ctx.shadowColor = "rgba(0,0,0,0.4)";
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetY = 4;
+          ctx.fillStyle = "#000";
+          ctx.fill();
+          ctx.shadowColor = "transparent";
+
+          // Hub Outer Ring
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
+          const hubRingGrad = ctx.createLinearGradient(centerX - hubRadiusOuter, centerY - hubRadiusOuter, centerX + hubRadiusOuter, centerY + hubRadiusOuter);
+          if (document.documentElement.classList.contains("dark")) {
+             hubRingGrad.addColorStop(0, "#94a3b8");
+             hubRingGrad.addColorStop(1, "#334155");
+          } else {
+             hubRingGrad.addColorStop(0, "#ffffff");
+             hubRingGrad.addColorStop(1, "#94a3b8");
+          }
+          ctx.fillStyle = hubRingGrad;
+          ctx.fill();
+
+          // Hub Inner
           ctx.beginPath();
           ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
-          ctx.fillStyle = "#1e293b";
+          const hubInnerGrad = ctx.createRadialGradient(centerX, centerY - hubRadius/3, hubRadius/4, centerX, centerY, hubRadius);
+          hubInnerGrad.addColorStop(0, "#475569");
+          hubInnerGrad.addColorStop(1, "#0f172a");
+          ctx.fillStyle = hubInnerGrad;
           ctx.fill();
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.stroke();
 
           if (this.centerImage) {
             const img = new window.Image();
@@ -1694,14 +1758,15 @@
             }
           }
 
+          // Pointer
           const rightEdge = centerX + radius;
           ctx.save();
-          ctx.translate(rightEdge + 8, centerY);
+          ctx.translate(rightEdge + 12, centerY);
           if (!this.isSpinning) {
-            ctx.shadowColor = "rgba(0,0,0,0.2)";
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = -2;
-            ctx.shadowOffsetY = 2;
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetX = -4;
+            ctx.shadowOffsetY = 4;
           } else {
             ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
@@ -1710,21 +1775,29 @@
           }
 
           ctx.beginPath();
-          ctx.moveTo(-35, 0);
-          ctx.lineTo(10, -18);
-          ctx.lineTo(10, 18);
+          ctx.moveTo(-45, 0); // Tip
+          ctx.lineTo(5, -18);
+          ctx.quadraticCurveTo(20, -18, 20, 0); // Rounded back top
+          ctx.quadraticCurveTo(20, 18, 5, 18); // Rounded back bottom
           ctx.closePath();
-          ctx.fillStyle = "#ffffff";
+
+          const ptrGrad = ctx.createLinearGradient(-45, 0, 20, 0);
+          ptrGrad.addColorStop(0, "#ff3b3b"); // Vibrant red tip
+          ptrGrad.addColorStop(1, "#990000"); // Darker red back
+          ctx.fillStyle = ptrGrad;
           ctx.fill();
 
-          ctx.shadowColor = "transparent";
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "rgba(255,255,255,0.8)";
+          ctx.stroke();
+
+          // Pointer inner detail line/dot
           ctx.beginPath();
-          ctx.moveTo(-25, 0);
-          ctx.lineTo(6, -12);
-          ctx.lineTo(6, 12);
-          ctx.closePath();
-          ctx.fillStyle = "#3b82f6";
+          ctx.arc(8, 0, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "transparent";
           ctx.fill();
+
           ctx.restore();
         }
 
