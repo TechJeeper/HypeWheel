@@ -935,11 +935,14 @@
 
                             <div class="grid grid-cols-2 gap-2 mt-4 shuffle-grid">
                                 <button class="btn-shuffle flex items-center justify-center p-3 rounded-lg font-bold transition-colors bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"><i data-lucide="shuffle" class="w-4 h-4 mr-2"></i> Shuffle</button>
-                                <div class="relative flex flex-col justify-end w-full">
-                                    <div class="shuffle-count-display absolute -top-5 left-0 w-full text-center text-xs font-bold text-gray-500 dark:text-gray-400 hidden"></div>
-                                    <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700">
-                                        <input type="number" min="1" max="50" value="10" class="auto-shuffle-input w-12 text-center bg-transparent outline-none text-gray-900 dark:text-white text-sm font-bold">
-                                        <button class="btn-auto-shuffle flex-1 flex items-center justify-center text-sm font-bold transition-colors text-gray-900 dark:text-white hover:bg-black/10 disabled:opacity-50"><i data-lucide="rotate-cw" class="w-4 h-4 mr-1"></i> Auto</button>
+                                <div class="relative flex w-full h-full">
+                                    <div class="auto-shuffle-container flex w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <input type="number" min="1" max="50" value="10" class="auto-shuffle-input w-16 text-center bg-transparent outline-none p-3 font-bold border-r border-gray-300 dark:border-gray-600">
+                                        <button class="btn-auto-shuffle flex-1 flex items-center justify-center p-3 font-bold transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"><i data-lucide="rotate-cw" class="w-4 h-4 mr-2"></i> Auto</button>
+                                    </div>
+                                    <div class="auto-shuffle-running hidden absolute inset-0 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center overflow-hidden border border-gray-300 dark:border-gray-600">
+                                        <div class="shuffle-count-display flex-1 text-center font-bold text-gray-900 dark:text-white"></div>
+                                        <button class="btn-stop-shuffle p-3 font-bold text-red-600 dark:text-red-400 hover:bg-black/10 transition-colors h-full flex items-center justify-center border-l border-gray-300 dark:border-gray-600"><i data-lucide="square" class="w-4 h-4 fill-current"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -1003,6 +1006,11 @@
             ),
             autoShuffleInput: wrapper.querySelector(".auto-shuffle-input"),
             btnAutoShuffle: wrapper.querySelector(".btn-auto-shuffle"),
+            autoShuffleContainer: wrapper.querySelector(
+              ".auto-shuffle-container",
+            ),
+            autoShuffleRunning: wrapper.querySelector(".auto-shuffle-running"),
+            btnStopShuffle: wrapper.querySelector(".btn-stop-shuffle"),
             btnSpin: wrapper.querySelector(".btn-spin"),
             hideInTheater: wrapper.querySelector(".hide-in-theater"),
             controlsArea: wrapper.querySelector(".controls-area"),
@@ -1278,6 +1286,10 @@
             this.autoShuffle(),
           );
 
+          this.dom.btnStopShuffle.addEventListener("click", () => {
+            this.stopAutoShuffle = true;
+          });
+
           this.dom.btnSpin.addEventListener("click", () => this.spin());
           this.dom.canvas.addEventListener("click", () => {
             if (!this.isSpinning && this.entries.length >= 2) this.spin();
@@ -1375,29 +1387,47 @@
 
           this.isSpinning = true;
           this.isShuffling = true;
+          this.stopAutoShuffle = false;
           this.updateUIState();
 
-          if (this.dom.shuffleCountDisplay) {
-            this.dom.shuffleCountDisplay.classList.remove("hidden");
+          if (this.dom.autoShuffleContainer && this.dom.autoShuffleRunning) {
+            this.dom.autoShuffleContainer.classList.add("hidden");
+            this.dom.autoShuffleRunning.classList.remove("hidden");
           }
 
+          let shufflesCompleted = 0;
+
           for (let i = 0; i < this.autoShuffleCount; i++) {
+            if (this.stopAutoShuffle) {
+              break;
+            }
             if (this.dom.shuffleCountDisplay) {
               this.dom.shuffleCountDisplay.innerText = `Shuffle: ${i + 1} / ${this.autoShuffleCount}`;
             }
             this._performShuffle();
             this.draw();
+            shufflesCompleted++;
             await new Promise((r) => setTimeout(r, 80));
           }
 
-          if (this.dom.shuffleCountDisplay) {
-            this.dom.shuffleCountDisplay.classList.add("hidden");
+          if (this.dom.autoShuffleContainer && this.dom.autoShuffleRunning) {
+            this.dom.autoShuffleContainer.classList.remove("hidden");
+            this.dom.autoShuffleRunning.classList.add("hidden");
           }
+
           this.saveConfig();
           this.isSpinning = false;
           this.isShuffling = false;
           this.updateUIState();
-          showToast(`Shuffled ${this.autoShuffleCount} times!`, "success");
+
+          if (this.stopAutoShuffle) {
+            showToast(
+              `Shuffle stopped after ${shufflesCompleted} times!`,
+              "info",
+            );
+          } else {
+            showToast(`Shuffled ${shufflesCompleted} times!`, "success");
+          }
         }
 
         handleResize() {
