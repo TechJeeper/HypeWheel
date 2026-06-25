@@ -1489,7 +1489,7 @@
 
           const centerX = size / 2;
           const centerY = size / 2;
-          const radius = Math.min(centerX, centerY) - 40;
+          const radius = Math.min(centerX, centerY) - 30;
 
           ctx.save();
           ctx.beginPath();
@@ -1600,7 +1600,7 @@
           const fontSize = Math.max(1, Math.min(maxFontSize, arcLength * 0.7));
           ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
           const hubRadius = radius * 0.12;
-          const rightMargin = 15;
+          const rightMargin = 25;
           const availableWidth = radius - hubRadius - rightMargin - 10;
 
           if (
@@ -1628,22 +1628,6 @@
             this._cacheKeyWheelEntriesLength = wheelEntries.length;
             this._cacheKeyFontFamily = this.fontFamily;
           }
-
-          // 3D Overlay over slices
-          const overlayGradient = ctx.createRadialGradient(
-            centerX,
-            centerY,
-            radius * 0.5,
-            centerX,
-            centerY,
-            radius,
-          );
-          overlayGradient.addColorStop(0, "rgba(0,0,0,0)");
-          overlayGradient.addColorStop(1, "rgba(0,0,0,0.4)");
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          ctx.fillStyle = overlayGradient;
-          ctx.fill();
 
           for (let i = 0; i < wheelEntries.length; i++) {
             const startAngle = i * sliceAngle + angleOffset;
@@ -1674,87 +1658,19 @@
             ctx.restore();
           }
 
-          // Rim
-          const rimWidth = 14;
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius + rimWidth / 2, 0, 2 * Math.PI);
-          ctx.lineWidth = rimWidth;
-          ctx.strokeStyle = "#111827";
-          ctx.stroke();
-
-          // Inner border
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 6;
           ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
           ctx.stroke();
-
-          // Outer border
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius + rimWidth, 0, 2 * Math.PI);
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.stroke();
-
-          // Lights
-          const numLights = Math.max(
-            12,
-            Math.floor((radius * 2 * Math.PI) / 40),
-          );
-          const evenNumLights = numLights % 2 === 0 ? numLights : numLights + 1;
-          for (let i = 0; i < evenNumLights; i++) {
-            const lightAngle = i * ((2 * Math.PI) / evenNumLights);
-            const lightX =
-              centerX + Math.cos(lightAngle) * (radius + rimWidth / 2);
-            const lightY =
-              centerY + Math.sin(lightAngle) * (radius + rimWidth / 2);
-
-            ctx.beginPath();
-            ctx.arc(lightX, lightY, 3.5, 0, 2 * Math.PI);
-
-            const blinkOffset = Math.floor(angleOffset * 10) % 2 === 0;
-            const isLightOn = this.isSpinning
-              ? i % 2 === 0
-                ? blinkOffset
-                : !blinkOffset
-              : true;
-
-            ctx.fillStyle = isLightOn ? "#fef08a" : "#713f12";
-
-            if (isLightOn && !this.isSpinning) {
-              ctx.shadowColor = "#fde047";
-              ctx.shadowBlur = 6;
-            } else {
-              ctx.shadowColor = "transparent";
-              ctx.shadowBlur = 0;
-            }
-
-            ctx.fill();
-            ctx.shadowBlur = 0;
-          }
-
-          // Hub
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
-          ctx.fillStyle = "#111827";
-          ctx.fill();
 
           ctx.beginPath();
           ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
-          ctx.lineWidth = 3;
+          ctx.fillStyle = "#1e293b";
+          ctx.fill();
+          ctx.lineWidth = 4;
           ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
           ctx.stroke();
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadius * 0.6, 0, 2 * Math.PI);
-          ctx.fillStyle = "#1f2937";
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadius * 0.2, 0, 2 * Math.PI);
-          ctx.fillStyle = "#374151";
-          ctx.fill();
 
           if (this.centerImage) {
             const img = new window.Image();
@@ -1778,7 +1694,7 @@
             }
           }
 
-          const rightEdge = centerX + radius + 14;
+          const rightEdge = centerX + radius;
           ctx.save();
           ctx.translate(rightEdge + 8, centerY);
           if (!this.isSpinning) {
