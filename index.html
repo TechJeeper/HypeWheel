@@ -54,19 +54,23 @@
       }
 
       /* Horizontal scrollbar for winner text */
-      .custom-scrollbar::-webkit-scrollbar, .horizontal-scroll::-webkit-scrollbar {
+      .custom-scrollbar::-webkit-scrollbar,
+      .horizontal-scroll::-webkit-scrollbar {
         height: 6px;
         width: 6px;
       }
-      .custom-scrollbar::-webkit-scrollbar-track, .horizontal-scroll::-webkit-scrollbar-track {
+      .custom-scrollbar::-webkit-scrollbar-track,
+      .horizontal-scroll::-webkit-scrollbar-track {
         background: rgba(0, 0, 0, 0.1);
         border-radius: 10px;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb, .horizontal-scroll::-webkit-scrollbar-thumb {
+      .custom-scrollbar::-webkit-scrollbar-thumb,
+      .horizontal-scroll::-webkit-scrollbar-thumb {
         background-color: rgba(255, 255, 255, 0.3);
         border-radius: 10px;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover, .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+      .horizontal-scroll::-webkit-scrollbar-thumb:hover {
         background-color: rgba(255, 255, 255, 0.5);
       }
     </style>
@@ -596,6 +600,55 @@
           setTimeout(() => toast.remove(), 300);
         }, 3000);
       };
+
+      // --- URL PARSER ---
+      const checkUrlForList = () => {
+        const urlStr = window.location.href;
+        const match = urlStr.match(/[\?&\/#]list=([^&#]*)/);
+        if (match) {
+          const listParam = decodeURIComponent(match[1]);
+          const entries = listParam
+            .split(",")
+            .map((e) => e.trim())
+            .filter((e) => e.length > 0);
+
+          if (entries.length > 0) {
+            // Append the new wheel to existing wheels, avoiding data loss
+            let existingWheels =
+              JSON.parse(localStorage.getItem("wheelsData") || "null") || [];
+            const newWheel = {
+              id: "wheel_" + Date.now(),
+              title: "Imported Wheel",
+              rawText: entries.join("\n"),
+              palette: "rainbow",
+              seed: generateSeed(),
+              centerImage: "",
+              customImage: "",
+              customTextColor: "#ffffff",
+              spinSpeed: "normal",
+              spinDuration: "medium",
+              spinSound: true,
+              countdownEnabled: false,
+              countdownSeconds: 60,
+              confettiEnabled: true,
+              fontFamily: "system-ui",
+              layout: "right",
+              zoomLevel: 1.0,
+            };
+            existingWheels.push(newWheel);
+            localStorage.setItem("wheelsData", JSON.stringify(existingWheels));
+          }
+
+          // Clean up URL
+          let urlObj = new URL(urlStr);
+          let newHref = urlObj.href.replace(/\/?list=[^&#]*/, "");
+          newHref = newHref.replace(/[?&]$/, "");
+          window.history.replaceState({}, document.title, newHref);
+        }
+      };
+
+      // Run URL check before loading state
+      checkUrlForList();
 
       // --- GLOBAL STATE ---
       let appState = {
@@ -1665,8 +1718,12 @@
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
           const glossGrad = ctx.createRadialGradient(
-            centerX - radius * 0.3, centerY - radius * 0.3, 0,
-            centerX, centerY, radius
+            centerX - radius * 0.3,
+            centerY - radius * 0.3,
+            0,
+            centerX,
+            centerY,
+            radius,
           );
           glossGrad.addColorStop(0, "rgba(255, 255, 255, 0.5)"); // Highlight top-left
           glossGrad.addColorStop(0.4, "rgba(255, 255, 255, 0)");
@@ -1677,13 +1734,18 @@
           // Outer Border
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          const outerRingGrad = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
+          const outerRingGrad = ctx.createLinearGradient(
+            centerX - radius,
+            centerY - radius,
+            centerX + radius,
+            centerY + radius,
+          );
           if (document.documentElement.classList.contains("dark")) {
-             outerRingGrad.addColorStop(0, "#64748b");
-             outerRingGrad.addColorStop(1, "#1e293b");
+            outerRingGrad.addColorStop(0, "#64748b");
+            outerRingGrad.addColorStop(1, "#1e293b");
           } else {
-             outerRingGrad.addColorStop(0, "#ffffff");
-             outerRingGrad.addColorStop(1, "#cbd5e1");
+            outerRingGrad.addColorStop(0, "#ffffff");
+            outerRingGrad.addColorStop(1, "#cbd5e1");
           }
           ctx.lineWidth = 12;
           ctx.strokeStyle = outerRingGrad;
@@ -1719,13 +1781,18 @@
           // Hub Outer Ring
           ctx.beginPath();
           ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
-          const hubRingGrad = ctx.createLinearGradient(centerX - hubRadiusOuter, centerY - hubRadiusOuter, centerX + hubRadiusOuter, centerY + hubRadiusOuter);
+          const hubRingGrad = ctx.createLinearGradient(
+            centerX - hubRadiusOuter,
+            centerY - hubRadiusOuter,
+            centerX + hubRadiusOuter,
+            centerY + hubRadiusOuter,
+          );
           if (document.documentElement.classList.contains("dark")) {
-             hubRingGrad.addColorStop(0, "#94a3b8");
-             hubRingGrad.addColorStop(1, "#334155");
+            hubRingGrad.addColorStop(0, "#94a3b8");
+            hubRingGrad.addColorStop(1, "#334155");
           } else {
-             hubRingGrad.addColorStop(0, "#ffffff");
-             hubRingGrad.addColorStop(1, "#94a3b8");
+            hubRingGrad.addColorStop(0, "#ffffff");
+            hubRingGrad.addColorStop(1, "#94a3b8");
           }
           ctx.fillStyle = hubRingGrad;
           ctx.fill();
@@ -1733,7 +1800,14 @@
           // Hub Inner
           ctx.beginPath();
           ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
-          const hubInnerGrad = ctx.createRadialGradient(centerX, centerY - hubRadius/3, hubRadius/4, centerX, centerY, hubRadius);
+          const hubInnerGrad = ctx.createRadialGradient(
+            centerX,
+            centerY - hubRadius / 3,
+            hubRadius / 4,
+            centerX,
+            centerY,
+            hubRadius,
+          );
           hubInnerGrad.addColorStop(0, "#475569");
           hubInnerGrad.addColorStop(1, "#0f172a");
           ctx.fillStyle = hubInnerGrad;
