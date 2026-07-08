@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script type="text/javascript">
+      // Redirect /list=... to /?list=... so index.html can handle it
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+
+      // If the path looks like /list=...
+      if (path.startsWith('/list=')) {
+        window.location.replace('/?' + path.substring(1) + search + hash);
+      } else {
+        // Otherwise just go to the root
+        window.location.replace('/' + search + hash);
+      }
+    </script>
+  </head>
+  <body>
+    <a href="/">Click here if you are not redirected.</a>
+  </body>
+</html>
