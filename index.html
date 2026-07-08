@@ -602,49 +602,58 @@
       };
 
       // --- URL PARSER ---
+      const getUrlParam = (urlStr, key) => {
+        const match = urlStr.match(
+          new RegExp(`[\\?&\\/#]${key}=([^&#]*)`, "i"),
+        );
+        return match ? decodeURIComponent(match[1]).trim() : "";
+      };
+
       const checkUrlForList = () => {
         const urlStr = window.location.href;
-        const match = urlStr.match(/[\?&\/#]list=([^&#]*)/);
-        if (match) {
-          const listParam = decodeURIComponent(match[1]);
-          const entries = listParam
-            .split(",")
-            .map((e) => e.trim())
-            .filter((e) => e.length > 0);
+        const listParam = getUrlParam(urlStr, "list");
+        if (!listParam) return;
 
-          if (entries.length > 0) {
-            // Append the new wheel to existing wheels, avoiding data loss
-            let existingWheels =
-              JSON.parse(localStorage.getItem("wheelsData") || "null") || [];
-            const newWheel = {
-              id: "wheel_" + Date.now(),
-              title: "Imported Wheel",
-              rawText: entries.join("\n"),
-              palette: "rainbow",
-              seed: generateSeed(),
-              centerImage: "",
-              customImage: "",
-              customTextColor: "#ffffff",
-              spinSpeed: "normal",
-              spinDuration: "medium",
-              spinSound: true,
-              countdownEnabled: false,
-              countdownSeconds: 60,
-              confettiEnabled: true,
-              fontFamily: "system-ui",
-              layout: "right",
-              zoomLevel: 1.0,
-            };
-            existingWheels.push(newWheel);
-            localStorage.setItem("wheelsData", JSON.stringify(existingWheels));
-          }
+        const entries = listParam
+          .split(",")
+          .map((e) => e.trim())
+          .filter((e) => e.length > 0);
 
-          // Clean up URL
-          let urlObj = new URL(urlStr);
-          let newHref = urlObj.href.replace(/\/?list=[^&#]*/, "");
-          newHref = newHref.replace(/[?&]$/, "");
-          window.history.replaceState({}, document.title, newHref);
+        if (entries.length > 0) {
+          const titleParam = getUrlParam(urlStr, "title");
+          // Append the new wheel to existing wheels, avoiding data loss
+          let existingWheels =
+            JSON.parse(localStorage.getItem("wheelsData") || "null") || [];
+          const newWheel = {
+            id: "wheel_" + Date.now(),
+            title: titleParam || "Imported Wheel",
+            rawText: entries.join("\n"),
+            palette: "rainbow",
+            seed: generateSeed(),
+            centerImage: "",
+            customImage: "",
+            customTextColor: "#ffffff",
+            spinSpeed: "normal",
+            spinDuration: "medium",
+            spinSound: true,
+            countdownEnabled: false,
+            countdownSeconds: 60,
+            confettiEnabled: true,
+            fontFamily: "system-ui",
+            layout: "right",
+            zoomLevel: 1.0,
+          };
+          existingWheels.push(newWheel);
+          localStorage.setItem("wheelsData", JSON.stringify(existingWheels));
         }
+
+        // Clean up URL
+        let urlObj = new URL(urlStr);
+        let newHref = urlObj.href
+          .replace(/\/?list=[^&#]*/i, "")
+          .replace(/[?&]title=[^&#]*/i, "");
+        newHref = newHref.replace(/[?&]$/, "").replace(/\?&/, "?");
+        window.history.replaceState({}, document.title, newHref);
       };
 
       // Run URL check before loading state
