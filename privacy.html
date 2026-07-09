@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy - HypeWheel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: { sans: ["system-ui", "-apple-system", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-YSLWJE18SW"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-YSLWJE18SW");
+    </script>
+  </head>
+  <body
+    class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300 flex flex-col"
+  >
+    <!-- NAVBAR -->
+    <nav
+      class="px-4 md:px-6 py-4 flex justify-between items-center bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-sm border-b border-gray-300 dark:border-gray-700 sticky top-0 z-40 transition-colors duration-300"
+    >
+      <div class="flex items-center space-x-3">
+        <a
+          href="/"
+          class="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+        >
+          <img
+            src="logo.png"
+            alt="HypeWheel Logo"
+            class="w-8 h-8 md:w-10 md:h-10 object-contain"
+          />
+          <h1
+            class="text-xl md:text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500"
+          >
+            HypeWheel
+          </h1>
+        </a>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+      <div
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-300 dark:border-gray-700 p-6 md:p-10 space-y-6"
+      >
+        <h2 class="text-3xl font-bold mb-6 text-indigo-500">Privacy Policy</h2>
+
+        <p class="text-gray-700 dark:text-gray-300">
+          At HypeWheel, your privacy is our priority. This Privacy Policy
+          outlines how we handle data for both our web application
+          (HypeWheel.app) and the HypeWheel Chrome Browser Extension.
+        </p>
+
+        <section class="space-y-3">
+          <h3
+            class="text-xl font-semibold border-b border-gray-200 dark:border-gray-700 pb-2"
+          >
+            1. Data Storage & Local Processing
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300">
+            HypeWheel is designed to be a client-side application. This means
+            that all of your wheel configurations, names, lists, and settings
+            are stored locally on your device using your browser's
+            <code>localStorage</code>.
+          </p>
+          <ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1">
+            <li>We do not have a central database.</li>
+            <li>
+              We do not collect, store, or transmit your wheel data to our
+              servers.
+            </li>
+            <li>
+              If you clear your browser data or use a different device, your
+              lists will not be synced (unless you manually export and import
+              them).
+            </li>
+          </ul>
+        </section>
+
+        <section class="space-y-3">
+          <h3
+            class="text-xl font-semibold border-b border-gray-200 dark:border-gray-700 pb-2"
+          >
+            2. HypeWheel Chrome Extension
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300">
+            The HypeWheel Chrome extension operates under the same privacy
+            principles as our web application.
+          </p>
+          <ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1">
+            <li>It runs entirely locally within your browser.</li>
+            <li>
+              It does not track your browsing history or collect personal
+              information.
+            </li>
+            <li>
+              Any data generated or saved within the extension is stored locally
+              on your machine.
+            </li>
+          </ul>
+        </section>
+
+        <section class="space-y-3">
+          <h3
+            class="text-xl font-semibold border-b border-gray-200 dark:border-gray-700 pb-2"
+          >
+            3. Third-Party Services
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300">
+            While our core application works entirely locally, we do utilize a
+            few third-party services to enhance functionality and understand
+            usage:
+          </p>
+          <ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
+            <li>
+              <strong>Puter.js (AI Features):</strong> If you use the AI text
+              generation features (such as generating random lists), your prompt
+              is sent securely to the Puter.com API. Puter.js handles this
+              request. We do not store these requests on our end. Please refer
+              to Puter's privacy policy for more details on how they handle API
+              requests.
+            </li>
+            <li>
+              <strong>Google Analytics:</strong> We use Google Analytics to
+              understand general website traffic and usage patterns (e.g., how
+              many people visit the site). This data is anonymized and
+              aggregated. You can opt out of Google Analytics using browser
+              extensions if you prefer.
+            </li>
+          </ul>
+        </section>
+
+        <section class="space-y-3">
+          <h3
+            class="text-xl font-semibold border-b border-gray-200 dark:border-gray-700 pb-2"
+          >
+            4. Changes to This Policy
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300">
+            We may update this Privacy Policy from time to time. Any changes
+            will be reflected on this page. Because we do not collect user
+            contact information, we cannot notify you directly of changes.
+          </p>
+        </section>
+
+        <section class="space-y-3">
+          <h3
+            class="text-xl font-semibold border-b border-gray-200 dark:border-gray-700 pb-2"
+          >
+            5. Contact
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300">
+            If you have any questions or concerns about this Privacy Policy, you
+            can open an issue on our
+            <a
+              href="https://github.com/TechJeeper/HypeWheel/issues"
+              target="_blank"
+              class="text-indigo-500 hover:underline"
+              >GitHub repository</a
+            >.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer
+      id="main-footer"
+      class="w-full p-6 text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center space-y-4 mt-auto"
+    >
+      <div>
+        Provided free by
+        <a
+          href="https://TechJeeper.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors"
+          >TechJeeper Designs</a
+        >
+      </div>
+      <div>
+        <a
+          href="https://github.com/TechJeeper/HypeWheel/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors"
+          >Submit Issues to GitHub</a
+        >
+      </div>
+      <div>
+        <a
+          href="https://www.buymeacoffee.com/printventory"
+          target="_blank"
+          rel="noopener noreferrer"
+          ><img
+            src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=printventory&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
+            alt="Buy me a coffee"
+        /></a>
+      </div>
+    </footer>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
