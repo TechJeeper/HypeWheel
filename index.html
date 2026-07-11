@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HypeWheel - Random Name Picker</title>
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -157,6 +161,16 @@
         >
           <span id="theme-icon">☀️</span>
         </button>
+        <a
+          id="btn-chrome-extension"
+          href="https://chromewebstore.google.com/detail/afpnpiehbfpnolbmfpekfibonikdiaeo?utm_source=item-share-cb"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all w-10 h-10 items-center justify-center"
+          title="Get the Chrome Extension"
+        >
+          <i data-lucide="puzzle" class="w-4 h-4"></i>
+        </a>
         <button
           id="btn-quickstart"
           class="p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all w-10 h-10 flex items-center justify-center font-bold"
@@ -238,7 +252,7 @@
           <!-- Winners injected here -->
         </div>
         <div
-          class="p-4 border-t border-gray-300 dark:border-gray-700 flex justify-between gap-3"
+          class="p-4 border-t border-gray-300 dark:border-gray-700 flex flex-wrap justify-between gap-3"
         >
           <button
             id="btn-clear-winners"
@@ -246,12 +260,20 @@
           >
             Clear History
           </button>
-          <button
-            id="btn-export-winners"
-            class="flex items-center px-6 py-2 rounded-lg font-bold transition-all bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-          >
-            <i data-lucide="download" class="w-4 h-4 mr-2"></i> Export CSV
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="btn-copy-winners"
+              class="flex items-center px-4 py-2 rounded-lg font-bold transition-all bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50"
+            >
+              <i data-lucide="copy" class="w-4 h-4 mr-2"></i> Copy Winners
+            </button>
+            <button
+              id="btn-export-winners"
+              class="flex items-center px-4 py-2 rounded-lg font-bold transition-all bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+            >
+              <i data-lucide="download" class="w-4 h-4 mr-2"></i> Export Winners
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -367,9 +389,30 @@
             </li>
             <li>
               <strong>Winners:</strong> View past winners by clicking the trophy
-              icon in the top header.
+              icon in the top header. Copy or export winners as CSV from Winners
+              History.
             </li>
           </ul>
+          <div
+            class="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-4"
+          >
+            <h3 class="font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-2 mb-2">
+              <i data-lucide="puzzle" class="w-4 h-4"></i>
+              Chrome Extension
+            </h3>
+            <p class="text-sm">
+              Get the free
+              <a
+                href="https://chromewebstore.google.com/detail/afpnpiehbfpnolbmfpekfibonikdiaeo?utm_source=item-share-cb"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-semibold text-indigo-600 dark:text-indigo-400 underline hover:no-underline"
+                >Chrome extension</a
+              >
+              to import commenters from X, Facebook, Instagram, TikTok, or Google
+              Sheets into HypeWheel.
+            </p>
+          </div>
         </div>
         <div
           class="p-5 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
@@ -1495,6 +1538,50 @@
           }
         }
 
+        fitSliceLabel(ctx, text, availableWidth, minSize, maxSize) {
+          const setFont = (fontSize) => {
+            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+          };
+
+          setFont(maxSize);
+          if (ctx.measureText(text).width <= availableWidth) {
+            return { text, fontSize: maxSize };
+          }
+
+          let lo = minSize;
+          let hi = maxSize;
+          let bestSize = minSize;
+
+          while (hi - lo > 0.5) {
+            const mid = (lo + hi) / 2;
+            setFont(mid);
+            if (ctx.measureText(text).width <= availableWidth) {
+              bestSize = mid;
+              lo = mid;
+            } else {
+              hi = mid;
+            }
+          }
+
+          setFont(bestSize);
+          if (ctx.measureText(text).width <= availableWidth) {
+            return { text, fontSize: bestSize };
+          }
+
+          let displayString = text;
+          while (
+            displayString.length > 0 &&
+            ctx.measureText(displayString + "…").width > availableWidth
+          ) {
+            displayString = displayString.slice(0, -1);
+          }
+
+          return {
+            text: displayString.length > 0 ? displayString + "…" : "",
+            fontSize: bestSize,
+          };
+        }
+
         handleResize() {
           if (!this.dom.canvasContainer) return;
 
@@ -1554,7 +1641,8 @@
 
           const centerX = size / 2;
           const centerY = size / 2;
-          const radius = Math.min(centerX, centerY) - 30;
+          const edgePadding = Math.max(15, size * 0.04);
+          const radius = Math.min(centerX, centerY) - edgePadding;
 
           ctx.save();
           ctx.beginPath();
@@ -1582,7 +1670,7 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillStyle = "#9CA3AF";
-            ctx.font = `600 20px "${this.fontFamily}", sans-serif`;
+            ctx.font = `600 ${Math.max(14, size * 0.04)}px "${this.fontFamily}", sans-serif`;
             ctx.fillText("No Entries", centerX, centerY);
             return;
           }
@@ -1660,13 +1748,15 @@
             }
           }
 
-          const maxFontSize = 30;
-          const arcLength = radius * sliceAngle;
-          const fontSize = Math.max(1, Math.min(maxFontSize, arcLength * 0.7));
-          ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
           const hubRadius = radius * 0.12;
-          const rightMargin = 25;
-          const availableWidth = radius - hubRadius - rightMargin - 10;
+          const rightMargin = Math.max(12, radius * 0.07);
+          const availableWidth =
+            radius - hubRadius - rightMargin - Math.max(6, radius * 0.02);
+          const textRadius = radius - rightMargin;
+          const arcAtText = textRadius * sliceAngle;
+          const minFontSize = Math.max(6, radius * 0.02);
+          const globalMaxFontSize = Math.max(12, radius * 0.11);
+          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.9);
 
           if (
             this._cacheKeyCanvasSize !== this.canvasSize ||
@@ -1674,20 +1764,15 @@
             this._cacheKeyWheelEntriesLength !== wheelEntries.length ||
             this._cacheKeyFontFamily !== this.fontFamily
           ) {
-            this._cachedDisplayStrings = wheelEntries.map((text) => {
-              let displayString = text;
-              if (ctx.measureText(displayString).width > availableWidth) {
-                while (
-                  displayString.length > 0 &&
-                  ctx.measureText(displayString + "…").width > availableWidth
-                ) {
-                  displayString = displayString.slice(0, -1);
-                }
-                displayString =
-                  displayString.length > 0 ? displayString + "…" : "";
-              }
-              return displayString;
-            });
+            this._cachedSliceLabels = wheelEntries.map((text) =>
+              this.fitSliceLabel(
+                ctx,
+                text,
+                availableWidth,
+                minFontSize,
+                maxFontSize,
+              ),
+            );
             this._cacheKeyCanvasSize = this.canvasSize;
             this._cacheKeyRawText = this.rawText;
             this._cacheKeyWheelEntriesLength = wheelEntries.length;
@@ -1702,7 +1787,8 @@
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
 
-            const displayString = this._cachedDisplayStrings[i];
+            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
+            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
 
             ctx.fillStyle = this.customTextColor;
 
@@ -2885,6 +2971,34 @@
       });
 
       // --- WINNERS TRACKING ---
+      const WINNER_EXPORT_HEADERS = ["Name", "Date/Time", "Wheel Name"];
+
+      const getWinnerExportRows = () =>
+        appState.winners.map((w) => [
+          w.winnerName,
+          w.timestamp,
+          w.wheelTitle,
+        ]);
+
+      const formatWinnersTableText = () => {
+        const rows = [WINNER_EXPORT_HEADERS, ...getWinnerExportRows()];
+        const colWidths = WINNER_EXPORT_HEADERS.map((header, colIdx) =>
+          Math.max(
+            header.length,
+            ...rows.map((row) => String(row[colIdx] ?? "").length),
+          ),
+        );
+        return rows
+          .map((row) =>
+            row
+              .map((cell, colIdx) =>
+                String(cell ?? "").padEnd(colWidths[colIdx]),
+              )
+              .join("  "),
+          )
+          .join("\n");
+      };
+
       const updateWinnersUI = () => {
         const badge = document.getElementById("winners-badge");
         if (appState.winners.length > 0) {
@@ -2898,6 +3012,7 @@
         if (appState.winners.length === 0) {
           list.innerHTML = `<div class="text-center p-8 text-gray-500 font-medium">No winners recorded yet. Spin the wheel!</div>`;
           document.getElementById("btn-clear-winners").disabled = true;
+          document.getElementById("btn-copy-winners").disabled = true;
           document.getElementById("btn-export-winners").disabled = true;
         } else {
           list.innerHTML = `<ul class="space-y-2 p-3">
@@ -2921,6 +3036,7 @@
                       .join("")}
                 </ul>`;
           document.getElementById("btn-clear-winners").disabled = false;
+          document.getElementById("btn-copy-winners").disabled = false;
           document.getElementById("btn-export-winners").disabled = false;
         }
       };
@@ -2992,23 +3108,33 @@
       }
 
       document
+        .getElementById("btn-copy-winners")
+        .addEventListener("click", async () => {
+          if (appState.winners.length === 0) return;
+          try {
+            await navigator.clipboard.writeText(formatWinnersTableText());
+            showToast("Winners copied to clipboard", "success");
+          } catch {
+            showToast("Could not copy winners to clipboard", "error");
+          }
+        });
+
+      document
         .getElementById("btn-export-winners")
         .addEventListener("click", () => {
           if (appState.winners.length === 0) return;
           const csv =
-            "Time,Wheel,Winner\n" +
-            appState.winners
-              .map((w) => {
-                return [w.timestamp, w.wheelTitle, w.winnerName]
-                  .map(sanitizeCsvField)
-                  .join(",");
-              })
+            WINNER_EXPORT_HEADERS.map(sanitizeCsvField).join(",") +
+            "\n" +
+            getWinnerExportRows()
+              .map((row) => row.map(sanitizeCsvField).join(","))
               .join("\n");
           const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = "hypewheel_winners.csv";
           link.click();
+          showToast("Winners exported as CSV", "success");
         });
 
       // --- QUICK START MODAL ---
@@ -3050,6 +3176,22 @@
           }
           toggleQuickStartModal(false);
         });
+
+      // --- CHROME EXTENSION LINK ---
+      const isChromeBrowser = (() => {
+        const ua = navigator.userAgent;
+        return (
+          /Chrome\//.test(ua) &&
+          /Google Inc/.test(navigator.vendor) &&
+          !/Edg\//.test(ua) &&
+          !/OPR\//.test(ua)
+        );
+      })();
+      if (isChromeBrowser) {
+        const extBtn = document.getElementById("btn-chrome-extension");
+        extBtn.classList.remove("hidden");
+        extBtn.classList.add("flex");
+      }
 
       // --- INIT ---
       applyTheme();
