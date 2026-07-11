@@ -1538,48 +1538,65 @@
           }
         }
 
-        fitSliceLabel(ctx, text, availableWidth, minSize, maxSize) {
+        fitSliceLabel(
+          ctx,
+          text,
+          textRadius,
+          innerRadius,
+          sliceAngle,
+          minSize,
+          maxSize,
+        ) {
           const setFont = (fontSize) => {
             ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
           };
 
-          setFont(maxSize);
-          if (ctx.measureText(text).width <= availableWidth) {
-            return { text, fontSize: maxSize };
-          }
+          const angularMargin = 0.82;
+          const strokePad = 2;
+          const radialMax = textRadius - innerRadius;
+          const outerArcMax = textRadius * sliceAngle * angularMargin;
+          maxSize = Math.min(maxSize, outerArcMax);
+
+          const fits = (fontSize, str) => {
+            setFont(fontSize);
+            const width = ctx.measureText(str).width + strokePad;
+            if (width > radialMax) return false;
+            const innerR = Math.max(innerRadius, textRadius - width);
+            if (fontSize > innerR * sliceAngle * angularMargin) return false;
+            return true;
+          };
+
+          const fitAtSize = (fontSize) => {
+            if (fits(fontSize, text)) return { text, fontSize };
+            let shortened = text;
+            while (shortened.length > 0 && !fits(fontSize, shortened + "…")) {
+              shortened = shortened.slice(0, -1);
+            }
+            if (shortened.length > 0) {
+              return { text: shortened + "…", fontSize };
+            }
+            return null;
+          };
 
           let lo = minSize;
           let hi = maxSize;
-          let bestSize = minSize;
+          let best = null;
 
           while (hi - lo > 0.5) {
             const mid = (lo + hi) / 2;
-            setFont(mid);
-            if (ctx.measureText(text).width <= availableWidth) {
-              bestSize = mid;
+            const result = fitAtSize(mid);
+            if (result) {
+              best = result;
               lo = mid;
             } else {
               hi = mid;
             }
           }
 
-          setFont(bestSize);
-          if (ctx.measureText(text).width <= availableWidth) {
-            return { text, fontSize: bestSize };
-          }
+          if (best) return best;
 
-          let displayString = text;
-          while (
-            displayString.length > 0 &&
-            ctx.measureText(displayString + "…").width > availableWidth
-          ) {
-            displayString = displayString.slice(0, -1);
-          }
-
-          return {
-            text: displayString.length > 0 ? displayString + "…" : "",
-            fontSize: bestSize,
-          };
+          const fallback = fitAtSize(minSize);
+          return fallback || { text: "", fontSize: minSize };
         }
 
         handleResize() {
@@ -1749,14 +1766,14 @@
           }
 
           const hubRadius = radius * 0.12;
+          const labelInnerRadius =
+            hubRadius + Math.max(4, radius * 0.015);
           const rightMargin = Math.max(12, radius * 0.07);
-          const availableWidth =
-            radius - hubRadius - rightMargin - Math.max(6, radius * 0.02);
           const textRadius = radius - rightMargin;
-          const arcAtText = textRadius * sliceAngle;
           const minFontSize = Math.max(6, radius * 0.02);
           const globalMaxFontSize = Math.max(12, radius * 0.11);
-          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.9);
+          const outerArcCap = textRadius * sliceAngle * 0.82;
+          const maxFontSize = Math.min(globalMaxFontSize, outerArcCap);
 
           if (
             this._cacheKeyCanvasSize !== this.canvasSize ||
@@ -1768,7 +1785,9 @@
               this.fitSliceLabel(
                 ctx,
                 text,
-                availableWidth,
+                textRadius,
+                labelInnerRadius,
+                sliceAngle,
                 minFontSize,
                 maxFontSize,
               ),
@@ -1781,20 +1800,34 @@
 
           for (let i = 0; i < wheelEntries.length; i++) {
             const startAngle = i * sliceAngle + angleOffset;
+            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
+            if (!displayString) continue;
+
             ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.rotate(startAngle + sliceAngle / 2);
+            ctx.rotate(startAngle);
+
+            ctx.beginPath();
+            ctx.moveTo(labelInnerRadius, 0);
+            ctx.lineTo(radius, 0);
+            ctx.arc(0, 0, radius, 0, sliceAngle, false);
+            ctx.lineTo(
+              labelInnerRadius * Math.cos(sliceAngle),
+              labelInnerRadius * Math.sin(sliceAngle),
+            );
+            ctx.arc(0, 0, labelInnerRadius, sliceAngle, 0, true);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.rotate(sliceAngle / 2);
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
-
-            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
             ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
-
             ctx.fillStyle = this.customTextColor;
 
             if (!this.isSpinning) {
-              ctx.shadowColor = "rgba(0,0,0,0.4)";
-              ctx.shadowBlur = 4;
+              ctx.shadowColor = "rgba(0,0,0,0.35)";
+              ctx.shadowBlur = 2;
               ctx.shadowOffsetY = 1;
             } else {
               ctx.shadowColor = "transparent";
@@ -1804,8 +1837,8 @@
 
             ctx.strokeStyle = "#000000";
             ctx.lineWidth = 1;
-            ctx.strokeText(displayString, radius - rightMargin, 0);
-            ctx.fillText(displayString, radius - rightMargin, 0);
+            ctx.strokeText(displayString, textRadius, 0);
+            ctx.fillText(displayString, textRadius, 0);
             ctx.restore();
           }
 
