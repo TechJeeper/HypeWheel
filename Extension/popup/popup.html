@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HypeWheel.app</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <img class="logo" src="../icons/icon-48.png" alt="" width="36" height="36" />
+      <div>
+        <h1>HypeWheel.app</h1>
+        <p class="tagline">Loads names to the HypeWheel.app giveaway tool</p>
+      </div>
+    </header>
+
+    <section class="status" id="status">
+      <p class="platform" id="platform">Detecting page…</p>
+      <p class="message" id="message">Open a supported post or Google Sheet.</p>
+    </section>
+
+    <section class="sheets-picker" id="sheets-picker" hidden>
+      <label for="column-input">Names column</label>
+      <div class="sheets-row">
+        <input
+          id="column-input"
+          type="text"
+          maxlength="3"
+          placeholder="C"
+          value=""
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="button" class="btn ghost" id="detect-col-btn">
+          Detect
+        </button>
+      </div>
+      <p class="sheets-hint">
+        Type the column with names (in your sheet that’s <strong>C</strong>), then Extract.
+        Or click the column letter and press Detect.
+      </p>
+    </section>
+
+    <section class="preview" id="preview" hidden>
+      <div class="preview-head">
+        <span id="count-label">0 names</span>
+        <button type="button" class="linkish" id="copy-btn" hidden>Copy list</button>
+      </div>
+      <ul id="name-list"></ul>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="btn primary" id="extract-btn" disabled>
+        Extract names
+      </button>
+      <button type="button" class="btn secondary" id="open-btn" disabled>
+        Open in HypeWheel.app
+      </button>
+    </div>
+
+    <footer class="help" id="help">
+      Open a supported page to see instructions for that platform.
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

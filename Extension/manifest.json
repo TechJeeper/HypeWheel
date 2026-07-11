@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "HypeWheel.app",
+  "version": "1.0.0",
+  "description": "Pull unique commenter names from X, Facebook, Instagram, TikTok, or Google Sheets into HypeWheel.app FREE giveaway tool!",
+  "action": {
+    "default_title": "HypeWheel.app",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["activeTab", "scripting", "clipboardRead"],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://www.facebook.com/*",
+    "https://facebook.com/*",
+    "https://www.instagram.com/*",
+    "https://instagram.com/*",
+    "https://www.tiktok.com/*",
+    "https://tiktok.com/*",
+    "https://docs.google.com/spreadsheets/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["shared/utils.js", "content/twitter.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.facebook.com/*", "https://facebook.com/*"],
+      "js": ["shared/utils.js", "content/facebook.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.instagram.com/*", "https://instagram.com/*"],
+      "js": ["shared/utils.js", "content/instagram.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.tiktok.com/*", "https://tiktok.com/*"],
+      "js": ["shared/utils.js", "content/tiktok.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://docs.google.com/spreadsheets/*"],
+      "js": ["shared/utils.js", "content/sheets.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
