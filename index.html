@@ -1537,6 +1537,11 @@
           }
         }
 
+        getSliceDisplayName(text) {
+          const stripped = text.replace(/^\d+\.\s*/, "").trim();
+          return stripped || text;
+        }
+
         fitSliceLabel(
           ctx,
           text,
@@ -1546,56 +1551,68 @@
           minSize,
           maxSize,
         ) {
+          const displayName = this.getSliceDisplayName(text);
           const setFont = (fontSize) => {
             ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
           };
 
-          const angularMargin = 0.82;
           const strokePad = 2;
           const radialMax = textRadius - innerRadius;
-          const outerArcMax = textRadius * sliceAngle * angularMargin;
-          maxSize = Math.min(maxSize, outerArcMax);
+          const maxFromArc = textRadius * sliceAngle * 0.9;
+          maxSize = Math.min(maxSize, maxFromArc);
 
-          const fits = (fontSize, str) => {
+          if (maxSize < minSize) {
+            maxSize = minSize;
+          }
+
+          const fitsRadial = (fontSize, str) => {
             setFont(fontSize);
-            const width = ctx.measureText(str).width + strokePad;
-            if (width > radialMax) return false;
-            const innerR = Math.max(innerRadius, textRadius - width);
-            if (fontSize > innerR * sliceAngle * angularMargin) return false;
-            return true;
+            return ctx.measureText(str).width + strokePad <= radialMax;
           };
 
-          const fitAtSize = (fontSize) => {
-            if (fits(fontSize, text)) return { text, fontSize };
-            let shortened = text;
-            while (shortened.length > 0 && !fits(fontSize, shortened + "…")) {
-              shortened = shortened.slice(0, -1);
-            }
-            if (shortened.length > 0) {
-              return { text: shortened + "…", fontSize };
-            }
-            return null;
-          };
+          setFont(maxSize);
+          if (fitsRadial(maxSize, displayName)) {
+            return { text: displayName, fontSize: maxSize };
+          }
 
           let lo = minSize;
           let hi = maxSize;
-          let best = null;
+          let bestSize = minSize;
 
           while (hi - lo > 0.5) {
             const mid = (lo + hi) / 2;
-            const result = fitAtSize(mid);
-            if (result) {
-              best = result;
+            if (fitsRadial(mid, displayName)) {
+              bestSize = mid;
               lo = mid;
             } else {
               hi = mid;
             }
           }
 
-          if (best) return best;
+          if (fitsRadial(bestSize, displayName)) {
+            return { text: displayName, fontSize: bestSize };
+          }
 
-          const fallback = fitAtSize(minSize);
-          return fallback || { text: "", fontSize: minSize };
+          setFont(minSize);
+          let shortened = displayName;
+          while (
+            shortened.length > 1 &&
+            !fitsRadial(minSize, shortened + "…")
+          ) {
+            shortened = shortened.slice(0, -1);
+          }
+
+          if (fitsRadial(minSize, shortened)) {
+            return { text: shortened, fontSize: minSize };
+          }
+
+          return {
+            text:
+              shortened.length > 0
+                ? shortened + (shortened.length < displayName.length ? "…" : "")
+                : displayName.slice(0, 1),
+            fontSize: minSize,
+          };
         }
 
         handleResize() {
@@ -1771,14 +1788,16 @@
           const textRadius = radius - rightMargin;
           const minFontSize = Math.max(6, radius * 0.02);
           const globalMaxFontSize = Math.max(12, radius * 0.11);
-          const outerArcCap = textRadius * sliceAngle * 0.82;
+          const outerArcCap = textRadius * sliceAngle * 0.9;
           const maxFontSize = Math.min(globalMaxFontSize, outerArcCap);
+          const hideLabels = wheelEntries.length > 120;
 
           if (
-            this._cacheKeyCanvasSize !== this.canvasSize ||
+            !hideLabels &&
+            (this._cacheKeyCanvasSize !== this.canvasSize ||
             this._cacheKeyRawText !== this.rawText ||
             this._cacheKeyWheelEntriesLength !== wheelEntries.length ||
-            this._cacheKeyFontFamily !== this.fontFamily
+            this._cacheKeyFontFamily !== this.fontFamily)
           ) {
             this._cachedSliceLabels = wheelEntries.map((text) =>
               this.fitSliceLabel(
@@ -1797,48 +1816,51 @@
             this._cacheKeyFontFamily = this.fontFamily;
           }
 
-          for (let i = 0; i < wheelEntries.length; i++) {
-            const startAngle = i * sliceAngle + angleOffset;
-            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
-            if (!displayString) continue;
+          if (!hideLabels) {
+            for (let i = 0; i < wheelEntries.length; i++) {
+              const startAngle = i * sliceAngle + angleOffset;
+              const { text: displayString, fontSize } =
+                this._cachedSliceLabels[i];
+              if (!displayString) continue;
 
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(startAngle);
+              ctx.save();
+              ctx.translate(centerX, centerY);
+              ctx.rotate(startAngle);
 
-            ctx.beginPath();
-            ctx.moveTo(labelInnerRadius, 0);
-            ctx.lineTo(radius, 0);
-            ctx.arc(0, 0, radius, 0, sliceAngle, false);
-            ctx.lineTo(
-              labelInnerRadius * Math.cos(sliceAngle),
-              labelInnerRadius * Math.sin(sliceAngle),
-            );
-            ctx.arc(0, 0, labelInnerRadius, sliceAngle, 0, true);
-            ctx.closePath();
-            ctx.clip();
+              ctx.beginPath();
+              ctx.moveTo(labelInnerRadius, 0);
+              ctx.lineTo(radius, 0);
+              ctx.arc(0, 0, radius, 0, sliceAngle, false);
+              ctx.lineTo(
+                labelInnerRadius * Math.cos(sliceAngle),
+                labelInnerRadius * Math.sin(sliceAngle),
+              );
+              ctx.arc(0, 0, labelInnerRadius, sliceAngle, 0, true);
+              ctx.closePath();
+              ctx.clip();
 
-            ctx.rotate(sliceAngle / 2);
-            ctx.textAlign = "right";
-            ctx.textBaseline = "middle";
-            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
-            ctx.fillStyle = this.customTextColor;
+              ctx.rotate(sliceAngle / 2);
+              ctx.textAlign = "right";
+              ctx.textBaseline = "middle";
+              ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+              ctx.fillStyle = this.customTextColor;
 
-            if (!this.isSpinning) {
-              ctx.shadowColor = "rgba(0,0,0,0.35)";
-              ctx.shadowBlur = 2;
-              ctx.shadowOffsetY = 1;
-            } else {
-              ctx.shadowColor = "transparent";
-              ctx.shadowBlur = 0;
-              ctx.shadowOffsetY = 0;
+              if (!this.isSpinning) {
+                ctx.shadowColor = "rgba(0,0,0,0.35)";
+                ctx.shadowBlur = 2;
+                ctx.shadowOffsetY = 1;
+              } else {
+                ctx.shadowColor = "transparent";
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+              }
+
+              ctx.strokeStyle = "#000000";
+              ctx.lineWidth = 1;
+              ctx.strokeText(displayString, textRadius, 0);
+              ctx.fillText(displayString, textRadius, 0);
+              ctx.restore();
             }
-
-            ctx.strokeStyle = "#000000";
-            ctx.lineWidth = 1;
-            ctx.strokeText(displayString, textRadius, 0);
-            ctx.fillText(displayString, textRadius, 0);
-            ctx.restore();
           }
 
           // Glossy overlay over the wheel (adds 3D lighting)
