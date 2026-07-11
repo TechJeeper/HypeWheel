@@ -25,11 +25,10 @@ That opens `https://hypewheel.app/?title=…&list=…` with every unique name. T
 
 ## Install from source (development)
 
-1. Add icon PNGs to `icons/` (`icon-16.png`, `icon-48.png`, `icon-128.png`) — required by `manifest.json`.
-2. Open `chrome://extensions` (or `edge://extensions`).
-3. Turn on **Developer mode**.
-4. Click **Load unpacked** and select this `Extension` folder.
-5. After code changes, click **Reload** on the extension card.
+1. Open `chrome://extensions` (or `edge://extensions`).
+2. Turn on **Developer mode**.
+3. Click **Load unpacked** and select this `Extension` folder.
+4. After code changes, click **Reload** on the extension card.
 
 ## Build for Chrome Web Store
 
@@ -66,7 +65,7 @@ Extension/
 ├── popup/              # Extension popup UI
 ├── content/            # Per-platform extractors (twitter, facebook, …)
 ├── shared/utils.js     # Shared scroll/load/URL helpers
-└── icons/              # Extension icons (add locally for dev builds)
+└── icons/              # Extension icons (16, 48, 128 px)
 ```
 
 ## Related
