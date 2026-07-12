@@ -395,7 +395,9 @@
           <div
             class="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-4"
           >
-            <h3 class="font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-2 mb-2">
+            <h3
+              class="font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-2 mb-2"
+            >
               <i data-lucide="puzzle" class="w-4 h-4"></i>
               Chrome Extension
             </h3>
@@ -408,8 +410,8 @@
                 class="font-semibold text-indigo-600 dark:text-indigo-400 underline hover:no-underline"
                 >Chrome extension</a
               >
-              to import commenters from X, Facebook, Instagram, TikTok, or Google
-              Sheets into HypeWheel.
+              to import commenters from X, Facebook, Instagram, TikTok, or
+              Google Sheets into HypeWheel.
             </p>
           </div>
         </div>
@@ -1032,6 +1034,7 @@
                                         <button class="btn-ai-list p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="sparkles" class="w-3.5 h-3.5 inline mr-1"></i> AI List</button>
                                         <button class="btn-sort p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="arrow-down-a-z" class="w-3.5 h-3.5 inline mr-1"></i> Sort A-Z</button>
                                         <button class="btn-dedupe p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="copy" class="w-3.5 h-3.5 inline mr-1"></i> Dedupe</button>
+                                        <button class="btn-remove-past-winners p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="user-minus" class="w-3.5 h-3.5 inline mr-1"></i> Remove Past Winners</button>
                                         <button class="btn-clear p-1.5 rounded hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline mr-1"></i> Clear</button>
                                     </div>
                                 </div>
@@ -1103,6 +1106,9 @@
             btnAIList: wrapper.querySelector(".btn-ai-list"),
             btnSort: wrapper.querySelector(".btn-sort"),
             btnDedupe: wrapper.querySelector(".btn-dedupe"),
+            btnRemovePastWinners: wrapper.querySelector(
+              ".btn-remove-past-winners",
+            ),
             btnClear: wrapper.querySelector(".btn-clear"),
             entriesInput: wrapper.querySelector(".entries-input"),
             btnShuffle: wrapper.querySelector(".btn-shuffle"),
@@ -1319,6 +1325,33 @@
             this.saveConfig();
             this.draw();
             showToast(`Removed ${removed} duplicates!`, "success");
+          });
+
+          this.dom.btnRemovePastWinners.addEventListener("click", () => {
+            if (appState.winners.length === 0) {
+              showToast("No past winners to remove.", "error");
+              return;
+            }
+            const winnerNamesLower = new Set(
+              appState.winners.map((w) => w.winnerName.toLowerCase()),
+            );
+            const initialLength = this.entries.length;
+            const remaining = this.entries.filter(
+              (entry) => !winnerNamesLower.has(entry.toLowerCase()),
+            );
+            const removedCount = initialLength - remaining.length;
+
+            if (removedCount > 0) {
+              this.rawText = remaining.join("\n");
+              this.entries = remaining;
+              this.dom.entriesInput.value = this.rawText;
+              this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+              this.saveConfig();
+              this.draw();
+              showToast(`Removed ${removedCount} past winners!`, "success");
+            } else {
+              showToast("No matching past winners found.", "error");
+            }
           });
 
           this.dom.btnAIList.addEventListener("click", async () => {
@@ -1796,7 +1829,8 @@
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
 
-            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
+            const { text: displayString, fontSize } =
+              this._cachedSliceLabels[i];
             if (!displayString) continue;
 
             ctx.font = this.sliceLabelFont(fontSize);
@@ -2984,11 +3018,7 @@
       const WINNER_EXPORT_HEADERS = ["Name", "Date/Time", "Wheel Name"];
 
       const getWinnerExportRows = () =>
-        appState.winners.map((w) => [
-          w.winnerName,
-          w.timestamp,
-          w.wheelTitle,
-        ]);
+        appState.winners.map((w) => [w.winnerName, w.timestamp, w.wheelTitle]);
 
       const formatWinnersTableText = () => {
         const rows = [WINNER_EXPORT_HEADERS, ...getWinnerExportRows()];
