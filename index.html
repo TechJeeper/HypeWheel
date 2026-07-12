@@ -395,7 +395,9 @@
           <div
             class="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-4"
           >
-            <h3 class="font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-2 mb-2">
+            <h3
+              class="font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-2 mb-2"
+            >
               <i data-lucide="puzzle" class="w-4 h-4"></i>
               Chrome Extension
             </h3>
@@ -408,8 +410,8 @@
                 class="font-semibold text-indigo-600 dark:text-indigo-400 underline hover:no-underline"
                 >Chrome extension</a
               >
-              to import commenters from X, Facebook, Instagram, TikTok, or Google
-              Sheets into HypeWheel.
+              to import commenters from X, Facebook, Instagram, TikTok, or
+              Google Sheets into HypeWheel.
             </p>
           </div>
         </div>
@@ -1032,6 +1034,7 @@
                                         <button class="btn-ai-list p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="sparkles" class="w-3.5 h-3.5 inline mr-1"></i> AI List</button>
                                         <button class="btn-sort p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="arrow-down-a-z" class="w-3.5 h-3.5 inline mr-1"></i> Sort A-Z</button>
                                         <button class="btn-dedupe p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="copy" class="w-3.5 h-3.5 inline mr-1"></i> Dedupe</button>
+                                        <button class="btn-remove-past-winners p-1.5 rounded bg-gray-200 dark:bg-gray-700 text-xs text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"><i data-lucide="user-minus" class="w-3.5 h-3.5 inline mr-1"></i> Remove Past Winners</button>
                                         <button class="btn-clear p-1.5 rounded hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400 text-xs"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline mr-1"></i> Clear</button>
                                     </div>
                                 </div>
@@ -1103,6 +1106,9 @@
             btnAIList: wrapper.querySelector(".btn-ai-list"),
             btnSort: wrapper.querySelector(".btn-sort"),
             btnDedupe: wrapper.querySelector(".btn-dedupe"),
+            btnRemovePastWinners: wrapper.querySelector(
+              ".btn-remove-past-winners",
+            ),
             btnClear: wrapper.querySelector(".btn-clear"),
             entriesInput: wrapper.querySelector(".entries-input"),
             btnShuffle: wrapper.querySelector(".btn-shuffle"),
@@ -1321,6 +1327,33 @@
             showToast(`Removed ${removed} duplicates!`, "success");
           });
 
+          this.dom.btnRemovePastWinners.addEventListener("click", () => {
+            if (appState.winners.length === 0) {
+              showToast("No past winners to remove.", "error");
+              return;
+            }
+            const winnerNamesLower = new Set(
+              appState.winners.map((w) => w.winnerName.toLowerCase()),
+            );
+            const initialLength = this.entries.length;
+            const remaining = this.entries.filter(
+              (entry) => !winnerNamesLower.has(entry.toLowerCase()),
+            );
+            const removedCount = initialLength - remaining.length;
+
+            if (removedCount > 0) {
+              this.rawText = remaining.join("\n");
+              this.entries = remaining;
+              this.dom.entriesInput.value = this.rawText;
+              this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+              this.saveConfig();
+              this.draw();
+              showToast(`Removed ${removedCount} past winners!`, "success");
+            } else {
+              showToast("No matching past winners found.", "error");
+            }
+          });
+
           this.dom.btnAIList.addEventListener("click", async () => {
             const promptStr = prompt(
               "Enter a topic for the list (e.g., '10 popular pizza toppings'):",
@@ -1537,65 +1570,58 @@
           }
         }
 
-        fitSliceLabel(
-          ctx,
-          text,
-          textRadius,
-          innerRadius,
-          sliceAngle,
-          minSize,
-          maxSize,
-        ) {
+        sliceLabelFont(fontSize) {
+          return `500 ${fontSize}px "${this.fontFamily}", sans-serif`;
+        }
+
+        getSliceDisplayName(text) {
+          const stripped = text.replace(/^\d+\.\s*/, "").trim();
+          return stripped || text;
+        }
+
+        fitSliceLabel(ctx, text, availableWidth, minSize, maxSize) {
+          const displayName = this.getSliceDisplayName(text);
           const setFont = (fontSize) => {
-            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+            ctx.font = this.sliceLabelFont(fontSize);
           };
 
-          const angularMargin = 0.82;
-          const strokePad = 2;
-          const radialMax = textRadius - innerRadius;
-          const outerArcMax = textRadius * sliceAngle * angularMargin;
-          maxSize = Math.min(maxSize, outerArcMax);
-
-          const fits = (fontSize, str) => {
-            setFont(fontSize);
-            const width = ctx.measureText(str).width + strokePad;
-            if (width > radialMax) return false;
-            const innerR = Math.max(innerRadius, textRadius - width);
-            if (fontSize > innerR * sliceAngle * angularMargin) return false;
-            return true;
-          };
-
-          const fitAtSize = (fontSize) => {
-            if (fits(fontSize, text)) return { text, fontSize };
-            let shortened = text;
-            while (shortened.length > 0 && !fits(fontSize, shortened + "…")) {
-              shortened = shortened.slice(0, -1);
-            }
-            if (shortened.length > 0) {
-              return { text: shortened + "…", fontSize };
-            }
-            return null;
-          };
+          setFont(maxSize);
+          if (ctx.measureText(displayName).width <= availableWidth) {
+            return { text: displayName, fontSize: maxSize };
+          }
 
           let lo = minSize;
           let hi = maxSize;
-          let best = null;
+          let bestSize = minSize;
 
           while (hi - lo > 0.5) {
             const mid = (lo + hi) / 2;
-            const result = fitAtSize(mid);
-            if (result) {
-              best = result;
+            setFont(mid);
+            if (ctx.measureText(displayName).width <= availableWidth) {
+              bestSize = mid;
               lo = mid;
             } else {
               hi = mid;
             }
           }
 
-          if (best) return best;
+          setFont(bestSize);
+          if (ctx.measureText(displayName).width <= availableWidth) {
+            return { text: displayName, fontSize: bestSize };
+          }
 
-          const fallback = fitAtSize(minSize);
-          return fallback || { text: "", fontSize: minSize };
+          let displayString = displayName;
+          while (
+            displayString.length > 0 &&
+            ctx.measureText(displayString + "…").width > availableWidth
+          ) {
+            displayString = displayString.slice(0, -1);
+          }
+
+          return {
+            text: displayString.length > 0 ? displayString + "…" : "",
+            fontSize: bestSize,
+          };
         }
 
         handleResize() {
@@ -1765,14 +1791,14 @@
           }
 
           const hubRadius = radius * 0.12;
-          const labelInnerRadius =
-            hubRadius + Math.max(4, radius * 0.015);
           const rightMargin = Math.max(12, radius * 0.07);
+          const availableWidth =
+            radius - hubRadius - rightMargin - Math.max(6, radius * 0.02);
           const textRadius = radius - rightMargin;
-          const minFontSize = Math.max(6, radius * 0.02);
-          const globalMaxFontSize = Math.max(12, radius * 0.11);
-          const outerArcCap = textRadius * sliceAngle * 0.82;
-          const maxFontSize = Math.min(globalMaxFontSize, outerArcCap);
+          const arcAtText = textRadius * sliceAngle;
+          const minFontSize = Math.max(5, radius * 0.016);
+          const globalMaxFontSize = Math.max(9, radius * 0.075);
+          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.75);
 
           if (
             this._cacheKeyCanvasSize !== this.canvasSize ||
@@ -1784,9 +1810,7 @@
               this.fitSliceLabel(
                 ctx,
                 text,
-                textRadius,
-                labelInnerRadius,
-                sliceAngle,
+                availableWidth,
                 minFontSize,
                 maxFontSize,
               ),
@@ -1799,34 +1823,22 @@
 
           for (let i = 0; i < wheelEntries.length; i++) {
             const startAngle = i * sliceAngle + angleOffset;
-            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
-            if (!displayString) continue;
-
             ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.rotate(startAngle);
-
-            ctx.beginPath();
-            ctx.moveTo(labelInnerRadius, 0);
-            ctx.lineTo(radius, 0);
-            ctx.arc(0, 0, radius, 0, sliceAngle, false);
-            ctx.lineTo(
-              labelInnerRadius * Math.cos(sliceAngle),
-              labelInnerRadius * Math.sin(sliceAngle),
-            );
-            ctx.arc(0, 0, labelInnerRadius, sliceAngle, 0, true);
-            ctx.closePath();
-            ctx.clip();
-
-            ctx.rotate(sliceAngle / 2);
+            ctx.rotate(startAngle + sliceAngle / 2);
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
-            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+
+            const { text: displayString, fontSize } =
+              this._cachedSliceLabels[i];
+            if (!displayString) continue;
+
+            ctx.font = this.sliceLabelFont(fontSize);
             ctx.fillStyle = this.customTextColor;
 
             if (!this.isSpinning) {
               ctx.shadowColor = "rgba(0,0,0,0.35)";
-              ctx.shadowBlur = 2;
+              ctx.shadowBlur = 3;
               ctx.shadowOffsetY = 1;
             } else {
               ctx.shadowColor = "transparent";
@@ -3006,11 +3018,7 @@
       const WINNER_EXPORT_HEADERS = ["Name", "Date/Time", "Wheel Name"];
 
       const getWinnerExportRows = () =>
-        appState.winners.map((w) => [
-          w.winnerName,
-          w.timestamp,
-          w.wheelTitle,
-        ]);
+        appState.winners.map((w) => [w.winnerName, w.timestamp, w.wheelTitle]);
 
       const formatWinnersTableText = () => {
         const rows = [WINNER_EXPORT_HEADERS, ...getWinnerExportRows()];
