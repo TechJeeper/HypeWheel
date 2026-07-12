@@ -1537,6 +1537,10 @@
           }
         }
 
+        sliceLabelFont(fontSize) {
+          return `500 ${fontSize}px "${this.fontFamily}", sans-serif`;
+        }
+
         getSliceDisplayName(text) {
           const stripped = text.replace(/^\d+\.\s*/, "").trim();
           return stripped || text;
@@ -1545,7 +1549,7 @@
         fitSliceLabel(ctx, text, availableWidth, minSize, maxSize) {
           const displayName = this.getSliceDisplayName(text);
           const setFont = (fontSize) => {
-            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+            ctx.font = this.sliceLabelFont(fontSize);
           };
 
           setFont(maxSize);
@@ -1759,9 +1763,9 @@
             radius - hubRadius - rightMargin - Math.max(6, radius * 0.02);
           const textRadius = radius - rightMargin;
           const arcAtText = textRadius * sliceAngle;
-          const minFontSize = Math.max(6, radius * 0.02);
-          const globalMaxFontSize = Math.max(12, radius * 0.11);
-          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.9);
+          const minFontSize = Math.max(5, radius * 0.016);
+          const globalMaxFontSize = Math.max(9, radius * 0.075);
+          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.75);
 
           if (
             this._cacheKeyCanvasSize !== this.canvasSize ||
@@ -1795,12 +1799,12 @@
             const { text: displayString, fontSize } = this._cachedSliceLabels[i];
             if (!displayString) continue;
 
-            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+            ctx.font = this.sliceLabelFont(fontSize);
             ctx.fillStyle = this.customTextColor;
 
             if (!this.isSpinning) {
-              ctx.shadowColor = "rgba(0,0,0,0.4)";
-              ctx.shadowBlur = 4;
+              ctx.shadowColor = "rgba(0,0,0,0.35)";
+              ctx.shadowBlur = 3;
               ctx.shadowOffsetY = 1;
             } else {
               ctx.shadowColor = "transparent";
