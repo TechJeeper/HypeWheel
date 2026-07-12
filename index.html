@@ -1542,36 +1542,14 @@
           return stripped || text;
         }
 
-        fitSliceLabel(
-          ctx,
-          text,
-          textRadius,
-          innerRadius,
-          sliceAngle,
-          minSize,
-          maxSize,
-        ) {
+        fitSliceLabel(ctx, text, availableWidth, minSize, maxSize) {
           const displayName = this.getSliceDisplayName(text);
           const setFont = (fontSize) => {
             ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
           };
 
-          const strokePad = 2;
-          const radialMax = textRadius - innerRadius;
-          const maxFromArc = textRadius * sliceAngle * 0.9;
-          maxSize = Math.min(maxSize, maxFromArc);
-
-          if (maxSize < minSize) {
-            maxSize = minSize;
-          }
-
-          const fitsRadial = (fontSize, str) => {
-            setFont(fontSize);
-            return ctx.measureText(str).width + strokePad <= radialMax;
-          };
-
           setFont(maxSize);
-          if (fitsRadial(maxSize, displayName)) {
+          if (ctx.measureText(displayName).width <= availableWidth) {
             return { text: displayName, fontSize: maxSize };
           }
 
@@ -1581,7 +1559,8 @@
 
           while (hi - lo > 0.5) {
             const mid = (lo + hi) / 2;
-            if (fitsRadial(mid, displayName)) {
+            setFont(mid);
+            if (ctx.measureText(displayName).width <= availableWidth) {
               bestSize = mid;
               lo = mid;
             } else {
@@ -1589,29 +1568,22 @@
             }
           }
 
-          if (fitsRadial(bestSize, displayName)) {
+          setFont(bestSize);
+          if (ctx.measureText(displayName).width <= availableWidth) {
             return { text: displayName, fontSize: bestSize };
           }
 
-          setFont(minSize);
-          let shortened = displayName;
+          let displayString = displayName;
           while (
-            shortened.length > 1 &&
-            !fitsRadial(minSize, shortened + "…")
+            displayString.length > 0 &&
+            ctx.measureText(displayString + "…").width > availableWidth
           ) {
-            shortened = shortened.slice(0, -1);
-          }
-
-          if (fitsRadial(minSize, shortened)) {
-            return { text: shortened, fontSize: minSize };
+            displayString = displayString.slice(0, -1);
           }
 
           return {
-            text:
-              shortened.length > 0
-                ? shortened + (shortened.length < displayName.length ? "…" : "")
-                : displayName.slice(0, 1),
-            fontSize: minSize,
+            text: displayString.length > 0 ? displayString + "…" : "",
+            fontSize: bestSize,
           };
         }
 
@@ -1782,30 +1754,26 @@
           }
 
           const hubRadius = radius * 0.12;
-          const labelInnerRadius =
-            hubRadius + Math.max(4, radius * 0.015);
           const rightMargin = Math.max(12, radius * 0.07);
+          const availableWidth =
+            radius - hubRadius - rightMargin - Math.max(6, radius * 0.02);
           const textRadius = radius - rightMargin;
+          const arcAtText = textRadius * sliceAngle;
           const minFontSize = Math.max(6, radius * 0.02);
           const globalMaxFontSize = Math.max(12, radius * 0.11);
-          const outerArcCap = textRadius * sliceAngle * 0.9;
-          const maxFontSize = Math.min(globalMaxFontSize, outerArcCap);
-          const hideLabels = wheelEntries.length > 120;
+          const maxFontSize = Math.min(globalMaxFontSize, arcAtText * 0.9);
 
           if (
-            !hideLabels &&
-            (this._cacheKeyCanvasSize !== this.canvasSize ||
+            this._cacheKeyCanvasSize !== this.canvasSize ||
             this._cacheKeyRawText !== this.rawText ||
             this._cacheKeyWheelEntriesLength !== wheelEntries.length ||
-            this._cacheKeyFontFamily !== this.fontFamily)
+            this._cacheKeyFontFamily !== this.fontFamily
           ) {
             this._cachedSliceLabels = wheelEntries.map((text) =>
               this.fitSliceLabel(
                 ctx,
                 text,
-                textRadius,
-                labelInnerRadius,
-                sliceAngle,
+                availableWidth,
                 minFontSize,
                 maxFontSize,
               ),
@@ -1816,51 +1784,35 @@
             this._cacheKeyFontFamily = this.fontFamily;
           }
 
-          if (!hideLabels) {
-            for (let i = 0; i < wheelEntries.length; i++) {
-              const startAngle = i * sliceAngle + angleOffset;
-              const { text: displayString, fontSize } =
-                this._cachedSliceLabels[i];
-              if (!displayString) continue;
+          for (let i = 0; i < wheelEntries.length; i++) {
+            const startAngle = i * sliceAngle + angleOffset;
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + sliceAngle / 2);
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
 
-              ctx.save();
-              ctx.translate(centerX, centerY);
-              ctx.rotate(startAngle);
+            const { text: displayString, fontSize } = this._cachedSliceLabels[i];
+            if (!displayString) continue;
 
-              ctx.beginPath();
-              ctx.moveTo(labelInnerRadius, 0);
-              ctx.lineTo(radius, 0);
-              ctx.arc(0, 0, radius, 0, sliceAngle, false);
-              ctx.lineTo(
-                labelInnerRadius * Math.cos(sliceAngle),
-                labelInnerRadius * Math.sin(sliceAngle),
-              );
-              ctx.arc(0, 0, labelInnerRadius, sliceAngle, 0, true);
-              ctx.closePath();
-              ctx.clip();
+            ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
+            ctx.fillStyle = this.customTextColor;
 
-              ctx.rotate(sliceAngle / 2);
-              ctx.textAlign = "right";
-              ctx.textBaseline = "middle";
-              ctx.font = `800 ${fontSize}px "${this.fontFamily}", sans-serif`;
-              ctx.fillStyle = this.customTextColor;
-
-              if (!this.isSpinning) {
-                ctx.shadowColor = "rgba(0,0,0,0.35)";
-                ctx.shadowBlur = 2;
-                ctx.shadowOffsetY = 1;
-              } else {
-                ctx.shadowColor = "transparent";
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-              }
-
-              ctx.strokeStyle = "#000000";
-              ctx.lineWidth = 1;
-              ctx.strokeText(displayString, textRadius, 0);
-              ctx.fillText(displayString, textRadius, 0);
-              ctx.restore();
+            if (!this.isSpinning) {
+              ctx.shadowColor = "rgba(0,0,0,0.4)";
+              ctx.shadowBlur = 4;
+              ctx.shadowOffsetY = 1;
+            } else {
+              ctx.shadowColor = "transparent";
+              ctx.shadowBlur = 0;
+              ctx.shadowOffsetY = 0;
             }
+
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1;
+            ctx.strokeText(displayString, textRadius, 0);
+            ctx.fillText(displayString, textRadius, 0);
+            ctx.restore();
           }
 
           // Glossy overlay over the wheel (adds 3D lighting)
