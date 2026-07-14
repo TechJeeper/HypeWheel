@@ -715,6 +715,7 @@
             countdownSeconds: 60,
             confettiEnabled: true,
             fontFamily: "system-ui",
+            pointerStyle: "classic",
             layout: "right",
             zoomLevel: 1.0,
           };
@@ -760,6 +761,7 @@
             countdownSeconds: 60,
             confettiEnabled: true,
             fontFamily: "system-ui",
+            pointerStyle: "classic",
             layout: "right",
             zoomLevel: 1.0,
           },
@@ -792,6 +794,7 @@
               ? config.confettiEnabled
               : true;
           this.fontFamily = config.fontFamily || "system-ui";
+          this.pointerStyle = config.pointerStyle || "classic";
           this.seed = config.seed || generateSeed();
           this.layout = config.layout || "right";
           this.zoomLevel = config.zoomLevel || 1.0;
@@ -949,6 +952,19 @@
                                     </select>
                                 </div>
                                 <div>
+                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Pointer Style</label>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="pointer-style-select flex-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                            <option value="classic" ${this.pointerStyle === "classic" ? "selected" : ""}>Classic</option>
+                                            <option value="arrow" ${this.pointerStyle === "arrow" ? "selected" : ""}>Arrow</option>
+                                            <option value="triangle" ${this.pointerStyle === "triangle" ? "selected" : ""}>Triangle</option>
+                                            <option value="diamond" ${this.pointerStyle === "diamond" ? "selected" : ""}>Diamond</option>
+                                            <option value="minimal" ${this.pointerStyle === "minimal" ? "selected" : ""}>Minimal</option>
+                                        </select>
+                                        <canvas class="pointer-preview-canvas w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg" width="40" height="40"></canvas>
+                                    </div>
+                                </div>
+                                <div>
                                     <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Center Image URL (Optional)</label>
                                     <div class="flex">
                                         <span class="p-2 rounded-l-lg bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
@@ -1103,6 +1119,10 @@
             settingsPanel: wrapper.querySelector(".settings-panel"),
             paletteSelect: wrapper.querySelector(".palette-select"),
             fontFamilySelect: wrapper.querySelector(".font-family-select"),
+            pointerStyleSelect: wrapper.querySelector(".pointer-style-select"),
+            pointerPreviewCanvas: wrapper.querySelector(
+              ".pointer-preview-canvas",
+            ),
             customImageContainer: wrapper.querySelector(
               ".custom-image-container",
             ),
@@ -1208,6 +1228,16 @@
             this.saveConfig();
             this.draw();
           });
+
+          this.dom.pointerStyleSelect.addEventListener("change", (e) => {
+            this.pointerStyle = e.target.value;
+            this.saveConfig();
+            this.draw();
+            this.drawPointerPreview();
+          });
+
+          // Initial preview render
+          this.drawPointerPreview();
 
           this.dom.layoutSelect.addEventListener("change", (e) => {
             this.layout = e.target.value;
@@ -2021,31 +2051,115 @@
             ctx.shadowOffsetY = 0;
           }
 
-          ctx.beginPath();
-          ctx.moveTo(-45, 0); // Tip
-          ctx.lineTo(5, -18);
-          ctx.quadraticCurveTo(20, -18, 20, 0); // Rounded back top
-          ctx.quadraticCurveTo(20, 18, 5, 18); // Rounded back bottom
-          ctx.closePath();
-
-          const ptrGrad = ctx.createLinearGradient(-45, 0, 20, 0);
-          ptrGrad.addColorStop(0, "#ff3b3b"); // Vibrant red tip
-          ptrGrad.addColorStop(1, "#990000"); // Darker red back
-          ctx.fillStyle = ptrGrad;
-          ctx.fill();
-
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = "rgba(255,255,255,0.8)";
-          ctx.stroke();
-
-          // Pointer inner detail line/dot
-          ctx.beginPath();
-          ctx.arc(8, 0, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = "#ffffff";
-          ctx.shadowColor = "transparent";
-          ctx.fill();
+          this.drawPointerShape(ctx, this.pointerStyle);
 
           ctx.restore();
+        }
+
+        drawPointerPreview() {
+          if (!this.dom.pointerPreviewCanvas) return;
+          const canvas = this.dom.pointerPreviewCanvas;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save();
+          ctx.translate(canvas.width / 2 + 10, canvas.height / 2);
+          ctx.scale(0.8, 0.8);
+
+          // Add a small shadow for preview to look nice
+          ctx.shadowColor = "rgba(0,0,0,0.5)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2;
+
+          this.drawPointerShape(ctx, this.pointerStyle);
+          ctx.restore();
+        }
+
+        drawPointerShape(ctx, style) {
+          if (style === "arrow") {
+            ctx.beginPath();
+            ctx.moveTo(-40, 0);
+            ctx.lineTo(-10, -15);
+            ctx.lineTo(-10, -5);
+            ctx.lineTo(15, -5);
+            ctx.lineTo(15, 5);
+            ctx.lineTo(-10, 5);
+            ctx.lineTo(-10, 15);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(-40, 0, 15, 0);
+            grad.addColorStop(0, "#4299e1");
+            grad.addColorStop(1, "#2b6cb0");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.8)";
+            ctx.stroke();
+          } else if (style === "triangle") {
+            ctx.beginPath();
+            ctx.moveTo(-45, 0);
+            ctx.lineTo(15, -20);
+            ctx.lineTo(15, 20);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(-45, 0, 15, 0);
+            grad.addColorStop(0, "#48bb78");
+            grad.addColorStop(1, "#276749");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.8)";
+            ctx.stroke();
+          } else if (style === "diamond") {
+            ctx.beginPath();
+            ctx.moveTo(-45, 0);
+            ctx.lineTo(-5, -15);
+            ctx.lineTo(25, 0);
+            ctx.lineTo(-5, 15);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(-45, 0, 25, 0);
+            grad.addColorStop(0, "#ecc94b");
+            grad.addColorStop(1, "#b7791f");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.8)";
+            ctx.stroke();
+          } else if (style === "minimal") {
+            ctx.beginPath();
+            ctx.moveTo(-35, 0);
+            ctx.lineTo(5, -10);
+            ctx.lineTo(5, 10);
+            ctx.closePath();
+            ctx.fillStyle = "#333333";
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#ffffff";
+            ctx.stroke();
+          } else {
+            // Classic
+            ctx.beginPath();
+            ctx.moveTo(-45, 0); // Tip
+            ctx.lineTo(5, -18);
+            ctx.quadraticCurveTo(20, -18, 20, 0); // Rounded back top
+            ctx.quadraticCurveTo(20, 18, 5, 18); // Rounded back bottom
+            ctx.closePath();
+
+            const ptrGrad = ctx.createLinearGradient(-45, 0, 20, 0);
+            ptrGrad.addColorStop(0, "#ff3b3b"); // Vibrant red tip
+            ptrGrad.addColorStop(1, "#990000"); // Darker red back
+            ctx.fillStyle = ptrGrad;
+            ctx.fill();
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.8)";
+            ctx.stroke();
+
+            // Pointer inner detail line/dot
+            ctx.beginPath();
+            ctx.arc(8, 0, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowColor = "transparent";
+            ctx.fill();
+          }
         }
 
         getWinningIndex(angle) {
@@ -2921,6 +3035,7 @@
           countdownSeconds: 60,
           confettiEnabled: true,
           fontFamily: "system-ui",
+          pointerStyle: "classic",
           zoomLevel: 1.0,
         };
         appState.wheelsConfig.push(newWheel);
