@@ -39,7 +39,7 @@
 
   function textFrom(el) {
     if (!el) return "";
-    return normalizeName(el.innerText || el.textContent || "");
+    return normalizeName(el.textContent || "");
   }
 
   function collectFromSelectors(root, selectors, mapper) {
@@ -118,7 +118,12 @@
   }
 
   function scrollStep(container, amount) {
-    const delta = amount ?? Math.max(320, Math.floor((container?.clientHeight || window.innerHeight) * 0.85));
+    const delta =
+      amount ??
+      Math.max(
+        320,
+        Math.floor((container?.clientHeight || window.innerHeight) * 0.85),
+      );
     if (container) {
       container.scrollTop = Math.min(
         container.scrollTop + delta,
@@ -238,8 +243,9 @@
 
       if (clickLoadMore !== false) {
         const root =
-          (typeof loadMoreRoot === "function" ? loadMoreRoot() : loadMoreRoot) ||
-          document;
+          (typeof loadMoreRoot === "function"
+            ? loadMoreRoot()
+            : loadMoreRoot) || document;
         // undefined → use defaults; [] → click nothing
         clickLoadMoreButtons(
           root,
@@ -338,7 +344,13 @@
     };
   }
 
-  function doubleCheckHint(count, pass1Rounds, pass2Rounds, addedInCheck, noun) {
+  function doubleCheckHint(
+    count,
+    pass1Rounds,
+    pass2Rounds,
+    addedInCheck,
+    noun,
+  ) {
     const extra =
       addedInCheck > 0
         ? ` Double-check found ${addedInCheck} more.`
