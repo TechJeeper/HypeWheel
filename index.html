@@ -115,6 +115,32 @@
         opacity: 0.7;
       }
 
+      /* Compact settings form */
+      .settings-form {
+        width: 100%;
+      }
+      .settings-short-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+        gap: 0.5rem 0.75rem;
+      }
+      .settings-control {
+        width: 100%;
+        height: 2.25rem;
+        padding: 0.375rem 0.625rem;
+        border-radius: 0.5rem;
+        background-color: rgb(243 244 246);
+        color: rgb(17 24 39);
+        outline: none;
+      }
+      .dark .settings-control {
+        background-color: rgb(55 65 81);
+        color: rgb(255 255 255);
+      }
+      select.settings-control {
+        cursor: pointer;
+      }
+
       /* Horizontal scrollbar for winner text */
       .custom-scrollbar::-webkit-scrollbar,
       .horizontal-scroll::-webkit-scrollbar {
@@ -1064,15 +1090,15 @@
                     </div>
 
                     <!-- SETTINGS -->
-                    <div class="settings-panel hidden p-4 border-b border-gray-300 dark:border-gray-700 text-sm overflow-y-auto max-h-[50vh]">
-                        <div class="space-y-5">
+                    <div class="settings-panel hidden px-4 py-3 border-b border-gray-300 dark:border-gray-700 text-sm overflow-y-auto max-h-[45vh]">
+                        <div class="settings-form max-w-xl space-y-4">
                         <!-- Appearance -->
                         <section>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Appearance</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Appearance</h3>
+                            <div class="settings-short-grid">
                                 <div>
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Wheel Theme</label>
-                                    <select class="palette-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Theme</label>
+                                    <select class="palette-select settings-control">
                                         ${Object.keys(PALETTES)
                                           .map(
                                             (p) =>
@@ -1083,24 +1109,15 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Text Color</label>
-                                    <div class="flex items-center h-[42px] px-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                        <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0 bg-transparent" value="${this.customTextColor}">
-                                        <span class="ml-2 text-xs text-gray-500 dark:text-gray-400 font-mono custom-text-color-label">${this.customTextColor}</span>
-                                    </div>
-                                </div>
-                                <div class="custom-image-container sm:col-span-2 ${this.palette === "image" ? "" : "hidden"}">
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Custom Wheel Image</label>
-                                    <div class="flex rounded-lg overflow-hidden">
-                                        <span class="p-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
-                                        <input type="text" class="custom-image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${this.customImage}">
-                                        <button class="btn-custom-image-upload p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
-                                        <input type="file" class="custom-image-upload-input hidden" accept="image/*">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Color</label>
+                                    <div class="settings-control flex items-center gap-2 !px-2">
+                                        <input type="color" class="custom-text-color-input w-7 h-7 rounded cursor-pointer border-none p-0 bg-transparent shrink-0" value="${this.customTextColor}">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 font-mono custom-text-color-label truncate">${this.customTextColor}</span>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Font</label>
-                                    <select class="font-family-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <select class="font-family-select settings-control">
                                         <option value="system-ui" ${this.fontFamily === "system-ui" ? "selected" : ""}>System UI</option>
                                         <option value="Arial" ${this.fontFamily === "Arial" ? "selected" : ""}>Arial</option>
                                         <option value="Courier New" ${this.fontFamily === "Courier New" ? "selected" : ""}>Courier New</option>
@@ -1111,75 +1128,84 @@
                                 </div>
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Pointer</label>
-                                    <div class="flex items-center gap-2">
-                                        <select class="pointer-style-select flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <div class="flex items-center gap-1.5">
+                                        <select class="pointer-style-select settings-control flex-1 min-w-0">
                                             <option value="classic" ${this.pointerStyle === "classic" ? "selected" : ""}>Classic</option>
                                             <option value="arrow" ${this.pointerStyle === "arrow" ? "selected" : ""}>Arrow</option>
                                             <option value="triangle" ${this.pointerStyle === "triangle" ? "selected" : ""}>Triangle</option>
                                             <option value="diamond" ${this.pointerStyle === "diamond" ? "selected" : ""}>Diamond</option>
                                             <option value="minimal" ${this.pointerStyle === "minimal" ? "selected" : ""}>Minimal</option>
                                         </select>
-                                        <canvas class="pointer-preview-canvas w-14 h-10 shrink-0 bg-gray-100 dark:bg-gray-700 rounded-lg" width="56" height="40"></canvas>
-                                    </div>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Center Image</label>
-                                    <div class="flex rounded-lg overflow-hidden">
-                                        <span class="p-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
-                                        <input type="text" class="image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="URL or upload…" value="${escapeHTML(this.centerImage)}">
-                                        <button class="btn-image-upload p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
-                                        <input type="file" class="image-upload-input hidden" accept="image/*">
+                                        <canvas class="pointer-preview-canvas w-11 h-9 shrink-0 bg-gray-100 dark:bg-gray-700 rounded-lg" width="44" height="36"></canvas>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">List Position</label>
-                                    <select class="layout-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">List</label>
+                                    <select class="layout-select settings-control">
                                         <option value="right" ${this.layout === "right" ? "selected" : ""}>Right</option>
                                         <option value="left" ${this.layout === "left" ? "selected" : ""}>Left</option>
                                         <option value="bottom" ${this.layout === "bottom" ? "selected" : ""}>Bottom</option>
                                     </select>
                                 </div>
                                 <div class="flex items-end">
-                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 w-full cursor-pointer">
+                                    <label class="settings-control flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" class="confetti-checkbox w-4 h-4 rounded text-indigo-600" ${this.confettiEnabled ? "checked" : ""}>
                                         <span class="text-sm font-medium text-gray-900 dark:text-white">Confetti</span>
                                     </label>
+                                </div>
+                            </div>
+                            <div class="custom-image-container mt-2 ${this.palette === "image" ? "" : "hidden"}">
+                                <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Custom Wheel Image</label>
+                                <div class="flex rounded-lg overflow-hidden">
+                                    <span class="px-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
+                                    <input type="text" class="custom-image-input settings-control flex-1 rounded-none" placeholder="https://..." value="${this.customImage}">
+                                    <button class="btn-custom-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                    <input type="file" class="custom-image-upload-input hidden" accept="image/*">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Center Image</label>
+                                <div class="flex rounded-lg overflow-hidden">
+                                    <span class="px-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
+                                    <input type="text" class="image-input settings-control flex-1 rounded-none" placeholder="URL or upload…" value="${escapeHTML(this.centerImage)}">
+                                    <button class="btn-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                    <input type="file" class="image-upload-input hidden" accept="image/*">
                                 </div>
                             </div>
                         </section>
 
                         <!-- Brand Packs -->
                         <section>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Brand Packs</h3>
+                            <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Brand Packs</h3>
                             <div class="space-y-2">
                                 <div class="flex gap-2">
-                                    <select class="brand-pack-select flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <select class="brand-pack-select settings-control flex-1 min-w-0">
                                         <option value="">Select a pack…</option>
                                     </select>
-                                    <button type="button" class="btn-apply-brand-pack px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shrink-0">Apply</button>
-                                    <button type="button" class="btn-delete-brand-pack px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs shrink-0" title="Delete selected pack">Delete</button>
+                                    <button type="button" class="btn-apply-brand-pack px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shrink-0">Apply</button>
+                                    <button type="button" class="btn-delete-brand-pack px-2.5 py-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs shrink-0" title="Delete selected pack">Delete</button>
                                 </div>
                                 <div class="flex gap-2">
-                                    <input type="text" class="brand-pack-name-input flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm" placeholder="New pack name">
-                                    <button type="button" class="btn-save-brand-pack px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs shrink-0 whitespace-nowrap">Save current</button>
+                                    <input type="text" class="brand-pack-name-input settings-control flex-1 min-w-0 text-sm" placeholder="New pack name">
+                                    <button type="button" class="btn-save-brand-pack px-2.5 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs shrink-0 whitespace-nowrap">Save</button>
                                 </div>
                             </div>
                         </section>
 
                         <!-- Spin -->
                         <section>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Spin</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Spin</h3>
+                            <div class="settings-short-grid">
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Randomness</label>
-                                    <select class="randomness-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <select class="randomness-select settings-control">
                                         <option value="crypto" ${this.randomnessMode === "crypto" ? "selected" : ""}>Cryptographic</option>
                                         <option value="verifiable" ${this.randomnessMode === "verifiable" ? "selected" : ""}>Verifiable</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Speed</label>
-                                    <select class="speed-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <select class="speed-select settings-control">
                                         <option value="slow" ${this.spinSpeed === "slow" ? "selected" : ""}>Slow</option>
                                         <option value="normal" ${this.spinSpeed === "normal" ? "selected" : ""}>Normal</option>
                                         <option value="fast" ${this.spinSpeed === "fast" ? "selected" : ""}>Fast</option>
@@ -1187,16 +1213,16 @@
                                 </div>
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Duration</label>
-                                    <select class="duration-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <select class="duration-select settings-control">
                                         <option value="short" ${this.spinDuration === "short" ? "selected" : ""}>Short</option>
                                         <option value="medium" ${this.spinDuration === "medium" ? "selected" : ""}>Medium</option>
                                         <option value="long" ${this.spinDuration === "long" ? "selected" : ""}>Long</option>
                                     </select>
                                 </div>
-                                <div class="sm:col-span-3">
-                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 cursor-pointer w-full sm:w-auto sm:inline-flex">
+                                <div class="flex items-end">
+                                    <label class="settings-control flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" class="sound-checkbox w-4 h-4 rounded text-indigo-600" ${this.spinSound ? "checked" : ""}>
-                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Spin sound</span>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Sound</span>
                                     </label>
                                 </div>
                             </div>
@@ -1204,17 +1230,17 @@
 
                         <!-- Countdown -->
                         <section>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Countdown</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Countdown</h3>
+                            <div class="settings-short-grid">
                                 <div class="flex items-end">
-                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 w-full cursor-pointer">
+                                    <label class="settings-control flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox" class="countdown-checkbox w-4 h-4 rounded text-indigo-600" ${this.countdownEnabled ? "checked" : ""}>
-                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Enable timer</span>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Enable</span>
                                     </label>
                                 </div>
                                 <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Seconds</label>
-                                    <input type="number" min="1" max="3600" class="countdown-input w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" value="${this.countdownSeconds}">
+                                    <input type="number" min="1" max="3600" class="countdown-input settings-control" value="${this.countdownSeconds}">
                                 </div>
                             </div>
                         </section>
@@ -2439,7 +2465,7 @@
           ctx.save();
           // Center the tip-left pointer shapes inside the preview
           ctx.translate(canvas.width * 0.55, canvas.height / 2);
-          ctx.scale(0.55, 0.55);
+          ctx.scale(0.5, 0.5);
 
           ctx.shadowColor = "rgba(0,0,0,0.35)";
           ctx.shadowBlur = 3;
