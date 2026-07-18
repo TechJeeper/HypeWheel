@@ -431,7 +431,6 @@
     fontFamily: wheel.fontFamily || "system-ui",
     pointerStyle: wheel.pointerStyle || "classic",
     layout: wheel.layout || "right",
-    randomnessMode: wheel.randomnessMode || "crypto",
     seed: wheel.seed || "",
     centerImage: trimImage(wheel.centerImage),
     customImage: trimImage(wheel.customImage),

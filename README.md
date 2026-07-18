@@ -11,7 +11,6 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 - **Customize each wheel** — Colors, images, spin speed/duration, sound, and confetti
 - **Brand packs** — Save and reuse appearance presets across wheels
 - **Theater & OBS overlay** — Full-screen theater mode, or `?overlay=1` for a transparent Browser Source (Space = spin, R = remove, K = keep)
-- **Verifiable spins** — Optional seeded randomness with a copyable proof string
 - **Share links** — Copy a compressed `?w=` link for one or all wheels (Import/Export)
 - **Winners history** — Track past winners; copy as a formatted table or export CSV
 - **Import / export** — Back up or restore wheels, winners, brand packs, and settings as JSON
@@ -37,10 +36,6 @@ The wheel title and entries are added automatically. This is how the [Chrome ext
 
 From **Import / Export**, copy a share link (`?w=…`) for large lists, or an OBS overlay link (`?w=…&overlay=1`). Overlay mode hides chrome and uses a transparent background for Browser Source.
 
-### Verifiable randomness
-
-In wheel Settings → Spin → Randomness, choose **Verifiable (seeded)**. The seed determines the winner; after a spin you can copy a proof string and verify it later against the same entry list.
-
 ## Chrome extension
 
 Pull unique commenter names from social posts or Google Sheets and open them in HypeWheel:
@@ -55,7 +50,6 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 | Path | Description |
 |------|-------------|
 | `index.html` | Main HypeWheel web app (single-page, static) |
-| `js/fairness.js` | Seeded RNG and spin proof helpers |
 | `js/share.js` | Compress/encode share-link payloads |
 | `logo.png` | Site logo |
 | `privacy.html` | Privacy policy |

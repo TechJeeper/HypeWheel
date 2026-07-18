@@ -16,7 +16,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
-    <script src="js/fairness.js"></script>
     <script src="js/share.js"></script>
     <script>
       tailwind.config = {
@@ -433,27 +432,6 @@
                 overlay link
               </button>
             </div>
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
-              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                Verify a spin
-              </p>
-              <textarea
-                id="verify-proof-input"
-                rows="2"
-                class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono outline-none"
-                placeholder="Paste HypeWheel-Proof-v1|... string"
-              ></textarea>
-              <button
-                id="btn-verify-proof"
-                class="flex items-center justify-center w-full px-4 py-2 rounded-lg font-bold transition-all bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
-              >
-                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i> Verify
-              </button>
-              <p
-                id="verify-proof-result"
-                class="text-xs text-gray-500 dark:text-gray-400 hidden"
-              ></p>
-            </div>
           </div>
         </div>
       </div>
@@ -832,7 +810,6 @@
         pointerStyle: "classic",
         layout: "right",
         zoomLevel: 1.0,
-        randomnessMode: "crypto",
         ...overrides,
       });
 
@@ -974,8 +951,6 @@
           this.seed = config.seed || generateSeed();
           this.layout = config.layout || "right";
           this.zoomLevel = config.zoomLevel || 1.0;
-          this.randomnessMode = config.randomnessMode || "crypto";
-          this.lastProof = null;
 
           this.entries = this.parseEntries(this.rawText);
           this.isSpinning = false;
@@ -1039,7 +1014,6 @@
             conf.seed = this.seed;
             conf.layout = this.layout;
             conf.zoomLevel = this.zoomLevel;
-            conf.randomnessMode = this.randomnessMode;
             localStorage.setItem(
               "wheelsData",
               JSON.stringify(appState.wheelsConfig),
@@ -1197,13 +1171,6 @@
                             <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Spin</h3>
                             <div class="settings-short-grid">
                                 <div>
-                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Randomness</label>
-                                    <select class="randomness-select settings-control">
-                                        <option value="crypto" ${this.randomnessMode === "crypto" ? "selected" : ""}>Cryptographic</option>
-                                        <option value="verifiable" ${this.randomnessMode === "verifiable" ? "selected" : ""}>Verifiable</option>
-                                    </select>
-                                </div>
-                                <div>
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Speed</label>
                                     <select class="speed-select settings-control">
                                         <option value="slow" ${this.spinSpeed === "slow" ? "selected" : ""}>Slow</option>
@@ -1253,16 +1220,13 @@
                         <div class="canvas-container flex-1 relative flex flex-col items-center justify-center p-2 md:p-4 min-h-[300px]">
                             <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono group relative seed-badge">
                                 <span>Seed:</span>
-                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-24 text-center" value="${this.seed}" ${this.randomnessMode === "verifiable" ? "" : "readonly"}>
-                                <button type="button" class="btn-new-seed text-white/70 hover:text-white transition-colors" title="New seed"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-24 text-center" value="${this.seed}" readonly>
                                 <div class="relative flex items-center">
                                     <button class="text-white/70 hover:text-white transition-colors" title="About Randomness">
                                         <i data-lucide="help-circle" class="w-4 h-4"></i>
                                     </button>
                                     <div class="seed-tooltip absolute left-full ml-2 w-56 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[100]">
-                                        ${this.randomnessMode === "verifiable"
-                                          ? "Verifiable mode: this seed determines the winner. Share the proof after a spin so others can verify."
-                                          : "Cryptographic mode: spins use browser crypto randomness. This ID refreshes after each random action and cannot reproduce results."}
+                                        Spins use browser cryptographic randomness. This ID refreshes after each random action and cannot reproduce results.
                                     </div>
                                 </div>
                             </div>
@@ -1282,11 +1246,6 @@
                                     <h2 class="text-yellow-300 text-xl font-bold uppercase tracking-widest mb-2">Winner!</h2>
                                     <p class="winner-text text-white text-4xl md:text-5xl font-extrabold drop-shadow-lg mb-6 break-words max-h-[50vh] overflow-y-auto pb-2 custom-scrollbar"></p>
                                     <div class="countdown-display hidden text-white text-3xl font-mono font-bold mt-2 mb-6"></div>
-                                    <div class="proof-panel hidden text-left bg-black/30 rounded-xl p-3 mb-4 text-xs text-white/90 space-y-2">
-                                        <p class="font-bold text-yellow-200">Spin proof</p>
-                                        <p class="proof-summary font-mono break-all"></p>
-                                        <button type="button" class="btn-copy-proof w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 font-bold">Copy proof</button>
-                                    </div>
                                     <div class="flex flex-col md:flex-row gap-3">
                                         <button class="btn-remove-winner bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold transition-colors w-full md:w-auto shadow-lg flex-1">Remove Name</button>
                                         <button class="btn-keep-winner bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold transition-colors w-full md:w-auto flex-1">Keep Name</button>
@@ -1365,7 +1324,6 @@
             imageUploadInput: wrapper.querySelector(".image-upload-input"),
             speedSelect: wrapper.querySelector(".speed-select"),
             durationSelect: wrapper.querySelector(".duration-select"),
-            randomnessSelect: wrapper.querySelector(".randomness-select"),
             soundCheckbox: wrapper.querySelector(".sound-checkbox"),
             countdownCheckbox: wrapper.querySelector(".countdown-checkbox"),
             confettiCheckbox: wrapper.querySelector(".confetti-checkbox"),
@@ -1374,13 +1332,9 @@
             canvas: wrapper.querySelector(".wheel-canvas"),
             seedInput: wrapper.querySelector(".seed-input"),
             seedTooltip: wrapper.querySelector(".seed-tooltip"),
-            btnNewSeed: wrapper.querySelector(".btn-new-seed"),
             winnerOverlay: wrapper.querySelector(".winner-overlay"),
             winnerText: wrapper.querySelector(".winner-text"),
             countdownDisplay: wrapper.querySelector(".countdown-display"),
-            proofPanel: wrapper.querySelector(".proof-panel"),
-            proofSummary: wrapper.querySelector(".proof-summary"),
-            btnCopyProof: wrapper.querySelector(".btn-copy-proof"),
             btnRemoveWinner: wrapper.querySelector(".btn-remove-winner"),
             btnKeepWinner: wrapper.querySelector(".btn-keep-winner"),
             brandPackSelect: wrapper.querySelector(".brand-pack-select"),
@@ -1424,7 +1378,6 @@
 
           lucide.createIcons({ root: wrapper });
           this.refreshBrandPackSelect();
-          this.updateSeedUI();
           this.updateUIState();
         }
 
@@ -1497,19 +1450,6 @@
           this.drawPointerPreview();
         }
 
-        updateSeedUI() {
-          const verifiable = this.randomnessMode === "verifiable";
-          this.dom.seedInput.readOnly = !verifiable;
-          if (this.dom.seedTooltip) {
-            this.dom.seedTooltip.textContent = verifiable
-              ? "Verifiable mode: this seed determines the winner. Share the proof after a spin so others can verify."
-              : "Cryptographic mode: spins use browser crypto randomness. This ID refreshes after each random action and cannot reproduce results.";
-          }
-          if (this.dom.randomnessSelect) {
-            this.dom.randomnessSelect.value = this.randomnessMode;
-          }
-        }
-
         bindEvents() {
           this.dom.titleInput.addEventListener("input", (e) => {
             this.title = e.target.value;
@@ -1558,32 +1498,6 @@
           // Initial preview render
           this.drawPointerPreview();
 
-          if (this.dom.randomnessSelect) {
-            this.dom.randomnessSelect.addEventListener("change", (e) => {
-              this.randomnessMode = e.target.value;
-              this.updateSeedUI();
-              this.saveConfig();
-            });
-          }
-
-          this.dom.btnNewSeed.addEventListener("click", () => {
-            this.seed = generateSeed();
-            this.dom.seedInput.value = this.seed;
-            this.saveConfig();
-            showToast("New seed generated", "success");
-          });
-
-          this.dom.seedInput.addEventListener("change", (e) => {
-            if (this.randomnessMode !== "verifiable") return;
-            const cleaned = e.target.value
-              .replace(/[^0-9a-f]/gi, "")
-              .toUpperCase()
-              .slice(0, 8);
-            this.seed = cleaned || generateSeed();
-            this.dom.seedInput.value = this.seed;
-            this.saveConfig();
-          });
-
           this.dom.btnApplyBrandPack.addEventListener("click", () => {
             const id = this.dom.brandPackSelect.value;
             const pack = (appState.brandPacks || []).find((p) => p.id === id);
@@ -1627,16 +1541,6 @@
             saveBrandPacks();
             wheelInstances.forEach((w) => w.refreshBrandPackSelect());
             showToast("Brand pack deleted", "success");
-          });
-
-          this.dom.btnCopyProof.addEventListener("click", async () => {
-            if (!this.lastProof) return;
-            try {
-              await navigator.clipboard.writeText(this.lastProof);
-              showToast("Proof copied", "success");
-            } catch {
-              showToast("Could not copy proof", "error");
-            }
           });
 
           this.dom.layoutSelect.addEventListener("change", (e) => {
@@ -1966,10 +1870,8 @@
           this.rawText = this.entries.join("\n");
           this.dom.entriesInput.value = this.rawText;
 
-          if (this.randomnessMode !== "verifiable") {
-            this.seed = generateSeed();
-            this.dom.seedInput.value = this.seed;
-          }
+          this.seed = generateSeed();
+          this.dom.seedInput.value = this.seed;
         }
 
         shuffle() {
@@ -2586,61 +2488,34 @@
           const wheelEntries = this.getWheelEntries();
           const sliceAngle = (2 * Math.PI) / wheelEntries.length;
 
-          let duration;
-          let winningIndex;
-          let extraSpins;
-          const useVerifiable =
-            this.randomnessMode === "verifiable" &&
-            typeof HypeFairness !== "undefined";
-
-          if (useVerifiable) {
-            const params = HypeFairness.getSpinParams(
-              this.seed,
-              this.entries.length,
-              speedStr,
-              durationStr,
-            );
-            const winnerName = this.entries[params.winningIndex];
-            winningIndex = wheelEntries.indexOf(winnerName);
-            if (winningIndex < 0) winningIndex = params.winningIndex % wheelEntries.length;
-            duration = params.duration;
-            extraSpins = params.extraSpins;
-            this.lastProof = HypeFairness.formatProofString({
-              seed: this.seed,
-              entriesHash: HypeFairness.hashEntries(this.entries),
-              winner: winnerName,
-              entryCount: this.entries.length,
-            });
-          } else {
-            let minSpins = 5;
-            let maxSpinsRange = 5;
-            if (speedStr === "slow") {
-              minSpins = 3;
-              maxSpinsRange = 3;
-            } else if (speedStr === "fast") {
-              minSpins = 8;
-              maxSpinsRange = 4;
-            }
-
-            let minDuration = 10000;
-            let maxDurationRange = 4000;
-            if (durationStr === "short") {
-              minDuration = 4000;
-              maxDurationRange = 2000;
-            } else if (durationStr === "long") {
-              minDuration = 16000;
-              maxDurationRange = 6000;
-            }
-
-            duration = minDuration + getSecureRandomFloat() * maxDurationRange;
-            winningIndex = getSecureRandomInt(wheelEntries.length);
-            extraSpins = minSpins + getSecureRandomInt(maxSpinsRange);
-            this.lastProof = null;
-
-            this.seed = generateSeed();
-            this.dom.seedInput.value = this.seed;
-            this.saveConfig();
+          let minSpins = 5;
+          let maxSpinsRange = 5;
+          if (speedStr === "slow") {
+            minSpins = 3;
+            maxSpinsRange = 3;
+          } else if (speedStr === "fast") {
+            minSpins = 8;
+            maxSpinsRange = 4;
           }
+
+          let minDuration = 10000;
+          let maxDurationRange = 4000;
+          if (durationStr === "short") {
+            minDuration = 4000;
+            maxDurationRange = 2000;
+          } else if (durationStr === "long") {
+            minDuration = 16000;
+            maxDurationRange = 6000;
+          }
+
+          const duration =
+            minDuration + getSecureRandomFloat() * maxDurationRange;
+          const winningIndex = getSecureRandomInt(wheelEntries.length);
+          const extraSpins = minSpins + getSecureRandomInt(maxSpinsRange);
+
+          this.seed = generateSeed();
+          this.dom.seedInput.value = this.seed;
+          this.saveConfig();
 
           const targetNormalizedAngle =
             2 * Math.PI - (winningIndex + 0.5) * sliceAngle;
@@ -2698,13 +2573,6 @@
           this.dom.winnerOverlay.style.display = "flex";
           void this.dom.winnerOverlay.offsetWidth;
           this.dom.winnerOverlay.classList.remove("opacity-0");
-
-          if (this.lastProof && this.dom.proofPanel) {
-            this.dom.proofPanel.classList.remove("hidden");
-            this.dom.proofSummary.textContent = this.lastProof;
-          } else if (this.dom.proofPanel) {
-            this.dom.proofPanel.classList.add("hidden");
-          }
 
           if (this.confettiEnabled && typeof confetti !== "undefined") {
             confetti({
@@ -3622,39 +3490,6 @@
           const conf = getActiveWheelConfig();
           if (!conf) return;
           copyShareLink([conf], { overlay: true });
-        });
-
-      document
-        .getElementById("btn-verify-proof")
-        .addEventListener("click", () => {
-          const raw = document.getElementById("verify-proof-input").value;
-          const resultEl = document.getElementById("verify-proof-result");
-          resultEl.classList.remove("hidden");
-          if (typeof HypeFairness === "undefined") {
-            resultEl.textContent = "Fairness helper unavailable.";
-            return;
-          }
-          const parsed = HypeFairness.parseProofString(raw);
-          if (!parsed) {
-            resultEl.textContent = "Invalid proof string.";
-            return;
-          }
-          const conf = getActiveWheelConfig();
-          const entries = (conf.rawText || "")
-            .split("\n")
-            .map((e) => e.trim())
-            .filter((e) => e !== "");
-          const hashNow = HypeFairness.hashEntries(entries);
-          if (hashNow !== parsed.entriesHash) {
-            resultEl.textContent = `Entries hash mismatch (proof ${parsed.entriesHash}, current ${hashNow}). Load the same list to verify.`;
-            return;
-          }
-          const verified = HypeFairness.verifySpin(
-            parsed.seed,
-            entries,
-            parsed.winner,
-          );
-          resultEl.textContent = verified.message;
         });
 
       document
