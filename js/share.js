@@ -5,7 +5,7 @@
 (function (global) {
   "use strict";
 
-  const IMAGE_BUDGET = 8000; // omit data-URL images above this to keep links short
+  const IMAGE_BUDGET = 18000; // max data-URL length after shrink
 
   // Minimal LZ-String compressToEncodedURIComponent / decompressFromEncodedURIComponent
   // Adapted from pieroxy/lz-string (MIT)
@@ -410,6 +410,63 @@
     }
   };
 
+  const loadImage = (src) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("image load failed"));
+      img.src = src;
+    });
+
+  /**
+   * Keep http(s) URLs as-is. Shrink large data: URLs to JPEG so they fit in share links.
+   * Returns { value, shrunk, omitted }.
+   */
+  const prepareImageForShare = async (value, maxPx = 150) => {
+    if (!value || typeof value !== "string") {
+      return { value: "", shrunk: false, omitted: false };
+    }
+    if (!value.startsWith("data:")) {
+      return { value, shrunk: false, omitted: false };
+    }
+    // Compress any non-trivial data URL so center/custom images survive share links
+    if (value.length <= 4000) {
+      return { value, shrunk: false, omitted: false };
+    }
+
+    try {
+      const img = await loadImage(value);
+      const sizes = [maxPx, Math.round(maxPx * 0.7), Math.round(maxPx * 0.5)];
+      const qualities = [0.72, 0.6, 0.5];
+
+      for (const size of sizes) {
+        for (const quality of qualities) {
+          const scale = Math.min(1, size / Math.max(img.width, img.height, 1));
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          // White background so JPEG doesn't turn transparent areas black
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const out = canvas.toDataURL("image/jpeg", quality);
+          if (out.length <= IMAGE_BUDGET) {
+            return { value: out, shrunk: true, omitted: false };
+          }
+        }
+      }
+    } catch {
+      /* fall through */
+    }
+    if (value.length <= IMAGE_BUDGET) {
+      return { value, shrunk: false, omitted: false };
+    }
+    return { value: "", shrunk: false, omitted: true };
+  };
+
   const trimImage = (value) => {
     if (!value || typeof value !== "string") return "";
     if (value.startsWith("data:") && value.length > IMAGE_BUDGET) return "";
@@ -435,6 +492,24 @@
     centerImage: trimImage(wheel.centerImage),
     customImage: trimImage(wheel.customImage),
   });
+
+  const wheelToShareableAsync = async (wheel) => {
+    const center = await prepareImageForShare(wheel.centerImage, 150);
+    const custom = await prepareImageForShare(wheel.customImage, 360);
+    return {
+      shareable: {
+        ...wheelToShareable({
+          ...wheel,
+          centerImage: "",
+          customImage: "",
+        }),
+        centerImage: center.value,
+        customImage: custom.value,
+      },
+      shrunkImages: center.shrunk || custom.shrunk,
+      omittedImages: center.omitted || custom.omitted,
+    };
+  };
 
   const encodePayload = (payload) => {
     const json = JSON.stringify(payload);
@@ -464,17 +539,43 @@
     url.hash = "";
     url.searchParams.set("w", encoded);
     if (options.overlay) url.searchParams.set("overlay", "1");
-    return { url: url.toString(), omittedImages: payload.wheels.some(
-      (w, i) =>
-        (wheels[i].centerImage && !w.centerImage) ||
-        (wheels[i].customImage && !w.customImage),
-    ) };
+    return {
+      url: url.toString(),
+      omittedImages: payload.wheels.some(
+        (w, i) =>
+          (wheels[i].centerImage && !w.centerImage) ||
+          (wheels[i].customImage && !w.customImage),
+      ),
+      shrunkImages: false,
+    };
+  };
+
+  const buildShareUrlAsync = async (baseUrl, wheels, options = {}) => {
+    const prepared = await Promise.all(
+      (wheels || []).map((w) => wheelToShareableAsync(w)),
+    );
+    const payload = {
+      v: 1,
+      wheels: prepared.map((p) => p.shareable),
+    };
+    const encoded = encodePayload(payload);
+    const url = new URL(baseUrl);
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("w", encoded);
+    if (options.overlay) url.searchParams.set("overlay", "1");
+    return {
+      url: url.toString(),
+      omittedImages: prepared.some((p) => p.omittedImages),
+      shrunkImages: prepared.some((p) => p.shrunkImages),
+    };
   };
 
   global.HypeShare = {
     encodePayload,
     decodePayload,
     buildShareUrl,
+    buildShareUrlAsync,
     wheelToShareable,
     compressToEncodedURIComponent,
     decompressFromEncodedURIComponent,

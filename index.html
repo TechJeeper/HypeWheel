@@ -1601,21 +1601,20 @@
             showToast("Share helper unavailable", "error");
             return;
           }
-          const { url, omittedImages } = HypeShare.buildShareUrl(
-            window.location.origin + window.location.pathname,
-            [this.getSerializableConfig()],
-            options,
-          );
           try {
+            const { url, omittedImages, shrunkImages } =
+              await HypeShare.buildShareUrlAsync(
+                window.location.origin + window.location.pathname,
+                [this.getSerializableConfig()],
+                options,
+              );
             await navigator.clipboard.writeText(url);
-            showToast(
-              omittedImages
-                ? "Link copied (large images omitted)"
-                : options.overlay
-                  ? "OBS overlay link copied!"
-                  : "Share link copied!",
-              "success",
-            );
+            let msg = options.overlay
+              ? "OBS overlay link copied!"
+              : "Share link copied!";
+            if (omittedImages) msg = "Link copied (some images too large to include)";
+            else if (shrunkImages) msg = "Link copied (images compressed for sharing)";
+            showToast(msg, omittedImages ? "error" : "success");
           } catch {
             showToast("Could not copy link", "error");
           }
@@ -3729,19 +3728,22 @@
           showToast("Share helper unavailable", "error");
           return;
         }
-        const { url, omittedImages } = HypeShare.buildShareUrl(
-          window.location.origin + window.location.pathname,
-          wheels,
-          options,
-        );
         try {
+          const { url, omittedImages, shrunkImages } =
+            await HypeShare.buildShareUrlAsync(
+              window.location.origin + window.location.pathname,
+              wheels,
+              options,
+            );
           await navigator.clipboard.writeText(url);
-          showToast(
-            omittedImages
-              ? "Link copied (large images omitted)"
-              : "Share link copied!",
-            "success",
-          );
+          let msg = options.overlay
+            ? "OBS overlay link copied!"
+            : "Share link copied!";
+          if (omittedImages)
+            msg = "Link copied (some images too large to include)";
+          else if (shrunkImages)
+            msg = "Link copied (images compressed for sharing)";
+          showToast(msg, omittedImages ? "error" : "success");
         } catch {
           showToast("Could not copy link", "error");
         }
