@@ -114,13 +114,27 @@
         opacity: 0.7;
       }
 
-      /* Compact settings form */
-      .settings-form {
-        width: 100%;
+      /* Settings fill available width: appearance + side column */
+      .settings-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem 1.5rem;
+        align-items: start;
+      }
+      .settings-side {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 0;
+      }
+      @media (min-width: 800px) {
+        .settings-layout {
+          grid-template-columns: minmax(0, 1.75fr) minmax(15rem, 1fr);
+        }
       }
       .settings-short-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
         gap: 0.5rem 0.75rem;
       }
       .settings-control {
@@ -1064,8 +1078,8 @@
                     </div>
 
                     <!-- SETTINGS -->
-                    <div class="settings-panel hidden px-4 py-3 border-b border-gray-300 dark:border-gray-700 text-sm overflow-y-auto max-h-[45vh]">
-                        <div class="settings-form max-w-xl space-y-4">
+                    <div class="settings-panel hidden px-4 py-3 border-b border-gray-300 dark:border-gray-700 text-sm overflow-y-auto max-h-[42vh]">
+                        <div class="settings-layout">
                         <!-- Appearance -->
                         <section>
                             <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Appearance</h3>
@@ -1148,6 +1162,7 @@
                             </div>
                         </section>
 
+                        <div class="settings-side">
                         <!-- Brand Packs -->
                         <section>
                             <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Brand Packs</h3>
@@ -1211,6 +1226,7 @@
                                 </div>
                             </div>
                         </section>
+                        </div>
                         </div>
                     </div>
 
