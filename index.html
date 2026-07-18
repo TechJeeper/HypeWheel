@@ -210,6 +210,17 @@
       .settings-countdown-row .countdown-seconds-field {
         width: 7rem;
       }
+      .settings-spin-countdown {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem 1.5rem;
+        align-items: start;
+      }
+      @media (min-width: 640px) {
+        .settings-spin-countdown {
+          grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        }
+      }
 
       /* Horizontal scrollbar for winner text */
       .custom-scrollbar::-webkit-scrollbar,
@@ -1218,49 +1229,49 @@
                                 </div>
                             </div>
 
-                            <!-- Spin -->
-                            <div class="mt-3">
-                                <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Spin</h3>
-                                <div class="settings-short-grid">
-                                    <div>
-                                        <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Speed</label>
-                                        <select class="speed-select settings-control">
-                                            <option value="slow" ${this.spinSpeed === "slow" ? "selected" : ""}>Slow</option>
-                                            <option value="normal" ${this.spinSpeed === "normal" ? "selected" : ""}>Normal</option>
-                                            <option value="fast" ${this.spinSpeed === "fast" ? "selected" : ""}>Fast</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Duration</label>
-                                        <select class="duration-select settings-control">
-                                            <option value="short" ${this.spinDuration === "short" ? "selected" : ""}>Short</option>
-                                            <option value="medium" ${this.spinDuration === "medium" ? "selected" : ""}>Medium</option>
-                                            <option value="long" ${this.spinDuration === "long" ? "selected" : ""}>Long</option>
-                                        </select>
-                                    </div>
-                                    <div class="flex items-end">
-                                        <label class="settings-control flex items-center gap-2 cursor-pointer">
-                                            <input type="checkbox" class="sound-checkbox w-4 h-4 rounded text-indigo-600" ${this.spinSound ? "checked" : ""}>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Sound</span>
-                                        </label>
+                            <!-- Spin + Countdown -->
+                            <div class="mt-3 settings-spin-countdown">
+                                <div>
+                                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Spin</h3>
+                                    <div class="settings-short-grid">
+                                        <div>
+                                            <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Speed</label>
+                                            <select class="speed-select settings-control">
+                                                <option value="slow" ${this.spinSpeed === "slow" ? "selected" : ""}>Slow</option>
+                                                <option value="normal" ${this.spinSpeed === "normal" ? "selected" : ""}>Normal</option>
+                                                <option value="fast" ${this.spinSpeed === "fast" ? "selected" : ""}>Fast</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Duration</label>
+                                            <select class="duration-select settings-control">
+                                                <option value="short" ${this.spinDuration === "short" ? "selected" : ""}>Short</option>
+                                                <option value="medium" ${this.spinDuration === "medium" ? "selected" : ""}>Medium</option>
+                                                <option value="long" ${this.spinDuration === "long" ? "selected" : ""}>Long</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-end">
+                                            <label class="settings-control flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox w-4 h-4 rounded text-indigo-600" ${this.spinSound ? "checked" : ""}>
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white">Sound</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Countdown -->
-                            <div class="mt-3">
-                                <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Countdown</h3>
-                                <div class="settings-countdown-row">
-                                    <div>
-                                        <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Enabled</label>
-                                        <label class="settings-switch">
-                                            <input type="checkbox" class="countdown-checkbox" ${this.countdownEnabled ? "checked" : ""}>
-                                            <span class="settings-switch-track" aria-hidden="true"></span>
-                                        </label>
-                                    </div>
-                                    <div class="countdown-seconds-field">
-                                        <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Seconds</label>
-                                        <input type="number" min="1" max="3600" class="countdown-input settings-control" value="${this.countdownSeconds}">
+                                <div>
+                                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Countdown</h3>
+                                    <div class="settings-countdown-row">
+                                        <div>
+                                            <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Enabled</label>
+                                            <label class="settings-switch">
+                                                <input type="checkbox" class="countdown-checkbox" ${this.countdownEnabled ? "checked" : ""}>
+                                                <span class="settings-switch-track" aria-hidden="true"></span>
+                                            </label>
+                                        </div>
+                                        <div class="countdown-seconds-field">
+                                            <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Seconds</label>
+                                            <input type="number" min="1" max="3600" class="countdown-input settings-control" value="${this.countdownSeconds}">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
