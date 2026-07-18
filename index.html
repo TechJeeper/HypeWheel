@@ -1284,6 +1284,18 @@
                                 </div>
                             </div>
                         </section>
+
+                        <!-- Import / Export / Share -->
+                        <section>
+                            <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Import / Export / Share</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="btn-export-wheel px-2.5 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs">Export</button>
+                                <button type="button" class="btn-import-wheel px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs">Import</button>
+                                <button type="button" class="btn-share-wheel px-2.5 py-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs text-gray-900 dark:text-white">Share link</button>
+                                <button type="button" class="btn-share-overlay-wheel px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs">OBS link</button>
+                                <input type="file" class="wheel-import-input hidden" accept=".json,application/json">
+                            </div>
+                        </section>
                         </div>
                         </div>
                     </div>
@@ -1416,6 +1428,13 @@
             btnApplyBrandPack: wrapper.querySelector(".btn-apply-brand-pack"),
             btnSaveBrandPack: wrapper.querySelector(".btn-save-brand-pack"),
             btnDeleteBrandPack: wrapper.querySelector(".btn-delete-brand-pack"),
+            btnExportWheel: wrapper.querySelector(".btn-export-wheel"),
+            btnImportWheel: wrapper.querySelector(".btn-import-wheel"),
+            btnShareWheel: wrapper.querySelector(".btn-share-wheel"),
+            btnShareOverlayWheel: wrapper.querySelector(
+              ".btn-share-overlay-wheel",
+            ),
+            wheelImportInput: wrapper.querySelector(".wheel-import-input"),
             entriesCount: wrapper.querySelector(".entries-count"),
             btnAIList: wrapper.querySelector(".btn-ai-list"),
             btnSort: wrapper.querySelector(".btn-sort"),
@@ -1524,6 +1543,162 @@
           this.drawPointerPreview();
         }
 
+        getSerializableConfig() {
+          return {
+            id: this.id,
+            title: this.title,
+            rawText: this.rawText,
+            palette: this.palette,
+            seed: this.seed,
+            centerImage: this.centerImage,
+            customImage: this.customImage,
+            customTextColor: this.customTextColor,
+            spinSpeed: this.spinSpeed,
+            spinDuration: this.spinDuration,
+            spinSound: this.spinSound,
+            countdownEnabled: this.countdownEnabled,
+            countdownSeconds: this.countdownSeconds,
+            confettiEnabled: this.confettiEnabled,
+            fontFamily: this.fontFamily,
+            pointerStyle: this.pointerStyle,
+            layout: this.layout,
+            zoomLevel: this.zoomLevel,
+          };
+        }
+
+        exportWheelJson() {
+          const data = {
+            v: 1,
+            wheel: this.getSerializableConfig(),
+          };
+          const safeName = (this.title || "wheel")
+            .replace(/[^\w\-]+/g, "_")
+            .slice(0, 40);
+          const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json",
+          });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `hypewheel_${safeName || "wheel"}.json`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          showToast("Wheel exported!", "success");
+        }
+
+        async shareWheelLink(options = {}) {
+          if (typeof HypeShare === "undefined") {
+            showToast("Share helper unavailable", "error");
+            return;
+          }
+          const { url, omittedImages } = HypeShare.buildShareUrl(
+            window.location.origin + window.location.pathname,
+            [this.getSerializableConfig()],
+            options,
+          );
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast(
+              omittedImages
+                ? "Link copied (large images omitted)"
+                : options.overlay
+                  ? "OBS overlay link copied!"
+                  : "Share link copied!",
+              "success",
+            );
+          } catch {
+            showToast("Could not copy link", "error");
+          }
+        }
+
+        applyImportedWheel(data) {
+          let wheel = null;
+          if (!data || typeof data !== "object") {
+            throw new Error("Invalid file");
+          }
+          if (data.wheel && typeof data.wheel === "object") {
+            wheel = data.wheel;
+          } else if (Array.isArray(data.wheelsData) && data.wheelsData[0]) {
+            wheel = data.wheelsData[0];
+          } else if (data.title !== undefined || data.rawText !== undefined) {
+            wheel = data;
+          } else {
+            throw new Error("No wheel data found");
+          }
+
+          this.title = wheel.title !== undefined ? wheel.title : this.title;
+          this.rawText =
+            wheel.rawText !== undefined ? wheel.rawText : this.rawText;
+          this.palette = wheel.palette || this.palette;
+          this.centerImage =
+            wheel.centerImage !== undefined
+              ? wheel.centerImage
+              : this.centerImage;
+          this.customImage =
+            wheel.customImage !== undefined
+              ? wheel.customImage
+              : this.customImage;
+          this.customTextColor = wheel.customTextColor || this.customTextColor;
+          this.spinSpeed = wheel.spinSpeed || this.spinSpeed;
+          this.spinDuration = wheel.spinDuration || this.spinDuration;
+          this.spinSound =
+            wheel.spinSound !== undefined ? wheel.spinSound : this.spinSound;
+          this.countdownEnabled =
+            wheel.countdownEnabled !== undefined
+              ? wheel.countdownEnabled
+              : this.countdownEnabled;
+          this.countdownSeconds =
+            wheel.countdownSeconds !== undefined
+              ? wheel.countdownSeconds
+              : this.countdownSeconds;
+          this.confettiEnabled =
+            wheel.confettiEnabled !== undefined
+              ? wheel.confettiEnabled
+              : this.confettiEnabled;
+          this.fontFamily = wheel.fontFamily || this.fontFamily;
+          this.pointerStyle = wheel.pointerStyle || this.pointerStyle;
+          this.layout = wheel.layout || this.layout;
+          this.zoomLevel =
+            wheel.zoomLevel !== undefined ? wheel.zoomLevel : this.zoomLevel;
+          if (wheel.seed) this.seed = wheel.seed;
+
+          this.entries = this.parseEntries(this.rawText);
+
+          this.dom.titleInput.value = this.title;
+          this.dom.entriesInput.value = this.rawText;
+          this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+          this.dom.paletteSelect.value = this.palette;
+          this.dom.pointerStyleSelect.value = this.pointerStyle;
+          this.dom.fontFamilySelect.value = this.fontFamily;
+          this.dom.customTextColorInput.value = this.customTextColor;
+          const colorLabel = this.dom.wrapper.querySelector(
+            ".custom-text-color-label",
+          );
+          if (colorLabel) colorLabel.textContent = this.customTextColor;
+          this.dom.imageInput.value = this.centerImage || "";
+          this.dom.customImageInput.value = this.customImage || "";
+          this.dom.confettiCheckbox.checked = this.confettiEnabled;
+          this.dom.speedSelect.value = this.spinSpeed;
+          this.dom.durationSelect.value = this.spinDuration;
+          this.dom.soundCheckbox.checked = this.spinSound;
+          this.dom.countdownCheckbox.checked = this.countdownEnabled;
+          this.dom.countdownInput.value = this.countdownSeconds;
+          this.dom.layoutSelect.value = this.layout;
+          this.dom.seedInput.value = this.seed;
+          this.dom.zoomDisplay.innerText = `${Math.round(this.zoomLevel * 100)}%`;
+          if (this.palette === "image") {
+            this.dom.customImageContainer.classList.remove("hidden");
+          } else {
+            this.dom.customImageContainer.classList.add("hidden");
+          }
+
+          this.saveConfig();
+          this.applyLayout();
+          this.drawPointerPreview();
+          this.handleResize();
+          this.updateUIState();
+          showToast("Wheel imported!", "success");
+        }
+
         bindEvents() {
           this.dom.titleInput.addEventListener("input", (e) => {
             this.title = e.target.value;
@@ -1615,6 +1790,34 @@
             saveBrandPacks();
             wheelInstances.forEach((w) => w.refreshBrandPackSelect());
             showToast("Brand pack deleted", "success");
+          });
+
+          this.dom.btnExportWheel.addEventListener("click", () =>
+            this.exportWheelJson(),
+          );
+          this.dom.btnImportWheel.addEventListener("click", () =>
+            this.dom.wheelImportInput.click(),
+          );
+          this.dom.btnShareWheel.addEventListener("click", () =>
+            this.shareWheelLink(),
+          );
+          this.dom.btnShareOverlayWheel.addEventListener("click", () =>
+            this.shareWheelLink({ overlay: true }),
+          );
+          this.dom.wheelImportInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              try {
+                const data = JSON.parse(event.target.result);
+                this.applyImportedWheel(data);
+              } catch {
+                showToast("Failed to import wheel file.", "error");
+              }
+            };
+            reader.readAsText(file);
+            e.target.value = "";
           });
 
           this.dom.layoutSelect.addEventListener("change", (e) => {
