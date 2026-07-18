@@ -134,8 +134,8 @@
       }
       .settings-short-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-        gap: 0.5rem 0.75rem;
+        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        gap: 0.75rem 1rem;
       }
       .settings-control {
         width: 100%;
@@ -152,6 +152,63 @@
       }
       select.settings-control {
         cursor: pointer;
+      }
+      .settings-switch {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        height: 2.25rem;
+        cursor: pointer;
+        user-select: none;
+      }
+      .settings-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .settings-switch-track {
+        width: 2.75rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        background-color: rgb(156 163 175);
+        transition: background-color 0.2s ease;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .dark .settings-switch-track {
+        background-color: rgb(75 85 99);
+      }
+      .settings-switch-track::after {
+        content: "";
+        position: absolute;
+        top: 0.15rem;
+        left: 0.15rem;
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 9999px;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: transform 0.2s ease;
+      }
+      .settings-switch input:checked + .settings-switch-track {
+        background-color: rgb(79 70 229);
+      }
+      .settings-switch input:checked + .settings-switch-track::after {
+        transform: translateX(1.25rem);
+      }
+      .settings-switch input:focus-visible + .settings-switch-track {
+        outline: 2px solid rgb(129 140 248);
+        outline-offset: 2px;
+      }
+      .settings-countdown-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 1rem 1.25rem;
+      }
+      .settings-countdown-row .countdown-seconds-field {
+        width: 7rem;
       }
 
       /* Horizontal scrollbar for winner text */
@@ -1213,14 +1270,15 @@
                         <!-- Countdown -->
                         <section>
                             <h3 class="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Countdown</h3>
-                            <div class="settings-short-grid">
-                                <div class="flex items-end">
-                                    <label class="settings-control flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" class="countdown-checkbox w-4 h-4 rounded text-indigo-600" ${this.countdownEnabled ? "checked" : ""}>
-                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Enable</span>
+                            <div class="settings-countdown-row">
+                                <div>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Enabled</label>
+                                    <label class="settings-switch">
+                                        <input type="checkbox" class="countdown-checkbox" ${this.countdownEnabled ? "checked" : ""}>
+                                        <span class="settings-switch-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
-                                <div>
+                                <div class="countdown-seconds-field">
                                     <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Seconds</label>
                                     <input type="number" min="1" max="3600" class="countdown-input settings-control" value="${this.countdownSeconds}">
                                 </div>
