@@ -16,6 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
+    <script src="js/fairness.js"></script>
+    <script src="js/share.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -58,6 +60,59 @@
       }
       .theater-mode .shuffle-grid {
         grid-template-columns: minmax(0, 1fr);
+      }
+
+      /* OBS / presenter overlay */
+      html.overlay-mode,
+      html.overlay-mode body {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+      html.overlay-mode #navbar,
+      html.overlay-mode #main-footer,
+      html.overlay-mode #toast-container {
+        display: none !important;
+      }
+      html.overlay-mode #workspace {
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: 100vh;
+      }
+      html.overlay-mode .wheel-container {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+      }
+      html.overlay-mode .theater-mode {
+        background: transparent !important;
+        backdrop-filter: none !important;
+      }
+      html.overlay-mode .controls-area {
+        background: transparent !important;
+        border: none !important;
+        width: auto !important;
+        padding: 1rem !important;
+      }
+      html.overlay-mode .header-area,
+      html.overlay-mode .settings-panel,
+      html.overlay-mode .hide-in-theater,
+      html.overlay-mode .controls-area .shuffle-grid,
+      html.overlay-mode .zoom-display,
+      html.overlay-mode .btn-zoom-in,
+      html.overlay-mode .btn-zoom-out {
+        display: none !important;
+      }
+      html.overlay-mode .btn-spin {
+        font-size: 1.75rem !important;
+        padding: 1.25rem 2rem !important;
+      }
+      html.overlay-mode .winner-overlay .winner-text {
+        font-size: clamp(2.5rem, 8vw, 5rem) !important;
+      }
+      html.overlay-mode .seed-badge {
+        opacity: 0.7;
       }
 
       /* Horizontal scrollbar for winner text */
@@ -326,6 +381,53 @@
             >
               <i data-lucide="upload" class="w-5 h-5 mr-2"></i> Import Data
             </button>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                Share links
+              </p>
+              <button
+                id="btn-copy-share-active"
+                class="flex items-center justify-center w-full px-4 py-3 rounded-lg font-bold transition-all bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+              >
+                <i data-lucide="link" class="w-5 h-5 mr-2"></i> Copy share link
+                (active wheel)
+              </button>
+              <button
+                id="btn-copy-share-all"
+                class="flex items-center justify-center w-full px-4 py-3 rounded-lg font-bold transition-all bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+              >
+                <i data-lucide="share-2" class="w-5 h-5 mr-2"></i> Copy share
+                link (all wheels)
+              </button>
+              <button
+                id="btn-copy-overlay-link"
+                class="flex items-center justify-center w-full px-4 py-3 rounded-lg font-bold transition-all bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <i data-lucide="monitor" class="w-5 h-5 mr-2"></i> Copy OBS
+                overlay link
+              </button>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
+              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                Verify a spin
+              </p>
+              <textarea
+                id="verify-proof-input"
+                rows="2"
+                class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-xs font-mono outline-none"
+                placeholder="Paste HypeWheel-Proof-v1|... string"
+              ></textarea>
+              <button
+                id="btn-verify-proof"
+                class="flex items-center justify-center w-full px-4 py-2 rounded-lg font-bold transition-all bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+              >
+                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i> Verify
+              </button>
+              <p
+                id="verify-proof-result"
+                class="text-xs text-gray-500 dark:text-gray-400 hidden"
+              ></p>
+            </div>
           </div>
         </div>
       </div>
@@ -405,14 +507,22 @@
             </div>
             <div>
               <dt class="font-semibold text-gray-800 dark:text-gray-200">
-                Theater Mode
+                Slot Mode
               </dt>
               <dd class="mt-0.5">
-                Click the maximize icon (<i
-                  data-lucide="maximize"
-                  class="inline w-3 h-3 align-text-bottom"
-                ></i
-                >) for full screen.
+                With 2+ wheels, open
+                <strong class="font-medium">Slot Mode</strong> in the header to
+                spin every list together like a slot machine.
+              </dd>
+            </div>
+            <div>
+              <dt class="font-semibold text-gray-800 dark:text-gray-200">
+                Theater &amp; Overlay
+              </dt>
+              <dd class="mt-0.5">
+                Click maximize for theater mode, or copy an
+                <strong class="font-medium">OBS overlay link</strong> from
+                Import/Export (Space = spin, R = remove, K = keep).
               </dd>
             </div>
             <div>
@@ -677,11 +787,68 @@
       };
 
       // --- URL PARSER ---
+      const createWheelConfig = (overrides = {}) => ({
+        id: "wheel_" + Date.now(),
+        title: "New Wheel",
+        rawText: "",
+        palette: "neon",
+        seed: generateSeed(),
+        centerImage: "",
+        customImage: "",
+        customTextColor: "#ffffff",
+        spinSpeed: "normal",
+        spinDuration: "medium",
+        spinSound: true,
+        countdownEnabled: false,
+        countdownSeconds: 60,
+        confettiEnabled: true,
+        fontFamily: "system-ui",
+        pointerStyle: "classic",
+        layout: "right",
+        zoomLevel: 1.0,
+        randomnessMode: "crypto",
+        ...overrides,
+      });
+
       const getUrlParam = (urlStr, key) => {
         const match = urlStr.match(
           new RegExp(`[\\?&\\/#]${key}=([^&#]*)`, "i"),
         );
         return match ? decodeURIComponent(match[1]).trim() : "";
+      };
+
+      const cleanShareParamsFromUrl = () => {
+        const urlObj = new URL(window.location.href);
+        urlObj.searchParams.delete("list");
+        urlObj.searchParams.delete("title");
+        urlObj.searchParams.delete("w");
+        // keep overlay param so refresh stays in overlay
+        const cleaned = urlObj.pathname + urlObj.search + urlObj.hash;
+        window.history.replaceState({}, document.title, cleaned || "/");
+      };
+
+      const checkUrlForShare = () => {
+        const urlStr = window.location.href;
+        const wParam = getUrlParam(urlStr, "w");
+        if (!wParam || typeof HypeShare === "undefined") return false;
+
+        const payload = HypeShare.decodePayload(wParam);
+        if (!payload || !payload.wheels.length) return false;
+
+        let existingWheels =
+          JSON.parse(localStorage.getItem("wheelsData") || "null") || [];
+        payload.wheels.forEach((shared, idx) => {
+          existingWheels.push(
+            createWheelConfig({
+              id: "wheel_" + Date.now() + "_" + idx,
+              ...shared,
+              seed: shared.seed || generateSeed(),
+              zoomLevel: 1.0,
+            }),
+          );
+        });
+        localStorage.setItem("wheelsData", JSON.stringify(existingWheels));
+        return true;
       };
 
       const checkUrlForList = () => {
@@ -696,77 +863,60 @@
 
         if (entries.length > 0) {
           const titleParam = getUrlParam(urlStr, "title");
-          // Append the new wheel to existing wheels, avoiding data loss
           let existingWheels =
             JSON.parse(localStorage.getItem("wheelsData") || "null") || [];
-          const newWheel = {
-            id: "wheel_" + Date.now(),
-            title: titleParam || "Imported Wheel",
-            rawText: entries.join("\n"),
-            palette: "rainbow",
-            seed: generateSeed(),
-            centerImage: "",
-            customImage: "",
-            customTextColor: "#ffffff",
-            spinSpeed: "normal",
-            spinDuration: "medium",
-            spinSound: true,
-            countdownEnabled: false,
-            countdownSeconds: 60,
-            confettiEnabled: true,
-            fontFamily: "system-ui",
-            pointerStyle: "classic",
-            layout: "right",
-            zoomLevel: 1.0,
-          };
-          existingWheels.push(newWheel);
+          existingWheels.push(
+            createWheelConfig({
+              title: titleParam || "Imported Wheel",
+              rawText: entries.join("\n"),
+              palette: "rainbow",
+            }),
+          );
           localStorage.setItem("wheelsData", JSON.stringify(existingWheels));
         }
-
-        // Clean up URL
-        let urlObj = new URL(urlStr);
-        let newHref = urlObj.href
-          .replace(/\/?list=[^&#]*/i, "")
-          .replace(/[?&]title=[^&#]*/i, "");
-        newHref = newHref.replace(/[?&]$/, "").replace(/\?&/, "?");
-        window.history.replaceState({}, document.title, newHref);
       };
 
-      // Run URL check before loading state
-      checkUrlForList();
+      // Run URL checks before loading state (share takes priority over list)
+      const importedFromShare = checkUrlForShare();
+      if (!importedFromShare) checkUrlForList();
+      if (getUrlParam(window.location.href, "w") || getUrlParam(window.location.href, "list")) {
+        cleanShareParamsFromUrl();
+      }
+
+      const isOverlayMode =
+        getUrlParam(window.location.href, "overlay") === "1";
+      if (isOverlayMode) {
+        document.documentElement.classList.add("overlay-mode");
+      }
 
       // --- GLOBAL STATE ---
       let appState = {
         theme: localStorage.getItem("appTheme") || "dark",
         winners: JSON.parse(localStorage.getItem("winnersData") || "[]"),
         wheelsConfig: JSON.parse(localStorage.getItem("wheelsData") || "null"),
+        brandPacks: JSON.parse(localStorage.getItem("brandPacks") || "[]"),
         theaterModeId: null,
+        overlayMode: isOverlayMode,
+        activeWheelId: null,
       };
 
       if (!appState.wheelsConfig) {
         appState.wheelsConfig = [
-          {
+          createWheelConfig({
             id: "default",
             title: "Main Giveaway",
             rawText: "Alice\nBob\nCharlie\nDave\nEve\nFrank",
             palette: "rainbow",
-            seed: generateSeed(),
-            centerImage: "",
-            customImage: "",
-            customTextColor: "#ffffff",
-            spinSpeed: "normal",
-            spinDuration: "medium",
-            spinSound: true,
-            countdownEnabled: false,
-            countdownSeconds: 60,
-            confettiEnabled: true,
-            fontFamily: "system-ui",
-            pointerStyle: "classic",
-            layout: "right",
-            zoomLevel: 1.0,
-          },
+          }),
         ];
       }
+
+      const saveBrandPacks = () => {
+        localStorage.setItem(
+          "brandPacks",
+          JSON.stringify(appState.brandPacks || []),
+        );
+      };
 
       const saveState = () => {
         localStorage.setItem("appTheme", appState.theme);
@@ -798,6 +948,8 @@
           this.seed = config.seed || generateSeed();
           this.layout = config.layout || "right";
           this.zoomLevel = config.zoomLevel || 1.0;
+          this.randomnessMode = config.randomnessMode || "crypto";
+          this.lastProof = null;
 
           this.entries = this.parseEntries(this.rawText);
           this.isSpinning = false;
@@ -857,9 +1009,11 @@
             conf.countdownSeconds = this.countdownSeconds;
             conf.confettiEnabled = this.confettiEnabled;
             conf.fontFamily = this.fontFamily;
+            conf.pointerStyle = this.pointerStyle;
             conf.seed = this.seed;
             conf.layout = this.layout;
             conf.zoomLevel = this.zoomLevel;
+            conf.randomnessMode = this.randomnessMode;
             localStorage.setItem(
               "wheelsData",
               JSON.stringify(appState.wheelsConfig),
@@ -985,6 +1139,20 @@
                                     <input type="checkbox" class="confetti-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.confettiEnabled ? "checked" : ""}>
                                     <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Confetti Effect</label>
                                 </div>
+                                <div class="md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+                                    <label class="block font-semibold text-gray-900 dark:text-white">Brand Packs</label>
+                                    <div class="flex flex-wrap gap-2 items-center">
+                                        <select class="brand-pack-select flex-1 min-w-[140px] p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                            <option value="">Select a pack…</option>
+                                        </select>
+                                        <button type="button" class="btn-apply-brand-pack px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">Apply</button>
+                                        <button type="button" class="btn-delete-brand-pack px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-bold text-xs" title="Delete selected pack">Delete</button>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <input type="text" class="brand-pack-name-input flex-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm" placeholder="Pack name">
+                                        <button type="button" class="btn-save-brand-pack px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-xs whitespace-nowrap">Save current</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -992,6 +1160,13 @@
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">Spin Settings</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Randomness</label>
+                                    <select class="randomness-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                        <option value="crypto" ${this.randomnessMode === "crypto" ? "selected" : ""}>Cryptographic</option>
+                                        <option value="verifiable" ${this.randomnessMode === "verifiable" ? "selected" : ""}>Verifiable (seeded)</option>
+                                    </select>
+                                </div>
                                 <div>
                                     <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Spin Speed</label>
                                     <select class="speed-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
@@ -1035,15 +1210,18 @@
                     <div class="flex flex-1 overflow-hidden flex-col lg:flex-row workspace-area">
                         <!-- CANVAS -->
                         <div class="canvas-container flex-1 relative flex flex-col items-center justify-center p-2 md:p-4 min-h-[300px]">
-                            <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono group relative">
+                            <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white shadow font-mono group relative seed-badge">
                                 <span>Seed:</span>
-                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-24 text-center" value="${this.seed}" readonly>
+                                <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-24 text-center" value="${this.seed}" ${this.randomnessMode === "verifiable" ? "" : "readonly"}>
+                                <button type="button" class="btn-new-seed text-white/70 hover:text-white transition-colors" title="New seed"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
                                 <div class="relative flex items-center">
                                     <button class="text-white/70 hover:text-white transition-colors" title="About Randomness">
                                         <i data-lucide="help-circle" class="w-4 h-4"></i>
                                     </button>
-                                    <div class="absolute left-full ml-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[100]">
-                                        Spins and shuffles use browser cryptographic randomness. This ID refreshes after each random action and cannot reproduce results.
+                                    <div class="seed-tooltip absolute left-full ml-2 w-56 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[100]">
+                                        ${this.randomnessMode === "verifiable"
+                                          ? "Verifiable mode: this seed determines the winner. Share the proof after a spin so others can verify."
+                                          : "Cryptographic mode: spins use browser crypto randomness. This ID refreshes after each random action and cannot reproduce results."}
                                     </div>
                                 </div>
                             </div>
@@ -1063,6 +1241,11 @@
                                     <h2 class="text-yellow-300 text-xl font-bold uppercase tracking-widest mb-2">Winner!</h2>
                                     <p class="winner-text text-white text-4xl md:text-5xl font-extrabold drop-shadow-lg mb-6 break-words max-h-[50vh] overflow-y-auto pb-2 custom-scrollbar"></p>
                                     <div class="countdown-display hidden text-white text-3xl font-mono font-bold mt-2 mb-6"></div>
+                                    <div class="proof-panel hidden text-left bg-black/30 rounded-xl p-3 mb-4 text-xs text-white/90 space-y-2">
+                                        <p class="font-bold text-yellow-200">Spin proof</p>
+                                        <p class="proof-summary font-mono break-all"></p>
+                                        <button type="button" class="btn-copy-proof w-full py-2 rounded-lg bg-white/20 hover:bg-white/30 font-bold">Copy proof</button>
+                                    </div>
                                     <div class="flex flex-col md:flex-row gap-3">
                                         <button class="btn-remove-winner bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold transition-colors w-full md:w-auto shadow-lg flex-1">Remove Name</button>
                                         <button class="btn-keep-winner bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold transition-colors w-full md:w-auto flex-1">Keep Name</button>
@@ -1141,6 +1324,7 @@
             imageUploadInput: wrapper.querySelector(".image-upload-input"),
             speedSelect: wrapper.querySelector(".speed-select"),
             durationSelect: wrapper.querySelector(".duration-select"),
+            randomnessSelect: wrapper.querySelector(".randomness-select"),
             soundCheckbox: wrapper.querySelector(".sound-checkbox"),
             countdownCheckbox: wrapper.querySelector(".countdown-checkbox"),
             confettiCheckbox: wrapper.querySelector(".confetti-checkbox"),
@@ -1148,11 +1332,21 @@
             canvasContainer: wrapper.querySelector(".canvas-container"),
             canvas: wrapper.querySelector(".wheel-canvas"),
             seedInput: wrapper.querySelector(".seed-input"),
+            seedTooltip: wrapper.querySelector(".seed-tooltip"),
+            btnNewSeed: wrapper.querySelector(".btn-new-seed"),
             winnerOverlay: wrapper.querySelector(".winner-overlay"),
             winnerText: wrapper.querySelector(".winner-text"),
             countdownDisplay: wrapper.querySelector(".countdown-display"),
+            proofPanel: wrapper.querySelector(".proof-panel"),
+            proofSummary: wrapper.querySelector(".proof-summary"),
+            btnCopyProof: wrapper.querySelector(".btn-copy-proof"),
             btnRemoveWinner: wrapper.querySelector(".btn-remove-winner"),
             btnKeepWinner: wrapper.querySelector(".btn-keep-winner"),
+            brandPackSelect: wrapper.querySelector(".brand-pack-select"),
+            brandPackNameInput: wrapper.querySelector(".brand-pack-name-input"),
+            btnApplyBrandPack: wrapper.querySelector(".btn-apply-brand-pack"),
+            btnSaveBrandPack: wrapper.querySelector(".btn-save-brand-pack"),
+            btnDeleteBrandPack: wrapper.querySelector(".btn-delete-brand-pack"),
             entriesCount: wrapper.querySelector(".entries-count"),
             btnAIList: wrapper.querySelector(".btn-ai-list"),
             btnSort: wrapper.querySelector(".btn-sort"),
@@ -1188,7 +1382,87 @@
           };
 
           lucide.createIcons({ root: wrapper });
+          this.refreshBrandPackSelect();
+          this.updateSeedUI();
           this.updateUIState();
+        }
+
+        refreshBrandPackSelect() {
+          if (!this.dom.brandPackSelect) return;
+          const packs = appState.brandPacks || [];
+          const current = this.dom.brandPackSelect.value;
+          this.dom.brandPackSelect.innerHTML =
+            '<option value="">Select a pack…</option>' +
+            packs
+              .map(
+                (p) =>
+                  `<option value="${escapeHTML(p.id)}">${escapeHTML(p.name)}</option>`,
+              )
+              .join("");
+          if (current && packs.some((p) => p.id === current)) {
+            this.dom.brandPackSelect.value = current;
+          }
+        }
+
+        getAppearanceSnapshot() {
+          return {
+            palette: this.palette,
+            pointerStyle: this.pointerStyle,
+            fontFamily: this.fontFamily,
+            customTextColor: this.customTextColor,
+            centerImage: this.centerImage,
+            customImage: this.customImage,
+            confettiEnabled: this.confettiEnabled,
+          };
+        }
+
+        applyBrandPack(pack) {
+          if (!pack) return;
+          this.palette = pack.palette || this.palette;
+          this.pointerStyle = pack.pointerStyle || this.pointerStyle;
+          this.fontFamily = pack.fontFamily || this.fontFamily;
+          this.customTextColor = pack.customTextColor || this.customTextColor;
+          this.centerImage =
+            pack.centerImage !== undefined
+              ? pack.centerImage
+              : this.centerImage;
+          this.customImage =
+            pack.customImage !== undefined
+              ? pack.customImage
+              : this.customImage;
+          this.confettiEnabled =
+            pack.confettiEnabled !== undefined
+              ? pack.confettiEnabled
+              : this.confettiEnabled;
+
+          this.dom.paletteSelect.value = this.palette;
+          this.dom.pointerStyleSelect.value = this.pointerStyle;
+          this.dom.fontFamilySelect.value = this.fontFamily;
+          this.dom.customTextColorInput.value = this.customTextColor;
+          this.dom.imageInput.value = this.centerImage || "";
+          this.dom.customImageInput.value = this.customImage || "";
+          this.dom.confettiCheckbox.checked = this.confettiEnabled;
+          if (this.palette === "image") {
+            this.dom.customImageContainer.classList.remove("hidden");
+          } else {
+            this.dom.customImageContainer.classList.add("hidden");
+          }
+          this.saveConfig();
+          this.draw();
+          this.drawPointerPreview();
+        }
+
+        updateSeedUI() {
+          const verifiable = this.randomnessMode === "verifiable";
+          this.dom.seedInput.readOnly = !verifiable;
+          if (this.dom.seedTooltip) {
+            this.dom.seedTooltip.textContent = verifiable
+              ? "Verifiable mode: this seed determines the winner. Share the proof after a spin so others can verify."
+              : "Cryptographic mode: spins use browser crypto randomness. This ID refreshes after each random action and cannot reproduce results.";
+          }
+          if (this.dom.randomnessSelect) {
+            this.dom.randomnessSelect.value = this.randomnessMode;
+          }
         }
 
         bindEvents() {
@@ -1238,6 +1512,87 @@
 
           // Initial preview render
           this.drawPointerPreview();
+
+          if (this.dom.randomnessSelect) {
+            this.dom.randomnessSelect.addEventListener("change", (e) => {
+              this.randomnessMode = e.target.value;
+              this.updateSeedUI();
+              this.saveConfig();
+            });
+          }
+
+          this.dom.btnNewSeed.addEventListener("click", () => {
+            this.seed = generateSeed();
+            this.dom.seedInput.value = this.seed;
+            this.saveConfig();
+            showToast("New seed generated", "success");
+          });
+
+          this.dom.seedInput.addEventListener("change", (e) => {
+            if (this.randomnessMode !== "verifiable") return;
+            const cleaned = e.target.value
+              .replace(/[^0-9a-f]/gi, "")
+              .toUpperCase()
+              .slice(0, 8);
+            this.seed = cleaned || generateSeed();
+            this.dom.seedInput.value = this.seed;
+            this.saveConfig();
+          });
+
+          this.dom.btnApplyBrandPack.addEventListener("click", () => {
+            const id = this.dom.brandPackSelect.value;
+            const pack = (appState.brandPacks || []).find((p) => p.id === id);
+            if (!pack) {
+              showToast("Select a brand pack first", "error");
+              return;
+            }
+            this.applyBrandPack(pack);
+            showToast(`Applied "${pack.name}"`, "success");
+          });
+
+          this.dom.btnSaveBrandPack.addEventListener("click", () => {
+            const name = (this.dom.brandPackNameInput.value || "").trim();
+            if (!name) {
+              showToast("Enter a pack name", "error");
+              return;
+            }
+            const pack = {
+              id: "pack_" + Date.now(),
+              name,
+              ...this.getAppearanceSnapshot(),
+            };
+            appState.brandPacks = appState.brandPacks || [];
+            appState.brandPacks.push(pack);
+            saveBrandPacks();
+            this.dom.brandPackNameInput.value = "";
+            wheelInstances.forEach((w) => w.refreshBrandPackSelect());
+            this.dom.brandPackSelect.value = pack.id;
+            showToast(`Saved pack "${name}"`, "success");
+          });
+
+          this.dom.btnDeleteBrandPack.addEventListener("click", () => {
+            const id = this.dom.brandPackSelect.value;
+            if (!id) {
+              showToast("Select a pack to delete", "error");
+              return;
+            }
+            appState.brandPacks = (appState.brandPacks || []).filter(
+              (p) => p.id !== id,
+            );
+            saveBrandPacks();
+            wheelInstances.forEach((w) => w.refreshBrandPackSelect());
+            showToast("Brand pack deleted", "success");
+          });
+
+          this.dom.btnCopyProof.addEventListener("click", async () => {
+            if (!this.lastProof) return;
+            try {
+              await navigator.clipboard.writeText(this.lastProof);
+              showToast("Proof copied", "success");
+            } catch {
+              showToast("Could not copy proof", "error");
+            }
+          });
 
           this.dom.layoutSelect.addEventListener("change", (e) => {
             this.layout = e.target.value;
@@ -1499,19 +1854,9 @@
           this.dom.btnKeepWinner.addEventListener("click", () =>
             this.closeWinner(),
           );
-          this.dom.btnRemoveWinner.addEventListener("click", () => {
-            const idx = this.entries.indexOf(this.winnerName);
-            if (idx !== -1) {
-              this.entries.splice(idx, 1);
-              this.rawText = this.entries.join("\n");
-              this.dom.entriesInput.value = this.rawText;
-              this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
-              this.saveConfig();
-              this.draw();
-              showToast(`${this.winnerName} removed!`, "success");
-            }
-            this.closeWinner();
-          });
+          this.dom.btnRemoveWinner.addEventListener("click", () =>
+            this.removeWinnerName(),
+          );
         }
 
         updateUIState() {
@@ -1572,8 +1917,10 @@
           this.rawText = this.entries.join("\n");
           this.dom.entriesInput.value = this.rawText;
 
-          this.seed = generateSeed();
-          this.dom.seedInput.value = this.seed;
+          if (this.randomnessMode !== "verifiable") {
+            this.seed = generateSeed();
+            this.dom.seedInput.value = this.seed;
+          }
         }
 
         shuffle() {
@@ -2177,35 +2524,70 @@
 
           this.isSpinning = true;
           this.updateUIState();
+          appState.activeWheelId = this.id;
 
-          let speedStr = this.spinSpeed || "normal";
-          let minSpins = 5;
-          let maxSpinsRange = 5;
-          if (speedStr === "slow") {
-            minSpins = 3;
-            maxSpinsRange = 3;
-          } else if (speedStr === "fast") {
-            minSpins = 8;
-            maxSpinsRange = 4;
-          }
-
-          let durationStr = this.spinDuration || "medium";
-          let minDuration = 10000;
-          let maxDurationRange = 4000;
-          if (durationStr === "short") {
-            minDuration = 4000;
-            maxDurationRange = 2000;
-          } else if (durationStr === "long") {
-            minDuration = 16000;
-            maxDurationRange = 6000;
-          }
-
-          const duration =
-            minDuration + getSecureRandomFloat() * maxDurationRange;
+          const speedStr = this.spinSpeed || "normal";
+          const durationStr = this.spinDuration || "medium";
           const startAngle = this.currentAngle;
           const wheelEntries = this.getWheelEntries();
           const sliceAngle = (2 * Math.PI) / wheelEntries.length;
-          const winningIndex = getSecureRandomInt(wheelEntries.length);
+
+          let duration;
+          let winningIndex;
+          let extraSpins;
+          const useVerifiable =
+            this.randomnessMode === "verifiable" &&
+            typeof HypeFairness !== "undefined";
+
+          if (useVerifiable) {
+            const params = HypeFairness.getSpinParams(
+              this.seed,
+              this.entries.length,
+              speedStr,
+              durationStr,
+            );
+            const winnerName = this.entries[params.winningIndex];
+            winningIndex = wheelEntries.indexOf(winnerName);
+            if (winningIndex < 0) winningIndex = params.winningIndex % wheelEntries.length;
+            duration = params.duration;
+            extraSpins = params.extraSpins;
+            this.lastProof = HypeFairness.formatProofString({
+              seed: this.seed,
+              entriesHash: HypeFairness.hashEntries(this.entries),
+              winner: winnerName,
+              entryCount: this.entries.length,
+            });
+          } else {
+            let minSpins = 5;
+            let maxSpinsRange = 5;
+            if (speedStr === "slow") {
+              minSpins = 3;
+              maxSpinsRange = 3;
+            } else if (speedStr === "fast") {
+              minSpins = 8;
+              maxSpinsRange = 4;
+            }
+
+            let minDuration = 10000;
+            let maxDurationRange = 4000;
+            if (durationStr === "short") {
+              minDuration = 4000;
+              maxDurationRange = 2000;
+            } else if (durationStr === "long") {
+              minDuration = 16000;
+              maxDurationRange = 6000;
+            }
+
+            duration = minDuration + getSecureRandomFloat() * maxDurationRange;
+            winningIndex = getSecureRandomInt(wheelEntries.length);
+            extraSpins = minSpins + getSecureRandomInt(maxSpinsRange);
+            this.lastProof = null;
+
+            this.seed = generateSeed();
+            this.dom.seedInput.value = this.seed;
+            this.saveConfig();
+          }
+
           const targetNormalizedAngle =
             2 * Math.PI - (winningIndex + 0.5) * sliceAngle;
           const currentNormalizedAngle = positiveModulo(
@@ -2216,15 +2598,9 @@
             targetNormalizedAngle - currentNormalizedAngle,
             2 * Math.PI,
           );
-          const extraSpins = minSpins + getSecureRandomInt(maxSpinsRange);
 
           const targetAngle =
             startAngle + extraSpins * 2 * Math.PI + angleDelta;
-
-          // Refresh the display-only random ID for the next action.
-          this.seed = generateSeed();
-          this.dom.seedInput.value = this.seed;
-          this.saveConfig();
 
           let startTime = null;
           this.lastTickIndex = this.getWinningIndex(this.currentAngle);
@@ -2254,8 +2630,8 @@
               this.isSpinning = false;
               this.updateUIState();
 
-              const wheelEntries = this.getWheelEntries();
-              this.winnerName = wheelEntries[currentIndex];
+              const finalEntries = this.getWheelEntries();
+              this.winnerName = finalEntries[currentIndex];
               this.showWinner();
             }
           };
@@ -2268,6 +2644,13 @@
           this.dom.winnerOverlay.style.display = "flex";
           void this.dom.winnerOverlay.offsetWidth;
           this.dom.winnerOverlay.classList.remove("opacity-0");
+
+          if (this.lastProof && this.dom.proofPanel) {
+            this.dom.proofPanel.classList.remove("hidden");
+            this.dom.proofSummary.textContent = this.lastProof;
+          } else if (this.dom.proofPanel) {
+            this.dom.proofPanel.classList.add("hidden");
+          }
 
           if (this.confettiEnabled && typeof confetti !== "undefined") {
             confetti({
@@ -2302,6 +2685,28 @@
           }
 
           addWinner(this.title, this.winnerName);
+        }
+
+        removeWinnerName() {
+          const idx = this.entries.indexOf(this.winnerName);
+          if (idx !== -1) {
+            this.entries.splice(idx, 1);
+            this.rawText = this.entries.join("\n");
+            this.dom.entriesInput.value = this.rawText;
+            this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+            this.saveConfig();
+            this.draw();
+            showToast(`${this.winnerName} removed!`, "success");
+          }
+          this.closeWinner();
+        }
+
+        isWinnerOverlayOpen() {
+          return (
+            this.dom.winnerOverlay &&
+            this.dom.winnerOverlay.style.display === "flex" &&
+            !this.dom.winnerOverlay.classList.contains("opacity-0")
+          );
         }
 
         closeWinner() {
@@ -2938,6 +3343,32 @@
           slotMachineInstance = null;
         }
 
+        if (appState.overlayMode) {
+          document.getElementById("navbar").style.display = "none";
+          const footer = document.getElementById("main-footer");
+          if (footer) footer.style.display = "none";
+          document.body.style.overflow = "hidden";
+          workspace.className =
+            "p-0 m-0 w-full max-w-none mx-auto grid gap-0 flex-1 !block min-h-screen";
+          const conf =
+            appState.wheelsConfig[appState.wheelsConfig.length - 1] ||
+            appState.wheelsConfig[0];
+          if (conf) {
+            const inst = new WheelApp(conf, workspace);
+            wheelInstances.push(inst);
+            appState.activeWheelId = conf.id;
+            appState.theaterModeId = conf.id;
+            inst.setTheaterMode(true);
+            inst.dom.hideInTheater.style.display = "none";
+            inst.dom.headerArea.style.display = "none";
+            inst.dom.btnDelete.style.display = "none";
+            inst.dom.btnSettings.style.display = "none";
+            inst.dom.btnTheater.style.display = "none";
+            setTimeout(() => inst.handleResize(), 50);
+          }
+          return;
+        }
+
         if (appState.slotMode && appState.wheelsConfig.length >= 2) {
           workspace.className =
             "p-4 md:p-6 w-full max-w-[1920px] mx-auto grid gap-6 flex-1 grid-cols-1";
@@ -3019,25 +3450,7 @@
       });
 
       document.getElementById("btn-add-wheel").addEventListener("click", () => {
-        const newWheel = {
-          id: "wheel_" + Date.now(),
-          title: "New Wheel",
-          rawText: "",
-          palette: "neon",
-          seed: generateSeed(),
-          centerImage: "",
-          customImage: "",
-          customTextColor: "#ffffff",
-          spinSpeed: "normal",
-          spinDuration: "medium",
-          spinSound: true,
-          countdownEnabled: false,
-          countdownSeconds: 60,
-          confettiEnabled: true,
-          fontFamily: "system-ui",
-          pointerStyle: "classic",
-          zoomLevel: 1.0,
-        };
+        const newWheel = createWheelConfig();
         appState.wheelsConfig.push(newWheel);
         localStorage.setItem(
           "wheelsData",
@@ -3083,6 +3496,7 @@
             appTheme: appState.theme,
             winnersData: appState.winners,
             wheelsData: appState.wheelsConfig,
+            brandPacks: appState.brandPacks || [],
           };
           const blob = new Blob([JSON.stringify(data, null, 2)], {
             type: "application/json",
@@ -3098,6 +3512,95 @@
         .getElementById("btn-import-settings-modal")
         .addEventListener("click", () => {
           document.getElementById("import-settings-input").click();
+        });
+
+      const copyShareLink = async (wheels, options = {}) => {
+        if (typeof HypeShare === "undefined") {
+          showToast("Share helper unavailable", "error");
+          return;
+        }
+        const { url, omittedImages } = HypeShare.buildShareUrl(
+          window.location.origin + window.location.pathname,
+          wheels,
+          options,
+        );
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast(
+            omittedImages
+              ? "Link copied (large images omitted)"
+              : "Share link copied!",
+            "success",
+          );
+        } catch {
+          showToast("Could not copy link", "error");
+        }
+      };
+
+      const getActiveWheelConfig = () => {
+        const id =
+          appState.activeWheelId ||
+          appState.theaterModeId ||
+          (appState.wheelsConfig[0] && appState.wheelsConfig[0].id);
+        return (
+          appState.wheelsConfig.find((w) => w.id === id) ||
+          appState.wheelsConfig[0]
+        );
+      };
+
+      document
+        .getElementById("btn-copy-share-active")
+        .addEventListener("click", () => {
+          const conf = getActiveWheelConfig();
+          if (!conf) return;
+          copyShareLink([conf]);
+        });
+
+      document
+        .getElementById("btn-copy-share-all")
+        .addEventListener("click", () => {
+          copyShareLink(appState.wheelsConfig);
+        });
+
+      document
+        .getElementById("btn-copy-overlay-link")
+        .addEventListener("click", () => {
+          const conf = getActiveWheelConfig();
+          if (!conf) return;
+          copyShareLink([conf], { overlay: true });
+        });
+
+      document
+        .getElementById("btn-verify-proof")
+        .addEventListener("click", () => {
+          const raw = document.getElementById("verify-proof-input").value;
+          const resultEl = document.getElementById("verify-proof-result");
+          resultEl.classList.remove("hidden");
+          if (typeof HypeFairness === "undefined") {
+            resultEl.textContent = "Fairness helper unavailable.";
+            return;
+          }
+          const parsed = HypeFairness.parseProofString(raw);
+          if (!parsed) {
+            resultEl.textContent = "Invalid proof string.";
+            return;
+          }
+          const conf = getActiveWheelConfig();
+          const entries = (conf.rawText || "")
+            .split("\n")
+            .map((e) => e.trim())
+            .filter((e) => e !== "");
+          const hashNow = HypeFairness.hashEntries(entries);
+          if (hashNow !== parsed.entriesHash) {
+            resultEl.textContent = `Entries hash mismatch (proof ${parsed.entriesHash}, current ${hashNow}). Load the same list to verify.`;
+            return;
+          }
+          const verified = HypeFairness.verifySpin(
+            parsed.seed,
+            entries,
+            parsed.winner,
+          );
+          resultEl.textContent = verified.message;
         });
 
       document
@@ -3127,6 +3630,10 @@
                   "wheelsData",
                   JSON.stringify(appState.wheelsConfig),
                 );
+              }
+              if (data.brandPacks) {
+                appState.brandPacks = data.brandPacks;
+                saveBrandPacks();
               }
 
               // Re-render
@@ -3384,13 +3891,114 @@
         extBtn.classList.add("flex");
       }
 
+      // --- HOTKEYS (theater / overlay) ---
+      const getFocusedWheel = () => {
+        if (appState.activeWheelId) {
+          const found = wheelInstances.find(
+            (w) => w.id === appState.activeWheelId,
+          );
+          if (found) return found;
+        }
+        if (appState.theaterModeId) {
+          return wheelInstances.find((w) => w.id === appState.theaterModeId);
+        }
+        return wheelInstances[0];
+      };
+
+      document.addEventListener("keydown", (e) => {
+        const tag = (e.target && e.target.tagName) || "";
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          e.target.isContentEditable
+        ) {
+          return;
+        }
+
+        const wheel = getFocusedWheel();
+        if (!wheel) return;
+
+        const inPresenter =
+          appState.overlayMode || appState.theaterModeId === wheel.id;
+
+        if (e.code === "Space") {
+          if (!inPresenter && !appState.overlayMode) return;
+          e.preventDefault();
+          if (wheel.isWinnerOverlayOpen()) return;
+          if (!wheel.isSpinning && wheel.entries.length >= 2) wheel.spin();
+          return;
+        }
+
+        if (e.key === "r" || e.key === "R") {
+          if (!inPresenter) return;
+          if (wheel.isWinnerOverlayOpen()) {
+            e.preventDefault();
+            wheel.removeWinnerName();
+          }
+          return;
+        }
+
+        if (e.key === "k" || e.key === "K") {
+          if (!inPresenter) return;
+          if (wheel.isWinnerOverlayOpen()) {
+            e.preventDefault();
+            wheel.closeWinner();
+          }
+          return;
+        }
+
+        if (e.key === "Escape") {
+          if (wheel.isWinnerOverlayOpen()) {
+            e.preventDefault();
+            wheel.closeWinner();
+            return;
+          }
+          if (appState.overlayMode) {
+            e.preventDefault();
+            appState.overlayMode = false;
+            document.documentElement.classList.remove("overlay-mode");
+            const urlObj = new URL(window.location.href);
+            urlObj.searchParams.delete("overlay");
+            window.history.replaceState(
+              {},
+              document.title,
+              urlObj.pathname + urlObj.search + urlObj.hash,
+            );
+            document.getElementById("navbar").style.display = "flex";
+            const footer = document.getElementById("main-footer");
+            if (footer) footer.style.display = "block";
+            document.body.style.overflow = "auto";
+            appState.theaterModeId = null;
+            renderWheels();
+            return;
+          }
+          if (appState.theaterModeId) {
+            e.preventDefault();
+            toggleTheaterMode(appState.theaterModeId);
+          }
+        }
+      });
+
+      // Track last-interacted wheel for share/hotkeys
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          const wrapper = e.target.closest(".wheel-container");
+          if (!wrapper) return;
+          const inst = wheelInstances.find((w) => w.dom.wrapper === wrapper);
+          if (inst) appState.activeWheelId = inst.id;
+        },
+        true,
+      );
+
       // --- INIT ---
       applyTheme();
       renderWheels();
       updateWinnersUI();
       lucide.createIcons();
 
-      if (!localStorage.getItem("hideQuickStart")) {
+      if (!appState.overlayMode && !localStorage.getItem("hideQuickStart")) {
         // slight delay so animations run smoothly
         setTimeout(() => toggleQuickStartModal(true), 100);
       }
