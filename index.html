@@ -1064,13 +1064,14 @@
                     </div>
 
                     <!-- SETTINGS -->
-                    <div class="settings-panel hidden p-4 border-b border-gray-300 dark:border-gray-700 text-sm space-y-6">
-                        <!-- Appearance Section -->
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">Appearance</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="settings-panel hidden p-4 border-b border-gray-300 dark:border-gray-700 text-sm overflow-y-auto max-h-[50vh]">
+                        <div class="space-y-5">
+                        <!-- Appearance -->
+                        <section>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Appearance</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Wheel Theme</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Wheel Theme</label>
                                     <select class="palette-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                         ${Object.keys(PALETTES)
                                           .map(
@@ -1081,21 +1082,24 @@
                                         <option value="image" ${this.palette === "image" ? "selected" : ""}>Custom Image</option>
                                     </select>
                                 </div>
-                                <div class="flex items-center space-x-2">
-                                    <label class="font-semibold text-gray-900 dark:text-white">Text Color</label>
-                                    <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0" value="${this.customTextColor}">
+                                <div>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Text Color</label>
+                                    <div class="flex items-center h-[42px] px-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                        <input type="color" class="custom-text-color-input w-8 h-8 rounded cursor-pointer border-none p-0 bg-transparent" value="${this.customTextColor}">
+                                        <span class="ml-2 text-xs text-gray-500 dark:text-gray-400 font-mono custom-text-color-label">${this.customTextColor}</span>
+                                    </div>
                                 </div>
-                                <div class="custom-image-container md:col-span-2 ${this.palette === "image" ? "" : "hidden"}">
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Custom Wheel Image</label>
-                                    <div class="flex">
-                                        <span class="p-2 rounded-l-lg bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
+                                <div class="custom-image-container sm:col-span-2 ${this.palette === "image" ? "" : "hidden"}">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Custom Wheel Image</label>
+                                    <div class="flex rounded-lg overflow-hidden">
+                                        <span class="p-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
                                         <input type="text" class="custom-image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${this.customImage}">
-                                        <button class="btn-custom-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                        <button class="btn-custom-image-upload p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                         <input type="file" class="custom-image-upload-input hidden" accept="image/*">
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Font Family</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Font</label>
                                     <select class="font-family-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                         <option value="system-ui" ${this.fontFamily === "system-ui" ? "selected" : ""}>System UI</option>
                                         <option value="Arial" ${this.fontFamily === "Arial" ? "selected" : ""}>Arial</option>
@@ -1106,69 +1110,75 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Pointer Style</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="pointer-style-select flex-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Pointer</label>
+                                    <div class="flex items-center gap-2">
+                                        <select class="pointer-style-select flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                             <option value="classic" ${this.pointerStyle === "classic" ? "selected" : ""}>Classic</option>
                                             <option value="arrow" ${this.pointerStyle === "arrow" ? "selected" : ""}>Arrow</option>
                                             <option value="triangle" ${this.pointerStyle === "triangle" ? "selected" : ""}>Triangle</option>
                                             <option value="diamond" ${this.pointerStyle === "diamond" ? "selected" : ""}>Diamond</option>
                                             <option value="minimal" ${this.pointerStyle === "minimal" ? "selected" : ""}>Minimal</option>
                                         </select>
-                                        <canvas class="pointer-preview-canvas w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg" width="40" height="40"></canvas>
+                                        <canvas class="pointer-preview-canvas w-14 h-10 shrink-0 bg-gray-100 dark:bg-gray-700 rounded-lg" width="56" height="40"></canvas>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Center Image URL (Optional)</label>
-                                    <div class="flex">
-                                        <span class="p-2 rounded-l-lg bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
-                                        <input type="text" class="image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="https://..." value="${escapeHTML(this.centerImage)}">
-                                        <button class="btn-image-upload p-2 rounded-r-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                <div class="sm:col-span-2">
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Center Image</label>
+                                    <div class="flex rounded-lg overflow-hidden">
+                                        <span class="p-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
+                                        <input type="text" class="image-input w-full p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" placeholder="URL or upload…" value="${escapeHTML(this.centerImage)}">
+                                        <button class="btn-image-upload p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                         <input type="file" class="image-upload-input hidden" accept="image/*">
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">UI Layout</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">List Position</label>
                                     <select class="layout-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
-                                        <option value="right" ${this.layout === "right" ? "selected" : ""}>List on Right</option>
-                                        <option value="left" ${this.layout === "left" ? "selected" : ""}>List on Left</option>
-                                        <option value="bottom" ${this.layout === "bottom" ? "selected" : ""}>List on Bottom</option>
+                                        <option value="right" ${this.layout === "right" ? "selected" : ""}>Right</option>
+                                        <option value="left" ${this.layout === "left" ? "selected" : ""}>Left</option>
+                                        <option value="bottom" ${this.layout === "bottom" ? "selected" : ""}>Bottom</option>
                                     </select>
                                 </div>
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="confetti-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.confettiEnabled ? "checked" : ""}>
-                                    <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Confetti Effect</label>
-                                </div>
-                                <div class="md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                                    <label class="block font-semibold text-gray-900 dark:text-white">Brand Packs</label>
-                                    <div class="flex flex-wrap gap-2 items-center">
-                                        <select class="brand-pack-select flex-1 min-w-[140px] p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
-                                            <option value="">Select a pack…</option>
-                                        </select>
-                                        <button type="button" class="btn-apply-brand-pack px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">Apply</button>
-                                        <button type="button" class="btn-delete-brand-pack px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-bold text-xs" title="Delete selected pack">Delete</button>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <input type="text" class="brand-pack-name-input flex-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm" placeholder="Pack name">
-                                        <button type="button" class="btn-save-brand-pack px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-xs whitespace-nowrap">Save current</button>
-                                    </div>
+                                <div class="flex items-end">
+                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 w-full cursor-pointer">
+                                        <input type="checkbox" class="confetti-checkbox w-4 h-4 rounded text-indigo-600" ${this.confettiEnabled ? "checked" : ""}>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Confetti</span>
+                                    </label>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        <!-- Spin Settings Section -->
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">Spin Settings</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Brand Packs -->
+                        <section>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Brand Packs</h3>
+                            <div class="space-y-2">
+                                <div class="flex gap-2">
+                                    <select class="brand-pack-select flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
+                                        <option value="">Select a pack…</option>
+                                    </select>
+                                    <button type="button" class="btn-apply-brand-pack px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shrink-0">Apply</button>
+                                    <button type="button" class="btn-delete-brand-pack px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs shrink-0" title="Delete selected pack">Delete</button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" class="brand-pack-name-input flex-1 min-w-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm" placeholder="New pack name">
+                                    <button type="button" class="btn-save-brand-pack px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs shrink-0 whitespace-nowrap">Save current</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Spin -->
+                        <section>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Spin</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Randomness</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Randomness</label>
                                     <select class="randomness-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                         <option value="crypto" ${this.randomnessMode === "crypto" ? "selected" : ""}>Cryptographic</option>
-                                        <option value="verifiable" ${this.randomnessMode === "verifiable" ? "selected" : ""}>Verifiable (seeded)</option>
+                                        <option value="verifiable" ${this.randomnessMode === "verifiable" ? "selected" : ""}>Verifiable</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Spin Speed</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Speed</label>
                                     <select class="speed-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                         <option value="slow" ${this.spinSpeed === "slow" ? "selected" : ""}>Slow</option>
                                         <option value="normal" ${this.spinSpeed === "normal" ? "selected" : ""}>Normal</option>
@@ -1176,33 +1186,38 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Spin Duration</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Duration</label>
                                     <select class="duration-select w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none">
                                         <option value="short" ${this.spinDuration === "short" ? "selected" : ""}>Short</option>
                                         <option value="medium" ${this.spinDuration === "medium" ? "selected" : ""}>Medium</option>
                                         <option value="long" ${this.spinDuration === "long" ? "selected" : ""}>Long</option>
                                     </select>
                                 </div>
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="sound-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.spinSound ? "checked" : ""}>
-                                    <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Spin Sound</label>
+                                <div class="sm:col-span-3">
+                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 cursor-pointer w-full sm:w-auto sm:inline-flex">
+                                        <input type="checkbox" class="sound-checkbox w-4 h-4 rounded text-indigo-600" ${this.spinSound ? "checked" : ""}>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Spin sound</span>
+                                    </label>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        <!-- Countdown Timer Section -->
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 border-b border-gray-200 dark:border-gray-700 pb-1">Countdown Timer</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="flex items-center">
-                                    <input type="checkbox" class="countdown-checkbox w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" ${this.countdownEnabled ? "checked" : ""}>
-                                    <label class="ml-2 font-semibold text-gray-900 dark:text-white">Enable Countdown Timer</label>
+                        <!-- Countdown -->
+                        <section>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Countdown</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="flex items-end">
+                                    <label class="flex items-center gap-2 h-[42px] px-3 rounded-lg bg-gray-100 dark:bg-gray-700 w-full cursor-pointer">
+                                        <input type="checkbox" class="countdown-checkbox w-4 h-4 rounded text-indigo-600" ${this.countdownEnabled ? "checked" : ""}>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">Enable timer</span>
+                                    </label>
                                 </div>
                                 <div>
-                                    <label class="block mb-1 font-semibold text-gray-900 dark:text-white">Countdown Seconds</label>
+                                    <label class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Seconds</label>
                                     <input type="number" min="1" max="3600" class="countdown-input w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none" value="${this.countdownSeconds}">
                                 </div>
                             </div>
+                        </section>
                         </div>
                     </div>
 
@@ -1439,6 +1454,10 @@
           this.dom.pointerStyleSelect.value = this.pointerStyle;
           this.dom.fontFamilySelect.value = this.fontFamily;
           this.dom.customTextColorInput.value = this.customTextColor;
+          const colorLabel = this.dom.wrapper.querySelector(
+            ".custom-text-color-label",
+          );
+          if (colorLabel) colorLabel.textContent = this.customTextColor;
           this.dom.imageInput.value = this.centerImage || "";
           this.dom.customImageInput.value = this.customImage || "";
           this.dom.confettiCheckbox.checked = this.confettiEnabled;
@@ -1633,6 +1652,10 @@
           });
           this.dom.customTextColorInput.addEventListener("input", (e) => {
             this.customTextColor = e.target.value;
+            const label = this.dom.wrapper.querySelector(
+              ".custom-text-color-label",
+            );
+            if (label) label.textContent = this.customTextColor;
             this.saveConfig();
             this.draw();
           });
@@ -2064,15 +2087,17 @@
             availableHeight = maxViewportHeight;
           }
 
-          const padding = 32; // Account for container padding (p-4 = 16px * 2)
+          // Extra horizontal room so the right-side pointer is not clipped
+          const pointerRoom = 56;
+          const padding = 32;
           const size = Math.min(
-            rect.width - padding,
+            rect.width - padding - pointerRoom,
             availableHeight - padding,
             maxAllowedSize,
           );
 
           this.canvasSize = size * this.zoomLevel;
-          this.dom.canvas.style.width = `${this.canvasSize}px`;
+          this.dom.canvas.style.width = `${this.canvasSize + pointerRoom}px`;
           this.dom.canvas.style.height = `${this.canvasSize}px`;
           this.draw();
         }
@@ -2082,16 +2107,19 @@
           if (!canvas || !this.canvasSize) return;
           const ctx = canvas.getContext("2d");
           const size = this.canvasSize;
+          const pointerRoom = 56;
+          const drawWidth = size + pointerRoom;
 
           const dpr = window.devicePixelRatio || 1;
-          canvas.width = size * dpr;
+          canvas.width = drawWidth * dpr;
           canvas.height = size * dpr;
           ctx.scale(dpr, dpr);
-          ctx.clearRect(0, 0, size, size);
+          ctx.clearRect(0, 0, drawWidth, size);
 
+          // Center the wheel with leftover space reserved on the right for the pointer
           const centerX = size / 2;
           const centerY = size / 2;
-          const edgePadding = Math.max(15, size * 0.04);
+          const edgePadding = Math.max(12, size * 0.03);
           const radius = Math.min(centerX, centerY) - edgePadding;
 
           ctx.save();
@@ -2382,10 +2410,10 @@
             }
           }
 
-          // Pointer
+          // Pointer — sit just outside the rim, fully inside the reserved right margin
           const rightEdge = centerX + radius;
           ctx.save();
-          ctx.translate(rightEdge + 12, centerY);
+          ctx.translate(rightEdge + 6, centerY);
           if (!this.isSpinning) {
             ctx.shadowColor = "rgba(0,0,0,0.5)";
             ctx.shadowBlur = 12;
@@ -2409,14 +2437,14 @@
           const ctx = canvas.getContext("2d");
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.save();
-          ctx.translate(canvas.width / 2 + 10, canvas.height / 2);
-          ctx.scale(0.8, 0.8);
+          // Center the tip-left pointer shapes inside the preview
+          ctx.translate(canvas.width * 0.55, canvas.height / 2);
+          ctx.scale(0.55, 0.55);
 
-          // Add a small shadow for preview to look nice
-          ctx.shadowColor = "rgba(0,0,0,0.5)";
-          ctx.shadowBlur = 4;
+          ctx.shadowColor = "rgba(0,0,0,0.35)";
+          ctx.shadowBlur = 3;
           ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 2;
+          ctx.shadowOffsetY = 1;
 
           this.drawPointerShape(ctx, this.pointerStyle);
           ctx.restore();
