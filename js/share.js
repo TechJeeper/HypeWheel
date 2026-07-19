@@ -528,19 +528,25 @@
     }
   };
 
+  // Put payload in the hash (#w=…) so GitHub Pages never sees it (avoids 414 URI Too Long).
+  // Legacy ?w= links still decode via getUrlParam.
+  const applyShareToUrl = (baseUrl, encoded, options = {}) => {
+    const url = new URL(baseUrl);
+    url.search = "";
+    url.hash = "";
+    if (options.overlay) url.searchParams.set("overlay", "1");
+    url.hash = "w=" + encoded;
+    return url.toString();
+  };
+
   const buildShareUrl = (baseUrl, wheels, options = {}) => {
     const payload = {
       v: 1,
       wheels: (wheels || []).map(wheelToShareable),
     };
     const encoded = encodePayload(payload);
-    const url = new URL(baseUrl);
-    url.search = "";
-    url.hash = "";
-    url.searchParams.set("w", encoded);
-    if (options.overlay) url.searchParams.set("overlay", "1");
     return {
-      url: url.toString(),
+      url: applyShareToUrl(baseUrl, encoded, options),
       omittedImages: payload.wheels.some(
         (w, i) =>
           (wheels[i].centerImage && !w.centerImage) ||
@@ -559,13 +565,8 @@
       wheels: prepared.map((p) => p.shareable),
     };
     const encoded = encodePayload(payload);
-    const url = new URL(baseUrl);
-    url.search = "";
-    url.hash = "";
-    url.searchParams.set("w", encoded);
-    if (options.overlay) url.searchParams.set("overlay", "1");
     return {
-      url: url.toString(),
+      url: applyShareToUrl(baseUrl, encoded, options),
       omittedImages: prepared.some((p) => p.omittedImages),
       shrunkImages: prepared.some((p) => p.shrunkImages),
     };

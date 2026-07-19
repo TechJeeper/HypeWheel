@@ -907,6 +907,8 @@
         urlObj.searchParams.delete("list");
         urlObj.searchParams.delete("title");
         urlObj.searchParams.delete("w");
+        // Share payload lives in #w=… (and legacy ?w=); strip hash after import
+        if (/^#?w=/i.test(urlObj.hash)) urlObj.hash = "";
         // keep overlay param so refresh stays in overlay
         const cleaned = urlObj.pathname + urlObj.search + urlObj.hash;
         window.history.replaceState({}, document.title, cleaned || "/");
