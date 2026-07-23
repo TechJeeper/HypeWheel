@@ -222,7 +222,7 @@
         }
       }
 
-      /* Horizontal scrollbar for winner text */
+      /* Custom / horizontal scrollbars */
       .custom-scrollbar::-webkit-scrollbar,
       .horizontal-scroll::-webkit-scrollbar {
         height: 6px;
@@ -241,6 +241,36 @@
       .custom-scrollbar::-webkit-scrollbar-thumb:hover,
       .horizontal-scroll::-webkit-scrollbar-thumb:hover {
         background-color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* Long winner names: slow horizontal scroll instead of wrapping */
+      .winner-text-wrap {
+        overflow: hidden;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+      .winner-text-wrap.is-scrolling {
+        justify-content: flex-start;
+      }
+      .winner-text {
+        white-space: nowrap;
+        flex-shrink: 0;
+        max-width: none;
+      }
+      .winner-text.is-scrolling {
+        animation: winner-name-scroll var(--scroll-duration, 5s) ease-in-out
+          infinite alternate;
+      }
+      @keyframes winner-name-scroll {
+        0%,
+        12% {
+          transform: translateX(0);
+        }
+        88%,
+        100% {
+          transform: translateX(var(--scroll-distance, 0px));
+        }
       }
     </style>
     <!-- Google tag (gtag.js) -->
@@ -833,6 +863,28 @@
         );
       };
 
+      /** Enable slow horizontal scroll when winner name overflows its container. */
+      const setupWinnerNameScroll = (textEl) => {
+        if (!textEl) return;
+        const wrap = textEl.closest(".winner-text-wrap") || textEl.parentElement;
+        textEl.classList.remove("is-scrolling");
+        wrap?.classList.remove("is-scrolling");
+        textEl.style.removeProperty("--scroll-distance");
+        textEl.style.removeProperty("--scroll-duration");
+
+        requestAnimationFrame(() => {
+          if (!wrap) return;
+          const overflow = textEl.scrollWidth - wrap.clientWidth;
+          if (overflow <= 2) return;
+          // ~28px/sec with a short pause at each end via keyframe holds
+          const duration = Math.max(4, Math.min(18, overflow / 28));
+          textEl.style.setProperty("--scroll-distance", `-${overflow}px`);
+          textEl.style.setProperty("--scroll-duration", `${duration}s`);
+          textEl.classList.add("is-scrolling");
+          wrap.classList.add("is-scrolling");
+        });
+      };
+
       const showToast = (message, type = "info") => {
         const container = document.getElementById("toast-container");
         const toast = document.createElement("div");
@@ -1343,7 +1395,9 @@
                             <div class="winner-overlay absolute inset-0 z-20 hidden flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity opacity-0">
                                 <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 md:p-8 rounded-3xl shadow-2xl text-center transform scale-105 border-4 border-yellow-400 m-4 w-full max-w-sm md:max-w-md">
                                     <h2 class="text-yellow-300 text-xl font-bold uppercase tracking-widest mb-2">Winner!</h2>
-                                    <p class="winner-text text-white text-4xl md:text-5xl font-extrabold drop-shadow-lg mb-6 break-words max-h-[50vh] overflow-y-auto pb-2 custom-scrollbar"></p>
+                                    <div class="winner-text-wrap mb-6">
+                                        <p class="winner-text text-white text-4xl md:text-5xl font-extrabold drop-shadow-lg"></p>
+                                    </div>
                                     <div class="countdown-display hidden text-white text-3xl font-mono font-bold mt-2 mb-6"></div>
                                     <div class="flex flex-col md:flex-row gap-3">
                                         <button class="btn-remove-winner bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold transition-colors w-full md:w-auto shadow-lg flex-1">Remove Name</button>
@@ -2862,6 +2916,7 @@
           this.dom.winnerOverlay.style.display = "flex";
           void this.dom.winnerOverlay.offsetWidth;
           this.dom.winnerOverlay.classList.remove("opacity-0");
+          setupWinnerNameScroll(this.dom.winnerText);
 
           if (this.confettiEnabled && typeof confetti !== "undefined") {
             confetti({
@@ -3314,11 +3369,14 @@
             itemDiv.className =
               "flex items-center justify-between bg-white/10 p-3 rounded-xl border border-white/20";
 
+            const nameWrap = document.createElement("div");
+            nameWrap.className = "winner-text-wrap flex-1 min-w-0 mr-2";
             const nameSpan = document.createElement("div");
             nameSpan.className =
-              "text-white font-bold text-lg break-words overflow-y-auto max-h-[150px] custom-scrollbar flex-1 pb-1 mr-2";
+              "winner-text text-white font-bold text-lg";
             nameSpan.innerText = winnerName;
-            itemDiv.appendChild(nameSpan);
+            nameWrap.appendChild(nameSpan);
+            itemDiv.appendChild(nameWrap);
 
             if (col.entries.length > 1) {
               anyRemovable = true;
@@ -3349,6 +3407,9 @@
           this.dom.winnerOverlay.style.display = "flex";
           void this.dom.winnerOverlay.offsetWidth;
           this.dom.winnerOverlay.classList.remove("opacity-0");
+          this.dom.winnersList
+            .querySelectorAll(".winner-text")
+            .forEach(setupWinnerNameScroll);
         }
 
         closeWinner() {
