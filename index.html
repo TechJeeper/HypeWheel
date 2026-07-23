@@ -249,6 +249,9 @@
         width: 100%;
         display: flex;
         justify-content: center;
+        /* Keep descenders/ascenders visible inside overflow:hidden */
+        padding-block: 0.2em;
+        margin-block: -0.2em;
       }
       .winner-text-wrap.is-scrolling {
         justify-content: flex-start;
@@ -257,6 +260,7 @@
         white-space: nowrap;
         flex-shrink: 0;
         max-width: none;
+        line-height: 1.25;
       }
       .winner-text.is-scrolling {
         animation: winner-name-scroll var(--scroll-duration, 5s) ease-in-out
@@ -1396,7 +1400,7 @@
                                 <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 md:p-8 rounded-3xl shadow-2xl text-center transform scale-105 border-4 border-yellow-400 m-4 w-full max-w-sm md:max-w-md">
                                     <h2 class="text-yellow-300 text-xl font-bold uppercase tracking-widest mb-2">Winner!</h2>
                                     <div class="winner-text-wrap mb-6">
-                                        <p class="winner-text text-white text-3xl md:text-4xl font-extrabold drop-shadow-lg leading-tight"></p>
+                                        <p class="winner-text text-white text-3xl md:text-4xl font-extrabold drop-shadow-lg"></p>
                                     </div>
                                     <div class="countdown-display hidden text-white text-3xl font-mono font-bold mt-2 mb-6"></div>
                                     <div class="flex flex-col md:flex-row gap-3">
