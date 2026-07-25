@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = 7;
+  const VERSION = 8;
   if (globalThis.__hypewheelFacebook === VERSION) return;
   globalThis.__hypewheelFacebook = VERSION;
 
@@ -401,10 +401,15 @@
   function nameFromAriaCommentLabel(node) {
     const aria = normalizeName(node.getAttribute("aria-label") || "");
     // "Comment by Scott Brennan" / "Reply by Name" / "Comment by Name 5d"
-    const match = aria.match(/^(?:Comment|Reply) by (.+?)(?:\s+\d|\s*$)/i);
+    // Replies: "Reply by Cody Dean to Scott Brennan's comment"
+    const match = aria.match(/^(?:Comment|Reply) by (.+)$/i);
     if (!match) return "";
-    // Trim trailing meta like "5d" already handled; also "Name · 1 Reply"
     let name = normalizeName(match[1].split("·")[0]);
+    // Strip reply-target suffix before time/meta cleanup
+    name = name
+      .replace(/\s+to\s+.+?[''`′’]s\s+(?:comment|reply)\b.*$/i, "")
+      .replace(/\s+to\s+.+$/i, "")
+      .trim();
     name = name.replace(/\s+\d+[smhdwy]\b.*$/i, "").trim();
     // Relative times without digits: "a week ago", "an hour ago", "yesterday", "just now"
     name = name
