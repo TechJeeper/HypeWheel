@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = 8;
+  const VERSION = 9;
   if (globalThis.__hypewheelFacebook === VERSION) return;
   globalThis.__hypewheelFacebook = VERSION;
 
@@ -402,6 +402,7 @@
     const aria = normalizeName(node.getAttribute("aria-label") || "");
     // "Comment by Scott Brennan" / "Reply by Name" / "Comment by Name 5d"
     // Replies: "Reply by Cody Dean to Scott Brennan's comment"
+    // With counts: "Comment by Scott Brennan 3 replies"
     const match = aria.match(/^(?:Comment|Reply) by (.+)$/i);
     if (!match) return "";
     let name = normalizeName(match[1].split("·")[0]);
@@ -410,14 +411,17 @@
       .replace(/\s+to\s+.+?[''`′’]s\s+(?:comment|reply)\b.*$/i, "")
       .replace(/\s+to\s+.+$/i, "")
       .trim();
-    name = name.replace(/\s+\d+[smhdwy]\b.*$/i, "").trim();
-    // Relative times without digits: "a week ago", "an hour ago", "yesterday", "just now"
+    // Reply/like counts and relative times tacked onto the name
     name = name
+      .replace(/\s+\d+\s*(?:replies?|reply|likes?|reactions?|shares?)\b.*$/i, "")
+      .replace(/\s+\d+[smhdwy]\b.*$/i, "")
       .replace(
         /\s+(?:an?\s+)?(?:few\s+)?(?:second|minute|hour|day|week|month|year)s?\s+ago$/i,
         "",
       )
       .replace(/\s+(?:yesterday|just now)$/i, "")
+      // Bare trailing digit(s) left after count words were missing from aria
+      .replace(/\s+\d+$/g, "")
       .trim();
     return looksLikePersonName(name) ? name : "";
   }
