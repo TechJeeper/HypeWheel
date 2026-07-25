@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = 5;
+  const VERSION = 6;
   if (globalThis.__hypewheelFacebook === VERSION) return;
   globalThis.__hypewheelFacebook = VERSION;
 
@@ -58,6 +58,43 @@
     return true;
   }
 
+  function isPostPermalink() {
+    const path = location.pathname || "";
+    const href = location.href || "";
+    return (
+      /\/groups\/[^/]+\/posts\/\d+/i.test(path) ||
+      /\/posts\/\d+/i.test(path) ||
+      /\/permalink\.php/i.test(path) ||
+      /\/story\.php/i.test(path) ||
+      /\/videos\/\d+/i.test(path) ||
+      /\/reel\/\d+/i.test(path) ||
+      /[?&]story_fbid=/i.test(href) ||
+      /[?&]fbid=\d+/i.test(href)
+    );
+  }
+
+  function postKeyFromUrl() {
+    const path = location.pathname || "";
+    const href = location.href || "";
+    let match =
+      path.match(/\/groups\/[^/]+\/posts\/(\d+)/i) ||
+      path.match(/\/posts\/(\d+)/i) ||
+      path.match(/\/videos\/(\d+)/i) ||
+      path.match(/\/reel\/(\d+)/i);
+    if (match) return match[1];
+    try {
+      const params = new URLSearchParams(location.search);
+      return (
+        params.get("story_fbid") ||
+        params.get("fbid") ||
+        params.get("v") ||
+        href
+      );
+    } catch {
+      return href;
+    }
+  }
+
   function findPostModal() {
     const dialogs = Array.from(document.querySelectorAll('[role="dialog"]'));
     if (!dialogs.length) return null;
@@ -80,26 +117,110 @@
     });
 
     scored.sort((a, b) => b.score - a.score);
-    return scored[0]?.score > 0
-      ? scored[0].dialog
-      : dialogs[dialogs.length - 1];
+    // Only accept dialogs that look like a post — never fall back to chat/misc dialogs
+    return scored[0]?.score > 0 ? scored[0].dialog : null;
   }
 
-  function getPostAuthor(modal) {
-    if (!modal) return "";
-    const aria = normalizeName(modal.getAttribute("aria-label") || "");
+  function findSortControl(scope) {
+    if (!scope) return null;
+    return Array.from(
+      scope.querySelectorAll(
+        'div[role="button"], span[role="button"], [role="combobox"]',
+      ),
+    ).find((el) => {
+      if (el.closest('a[href]')) return false;
+      const t = normalizeName(textFrom(el));
+      return /^(most relevant|newest|all comments)$/i.test(t);
+    });
+  }
+
+  function findPermalinkPostRoot() {
+    const main =
+      document.querySelector('[role="main"]') ||
+      document.querySelector("#content") ||
+      document.body;
+
+    const labeled =
+      main.querySelector('[aria-label="Comments"]') ||
+      main.querySelector('[aria-label*="Comments" i]');
+    if (labeled) {
+      let cur = labeled.parentElement;
+      for (let i = 0; i < 10 && cur && cur !== document.body; i++) {
+        if (
+          cur.querySelector(
+            'form, [contenteditable="true"], [aria-label*="Write a comment" i]',
+          ) ||
+          findSortControl(cur) ||
+          cur.getAttribute("role") === "article"
+        ) {
+          return cur;
+        }
+        cur = cur.parentElement;
+      }
+      return labeled.closest('[role="article"]') || labeled.parentElement || main;
+    }
+
+    const sortBtn = findSortControl(main);
+    if (sortBtn) {
+      let cur = sortBtn.parentElement;
+      for (let i = 0; i < 10 && cur && cur !== document.body; i++) {
+        if (
+          cur.querySelector('[aria-label*="Comment by" i]') ||
+          cur.getAttribute("role") === "article" ||
+          cur.querySelector('form, [contenteditable="true"]')
+        ) {
+          return cur;
+        }
+        cur = cur.parentElement;
+      }
+      return sortBtn.closest('[role="article"]') || main;
+    }
+
+    const firstComment = main.querySelector('[aria-label*="Comment by" i]');
+    if (firstComment) {
+      return (
+        firstComment.closest('[role="article"]') ||
+        firstComment.closest('[role="main"]') ||
+        main
+      );
+    }
+
+    const articles = Array.from(main.querySelectorAll('[role="article"]'));
+    const withComments = articles.find(
+      (el) =>
+        el.querySelector('[aria-label*="Comment by" i]') ||
+        findSortControl(el) ||
+        el.querySelector('[aria-label*="Comments" i]'),
+    );
+    if (withComments) return withComments;
+
+    return isPostPermalink() ? main : null;
+  }
+
+  /** Modal post dialog, or the inline permalink post root. */
+  function findPostScope() {
+    const modal = findPostModal();
+    if (modal) return { root: modal, mode: "modal" };
+    const permalink = findPermalinkPostRoot();
+    if (permalink) return { root: permalink, mode: "permalink" };
+    return null;
+  }
+
+  function getPostAuthor(scope) {
+    if (!scope) return "";
+    const aria = normalizeName(scope.getAttribute("aria-label") || "");
     // "Cody Dean's Post" / "Cody Dean’s Post"
     let match = aria.match(/^(.+?)[''`′’]s\s+Post$/i);
     if (match) return normalizeName(match[1]);
 
     const heading = normalizeName(
-      textFrom(modal.querySelector('h2[id], [role="heading"]')),
+      textFrom(scope.querySelector('h2[id], [role="heading"]')),
     );
     match = heading.match(/^(.+?)[''`′’]s\s+Post$/i);
     if (match) return normalizeName(match[1]);
 
-    // Author link near top of modal (before comments)
-    const headerLink = modal.querySelector(
+    // Author link near top of post (before comments)
+    const headerLink = scope.querySelector(
       'h2 a[role="link"], [role="banner"] a[role="link"], a[role="link"]',
     );
     const headerName = textFrom(headerLink);
@@ -108,28 +229,22 @@
     return "";
   }
 
-  function findCommentsRoot(modal) {
-    if (!modal) return null;
+  function findCommentsRoot(scope) {
+    if (!scope) return null;
 
     const labeled =
-      modal.querySelector('[aria-label="Comments"]') ||
-      modal.querySelector('[aria-label*="Comments" i]');
+      scope.querySelector('[aria-label="Comments"]') ||
+      scope.querySelector('[aria-label*="Comments" i]');
     if (labeled) return labeled;
 
     // Section after the sort control ("Most relevant" / "All comments")
-    const sortBtn = Array.from(
-      modal.querySelectorAll(
-        'div[role="button"], span[role="button"], [role="combobox"]',
-      ),
-    ).find((el) =>
-      /^(most relevant|newest|all comments)$/i.test(normalizeName(textFrom(el))),
-    );
+    const sortBtn = findSortControl(scope);
     if (sortBtn) {
       let cur = sortBtn.parentElement;
-      for (let i = 0; i < 6 && cur && cur !== modal; i++) {
+      for (let i = 0; i < 6 && cur && cur !== scope; i++) {
         if (
           cur.querySelector('[aria-label*="Comment by" i]') ||
-          cur.querySelector('ul')
+          cur.querySelector("ul")
         ) {
           return cur;
         }
@@ -137,10 +252,10 @@
       }
     }
 
-    const firstComment = modal.querySelector('[aria-label*="Comment by" i]');
+    const firstComment = scope.querySelector('[aria-label*="Comment by" i]');
     if (firstComment) {
       let cur = firstComment.parentElement;
-      for (let i = 0; i < 8 && cur && cur !== modal; i++) {
+      for (let i = 0; i < 8 && cur && cur !== scope; i++) {
         if (cur.querySelectorAll('[aria-label*="Comment by" i]').length >= 2) {
           return cur;
         }
@@ -152,8 +267,8 @@
     return null;
   }
 
-  function findCommentPane(modal) {
-    const root = findCommentsRoot(modal) || modal;
+  function findCommentPane(scope) {
+    const root = findCommentsRoot(scope) || scope;
     if (!root) return null;
     if (isScrollable(root)) return root;
 
@@ -165,8 +280,9 @@
 
     let best = null;
     let bestScore = 0;
-    (modal || document).querySelectorAll("div, section, ul").forEach((el) => {
-      if (!modal.contains(el)) return;
+    const searchRoot = scope || document;
+    searchRoot.querySelectorAll("div, section, ul").forEach((el) => {
+      if (scope && !scope.contains(el)) return;
       if (!isScrollable(el)) return;
       const score = el.scrollHeight * el.clientHeight;
       if (score > bestScore) {
@@ -177,39 +293,21 @@
     return best || root;
   }
 
-  async function switchToAllComments(modal) {
-    if (!modal) return { ok: false, reason: "no-modal" };
+  async function switchToAllComments(scope) {
+    if (!scope) return { ok: false, reason: "no-scope" };
 
-    const current = Array.from(
-      modal.querySelectorAll(
-        'div[role="button"], span[role="button"], [role="combobox"]',
-      ),
-    ).find((el) => {
-      const t = normalizeName(textFrom(el));
-      return /^(most relevant|newest|all comments)$/i.test(t);
-    });
-
+    const current = findSortControl(scope);
     const currentText = current ? normalizeName(textFrom(current)) : "";
     if (/^all comments$/i.test(currentText)) {
       return { ok: true, already: true };
     }
 
-    const openers = Array.from(
-      modal.querySelectorAll(
-        'div[role="button"], span[role="button"], [role="combobox"], [aria-haspopup="menu"], [aria-haspopup="listbox"]',
-      ),
-    ).filter((el) => {
-      const t = normalizeName(el.getAttribute("aria-label") || textFrom(el));
-      return (
-        /most relevant|newest|all comments|sort|filter comments|comment sorting/i.test(
-          t,
-        ) && t.length < 40
-      );
-    });
-
-    const opener = openers[0] || current;
+    // Only click the known sort label — never broad "sort"/"filter" matches
+    // (those can hit nav and send Facebook back to facebook.com).
+    const opener = current;
     if (!opener) return { ok: false, reason: "no-opener" };
 
+    const startHref = location.href;
     try {
       opener.click();
     } catch {
@@ -217,11 +315,14 @@
     }
     await sleep(450);
 
+    if (location.href !== startHref && !location.href.includes(postKeyFromUrl())) {
+      return { ok: false, reason: "navigated-away" };
+    }
+
+    // Prefer menus/listboxes over unrelated dialogs (chat, etc.)
     const menuRoots = [
-      ...document.querySelectorAll(
-        '[role="menu"], [role="listbox"], [role="dialog"]',
-      ),
-      document.body,
+      ...document.querySelectorAll('[role="menu"], [role="listbox"]'),
+      ...document.querySelectorAll('[role="dialog"]'),
     ];
 
     let picked = null;
@@ -230,6 +331,8 @@
         '[role="menuitem"], [role="menuitemradio"], [role="option"], div[role="button"], span[role="button"]',
       );
       for (const opt of options) {
+        // Never follow a real navigation link
+        if (opt.closest('a[href^="http"], a[href^="/"]')) continue;
         const t = normalizeName(
           opt.getAttribute("aria-label") || textFrom(opt),
         );
@@ -259,6 +362,9 @@
     }
 
     await sleep(700);
+    if (location.href !== startHref && !location.href.includes(postKeyFromUrl())) {
+      return { ok: false, reason: "navigated-away" };
+    }
     return { ok: true, already: false };
   }
 
@@ -271,12 +377,13 @@
       return false;
     }
     if (
-      /\/(photo|photos|video|videos|reel|watch|permalink|story|stories|marketplace|ads|privacy|help|events|gaming|posts|groups\/\d+\/posts)\b/i.test(
+      /\/(photo|photos|video|videos|reel|watch|permalink|story|stories|marketplace|ads|privacy|help|events|gaming|posts)\b/i.test(
         href,
       )
     ) {
       return false;
     }
+    if (/\/groups\/[^/]+\/posts\b/i.test(href)) return false;
     if (/comment_id=|reply_comment_id=|__cft__/i.test(href)) return false;
     // Groups page link (not a person)
     if (/\/groups\/[^/]+\/?$/i.test(href) || /\/groups\/\d+/i.test(href)) {
@@ -332,27 +439,23 @@
     return "";
   }
 
-  function isMainPostArticle(node, modal) {
+  function isMainPostArticle(node, scope) {
     // The post itself is usually above the comments sort control
-    const sortBtn = Array.from(
-      modal.querySelectorAll('div[role="button"], [role="combobox"]'),
-    ).find((el) =>
-      /^(most relevant|newest|all comments)$/i.test(normalizeName(textFrom(el))),
-    );
+    const sortBtn = findSortControl(scope);
     if (!sortBtn) return false;
     const pos = node.compareDocumentPosition(sortBtn);
     // node is before sort button → likely the original post article
     return Boolean(pos & Node.DOCUMENT_POSITION_FOLLOWING);
   }
 
-  function collectVisibleNames(modal) {
-    if (!modal) return [];
+  function collectVisibleNames(scope) {
+    if (!scope) return [];
 
-    const author = getPostAuthor(modal);
+    const author = getPostAuthor(scope);
     const authorKey = author ? author.toLowerCase() : "";
 
-    const commentsRoot = findCommentsRoot(modal);
-    const scope = commentsRoot || modal;
+    const commentsRoot = findCommentsRoot(scope);
+    const collectScope = commentsRoot || scope;
     const names = [];
     const seen = new Set();
 
@@ -368,7 +471,7 @@
     };
 
     // Best signal: Facebook’s own “Comment by …” labels
-    const labeled = scope.querySelectorAll(
+    const labeled = collectScope.querySelectorAll(
       '[aria-label^="Comment by" i], [aria-label^="Reply by" i], [aria-label*="Comment by" i]',
     );
     labeled.forEach((node) => {
@@ -382,12 +485,12 @@
 
     // Fallback: comment list articles / list items under comments root only
     const commentNodes = [
-      ...scope.querySelectorAll('div[role="article"]'),
-      ...scope.querySelectorAll("ul li"),
+      ...collectScope.querySelectorAll('div[role="article"]'),
+      ...collectScope.querySelectorAll("ul li"),
     ];
 
     for (const node of commentNodes) {
-      if (!commentsRoot && isMainPostArticle(node, modal)) continue;
+      if (!commentsRoot && isMainPostArticle(node, scope)) continue;
       const fromAria = nameFromAriaCommentLabel(node);
       if (fromAria) {
         push(fromAria);
@@ -399,9 +502,9 @@
     return names;
   }
 
-  function clickExpanders(modal) {
-    if (!modal) return 0;
-    const scope = findCommentsRoot(modal) || modal;
+  function clickExpanders(scope) {
+    if (!scope) return 0;
+    const expandScope = findCommentsRoot(scope) || scope;
     let clicked = 0;
     const patterns = [
       /view more comments?/i,
@@ -413,7 +516,7 @@
       /show \d+ more/i,
     ];
 
-    const nodes = scope.querySelectorAll(
+    const nodes = expandScope.querySelectorAll(
       'div[role="button"], span[role="button"], button',
     );
     for (const node of nodes) {
@@ -439,78 +542,139 @@
   }
 
   async function extractCommenters() {
-    const modal = findPostModal();
-    if (!modal) {
+    const startKey = postKeyFromUrl();
+    const startHref = location.href;
+    const startPath = location.pathname;
+    const startedOnPermalink = isPostPermalink();
+
+    const found = findPostScope();
+    if (!found) {
       return {
         ok: false,
-        error:
-          "Open the post in its popup/modal first (click the post so the dialog is open), then Extract.",
+        error: startedOnPermalink
+          ? "Couldn’t find this post’s comments. Stay on the post URL, make sure comments are visible, then Extract."
+          : "Open the post page (or click the post so its dialog is open), then Extract.",
         names: [],
       };
     }
 
-    const sortResult = await switchToAllComments(modal);
+    const { mode } = found;
+    const liveScope = () => findPostScope()?.root || found.root;
+
+    const sortResult = await switchToAllComments(liveScope());
+    if (sortResult.reason === "navigated-away") {
+      return {
+        ok: false,
+        error:
+          "Facebook left the post while switching to All comments. Stay on the post URL and try Extract again.",
+        names: [],
+      };
+    }
     if (sortResult.ok && !sortResult.already) {
       await sleep(900);
     }
 
-    const liveModal = () => findPostModal() || modal;
-
-    const { names, pass1Rounds, pass2Rounds, addedInCheck } =
-      await loadAllNamesWithDoubleCheck({
-      collectNames: () => collectVisibleNames(liveModal()),
-      scrollCandidates: () => {
-        const current = liveModal();
-        return [findCommentPane(current), findCommentsRoot(current)].filter(
-          Boolean,
-        );
-      },
-      allowPageFallback: false,
-      loadMoreRoot: () => findCommentsRoot(liveModal()) || liveModal(),
-      loadMorePatterns: [
-        /view more comments?/i,
-        /view previous comments?/i,
-        /view \d+ more comments?/i,
-        /view more replies?/i,
-        /view \d+ more replies?/i,
-        /\d+\s+replies?/i,
-        /show \d+ more/i,
-      ],
-      beforeScroll: async () => {
-        clickExpanders(liveModal());
-      },
-      resetScroll: async () => {
-        const current = liveModal();
-        const pane = findCommentPane(current) || findCommentsRoot(current);
-        if (pane) pane.scrollTop = 0;
-        await sleep(350);
-      },
-      shouldAbort: () => {
+    const stillOnPost = () => {
+      if (mode === "modal") {
         if (!findPostModal()) return "Stopped because the post modal closed.";
         return false;
-      },
-      maxRounds: 60,
-      idleStop: 5,
-      delayMs: 650,
-      maxMs: 70000,
-    });
+      }
+      const key = postKeyFromUrl();
+      if (startKey && key && key !== startKey) {
+        return "Stopped because Facebook navigated away from this post.";
+      }
+      if (startedOnPermalink && !isPostPermalink()) {
+        return "Stopped because Facebook left the post page.";
+      }
+      if (
+        startKey &&
+        !String(location.href).includes(String(startKey)) &&
+        location.href !== startHref &&
+        location.pathname !== startPath
+      ) {
+        return "Stopped because the page URL changed.";
+      }
+      // Plain facebook.com / home after a bad click
+      const path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+      if (path === "/" || /\/(home|feed)$/i.test(path)) {
+        return "Stopped because Facebook navigated to the home feed.";
+      }
+      if (!findPostScope()) {
+        return "Stopped because the post comments are no longer on the page.";
+      }
+      return false;
+    };
+
+    const { names, pass1Rounds, pass2Rounds, addedInCheck, aborted, abortReason } =
+      await loadAllNamesWithDoubleCheck({
+        collectNames: () => collectVisibleNames(liveScope()),
+        scrollCandidates: () => {
+          const current = liveScope();
+          return [findCommentPane(current), findCommentsRoot(current)].filter(
+            Boolean,
+          );
+        },
+        // Permalink pages often scroll the document, not a nested pane
+        allowPageFallback: mode === "permalink",
+        loadMoreRoot: () => findCommentsRoot(liveScope()) || liveScope(),
+        loadMorePatterns: [
+          /view more comments?/i,
+          /view previous comments?/i,
+          /view \d+ more comments?/i,
+          /view more replies?/i,
+          /view \d+ more replies?/i,
+          /\d+\s+replies?/i,
+          /show \d+ more/i,
+        ],
+        beforeScroll: async () => {
+          clickExpanders(liveScope());
+        },
+        resetScroll: async () => {
+          const current = liveScope();
+          const pane = findCommentPane(current) || findCommentsRoot(current);
+          if (pane) pane.scrollTop = 0;
+          if (mode === "permalink") window.scrollTo(0, 0);
+          await sleep(350);
+        },
+        shouldAbort: stillOnPost,
+        maxRounds: 60,
+        idleStop: 5,
+        delayMs: 650,
+        maxMs: 70000,
+      });
 
     const unique = uniqueNames(names);
+    if (aborted && unique.length === 0) {
+      return {
+        ok: false,
+        error:
+          abortReason ||
+          "Facebook navigated away while loading comments. Stay on the post tab and try Extract again.",
+        names: [],
+      };
+    }
+
     const sortNote = sortResult.ok
       ? sortResult.already
         ? "All comments already selected. "
         : "Switched to All comments. "
       : "Couldn’t confirm All comments — names may be incomplete. ";
 
+    const modeNote =
+      mode === "permalink" ? "Stayed on the post page. " : "";
+
     return {
       ok: true,
       platform: "Facebook",
       names: unique,
       count: unique.length,
-      hint:
-        unique.length === 0
-          ? `${sortNote}No commenters found. Make sure the post modal is open and comments are visible.`
-          : `${sortNote}${doubleCheckHint(
+      hint: aborted
+        ? `${abortReason} Kept ${unique.length} unique commenter${
+            unique.length === 1 ? "" : "s"
+          } collected before that.`
+        : unique.length === 0
+          ? `${sortNote}${modeNote}No commenters found. Make sure comments are visible on this post.`
+          : `${sortNote}${modeNote}${doubleCheckHint(
               unique.length,
               pass1Rounds,
               pass2Rounds,

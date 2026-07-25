@@ -13,7 +13,7 @@ const PLATFORM_MATCHERS = [
     label: "Facebook",
     test: (url) => /https?:\/\/(www\.)?facebook\.com\//i.test(url),
     files: ["shared/utils.js", "content/facebook.js"],
-    help: "Open the post modal first. Extract switches to All comments and scrolls only inside that dialog.",
+    help: "Open a post URL or post modal. Extract switches to All comments, expands threads, and stays on that post.",
   },
   {
     id: "instagram",
@@ -40,7 +40,7 @@ const PLATFORM_MATCHERS = [
 
 const REQUIRED_VERSION = {
   twitter: 7,
-  facebook: 5,
+  facebook: 6,
   instagram: 5,
   tiktok: 4,
   sheets: 6,
@@ -345,7 +345,7 @@ async function init() {
       "error",
     );
     setHelp(
-      "Supported: X/Twitter posts, Facebook post modals, Instagram posts, TikTok videos, and Google Sheets.",
+      "Supported: X/Twitter posts, Facebook posts, Instagram posts, TikTok videos, and Google Sheets.",
     );
     return;
   }
