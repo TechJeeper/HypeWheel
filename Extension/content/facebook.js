@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = 6;
+  const VERSION = 7;
   if (globalThis.__hypewheelFacebook === VERSION) return;
   globalThis.__hypewheelFacebook = VERSION;
 
@@ -345,10 +345,10 @@
     }
 
     if (!picked) {
+      // Close the sort menu by toggling the opener again — never send Escape,
+      // Facebook closes the whole post modal on Escape.
       try {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
-        );
+        opener.click();
       } catch {
         // ignore
       }
@@ -406,6 +406,14 @@
     // Trim trailing meta like "5d" already handled; also "Name · 1 Reply"
     let name = normalizeName(match[1].split("·")[0]);
     name = name.replace(/\s+\d+[smhdwy]\b.*$/i, "").trim();
+    // Relative times without digits: "a week ago", "an hour ago", "yesterday", "just now"
+    name = name
+      .replace(
+        /\s+(?:an?\s+)?(?:few\s+)?(?:second|minute|hour|day|week|month|year)s?\s+ago$/i,
+        "",
+      )
+      .replace(/\s+(?:yesterday|just now)$/i, "")
+      .trim();
     return looksLikePersonName(name) ? name : "";
   }
 
@@ -558,8 +566,17 @@
       };
     }
 
-    const { mode } = found;
-    const liveScope = () => findPostScope()?.root || found.root;
+    // "View more comments" in a feed modal can swap the modal for the inline
+    // permalink view — track the mode live so we follow that transition.
+    let mode = found.mode;
+    const liveScope = () => {
+      const current = findPostScope();
+      if (current) {
+        mode = current.mode;
+        return current.root;
+      }
+      return found.root;
+    };
 
     const sortResult = await switchToAllComments(liveScope());
     if (sortResult.reason === "navigated-away") {
@@ -576,8 +593,17 @@
 
     const stillOnPost = () => {
       if (mode === "modal") {
-        if (!findPostModal()) return "Stopped because the post modal closed.";
-        return false;
+        if (findPostModal()) return false;
+        // Modal gone — keep going if the same post is now rendered inline
+        // (Facebook swaps modal → permalink page on "View more comments").
+        const key = postKeyFromUrl();
+        const samePost =
+          !startKey || key === startKey || location.href.includes(startKey);
+        if (samePost && isPostPermalink() && findPermalinkPostRoot()) {
+          mode = "permalink";
+          return false;
+        }
+        return "Stopped because the post modal closed.";
       }
       const key = postKeyFromUrl();
       if (startKey && key && key !== startKey) {
@@ -614,8 +640,9 @@
             Boolean,
           );
         },
-        // Permalink pages often scroll the document, not a nested pane
-        allowPageFallback: mode === "permalink",
+        // Permalink pages often scroll the document, not a nested pane.
+        // Keep fallback on so a modal→permalink transition still scrolls.
+        allowPageFallback: true,
         loadMoreRoot: () => findCommentsRoot(liveScope()) || liveScope(),
         loadMorePatterns: [
           /view more comments?/i,

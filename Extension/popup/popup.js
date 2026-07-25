@@ -40,7 +40,7 @@ const PLATFORM_MATCHERS = [
 
 const REQUIRED_VERSION = {
   twitter: 7,
-  facebook: 6,
+  facebook: 7,
   instagram: 5,
   tiktok: 4,
   sheets: 6,
