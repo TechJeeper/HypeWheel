@@ -3,11 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HypeWheel - Random Name Picker</title>
+    <title>HypeWheel - Free Random Name Picker & Wheel Spinner</title>
+
+    <!-- Primary SEO Meta Tags -->
+    <meta name="description" content="Free, customizable spinning wheel for random name picking, classroom picks, raffles, social media giveaways, and live stream OBS overlays. Spin the wheel to pick a winner instantly." />
+    <meta name="keywords" content="random name picker, wheel spinner, spin the wheel, giveaway picker, random choice generator, raffle wheel, classroom spinner, obs wheel overlay, hypewheel, name selector" />
+    <meta name="author" content="HypeWheel" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://hypewheel.app/" />
+    <meta name="theme-color" content="#111827" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hypewheel.app/" />
+    <meta property="og:title" content="HypeWheel - Free Random Name Picker & Wheel Spinner" />
+    <meta property="og:description" content="Free customizable random name picker wheel for giveaways, classroom picks, raffles, and OBS streamer overlays. Spin the wheel to pick a winner instantly!" />
+    <meta property="og:image" content="https://hypewheel.app/logo.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="HypeWheel Logo - Random Name Picker" />
+    <meta property="og:site_name" content="HypeWheel" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://hypewheel.app/" />
+    <meta name="twitter:title" content="HypeWheel - Free Random Name Picker & Wheel Spinner" />
+    <meta name="twitter:description" content="Free customizable random name picker wheel for giveaways, classroom picks, and OBS streamer overlays." />
+    <meta name="twitter:image" content="https://hypewheel.app/logo.png" />
+
+    <!-- Icons & Web App Manifest -->
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "HypeWheel",
+      "alternateName": "HypeWheel Random Name Picker",
+      "url": "https://hypewheel.app/",
+      "logo": "https://hypewheel.app/logo.png",
+      "description": "Free and customizable spinning wheel app for giveaways, classroom picks, raffles, and random name selection with OBS browser source overlay support.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript and HTML5 Canvas support",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -391,35 +442,24 @@
     <!-- FOOTER -->
     <footer
       id="main-footer"
-      class="w-full p-6 text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center space-y-4"
+      class="w-full mt-auto p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur border-t border-gray-200 dark:border-gray-800 text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300"
     >
-      <div>
-        Provided free by
-        <a
-          href="https://TechJeeper.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors"
-          >TechJeeper Designs</a
-        >
-      </div>
-      <div>
-        <a
-          href="https://github.com/TechJeeper/HypeWheel/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors"
-          >Submit Issues to GitHub</a
-        >
-      </div>
-      <div>
-        <a
-          href="https://techjeeper.com/support.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors"
-          >Support Projects</a
-        >
+      <div class="max-w-[1920px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+        <div class="space-y-1">
+          <p class="font-bold text-gray-900 dark:text-gray-100">HypeWheel - Free Random Name Picker & Wheel Spinner</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
+            Customizable wheel spinner for giveaways, classroom picks, raffles, and stream overlays (OBS Browser Source). Provided free by <a href="https://TechJeeper.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">TechJeeper Designs</a>.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-medium">
+          <a href="privacy.html" class="hover:text-indigo-500 transition-colors">Privacy Policy</a>
+          <span class="text-gray-300 dark:text-gray-700">•</span>
+          <a href="https://chromewebstore.google.com/detail/afpnpiehbfpnolbmfpekfibonikdiaeo?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-500 transition-colors">Chrome Extension</a>
+          <span class="text-gray-300 dark:text-gray-700">•</span>
+          <a href="https://github.com/TechJeeper/HypeWheel/issues" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-500 transition-colors">Report Issue</a>
+          <span class="text-gray-300 dark:text-gray-700">•</span>
+          <a href="https://techjeeper.com/support.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors">Support Projects</a>
+        </div>
       </div>
     </footer>
 
