@@ -491,6 +491,10 @@
     seed: wheel.seed || "",
     centerImage: trimImage(wheel.centerImage),
     customImage: trimImage(wheel.customImage),
+    twitchChannel: wheel.twitchChannel || "",
+    youtubeVideoId: wheel.youtubeVideoId || "",
+    joinCommand: wheel.joinCommand || "!join",
+    leaveCommand: wheel.leaveCommand || "!leave",
   });
 
   const wheelToShareableAsync = async (wheel) => {
