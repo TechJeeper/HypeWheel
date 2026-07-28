@@ -747,6 +747,17 @@
 
     <!-- APPLICATION LOGIC -->
     <script>
+      // --- GOATCOUNTER EVENT TRACKING ---
+      const trackGoatCounterEvent = (path, title) => {
+        if (window.goatcounter && typeof window.goatcounter.count === "function") {
+          window.goatcounter.count({
+            path: path,
+            title: title,
+            event: true,
+          });
+        }
+      };
+
       // --- AUDIO ---
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const playTickSound = () => {
@@ -2265,6 +2276,7 @@
 
         shuffle() {
           if (this.isSpinning || this.entries.length < 2) return;
+          trackGoatCounterEvent("shuffle", "Shuffle Entries");
           this._performShuffle();
           this.saveConfig();
           this.draw();
@@ -2272,6 +2284,7 @@
 
         async autoShuffle() {
           if (this.isSpinning || this.entries.length < 2) return;
+          trackGoatCounterEvent("auto-shuffle", "Auto Shuffle");
 
           this.isSpinning = true;
           this.isShuffling = true;
@@ -2866,6 +2879,7 @@
 
         spin() {
           if (this.entries.length < 2 || this.isSpinning) return;
+          trackGoatCounterEvent("spin", "Wheel Spin");
 
           this.isSpinning = true;
           this.updateUIState();
@@ -3275,6 +3289,7 @@
 
         spin() {
           if (this.isSpinning) return;
+          trackGoatCounterEvent("slot-spin", "Slot Machine Spin");
           this.isSpinning = true;
           this.startTime = performance.now();
           this.lastTickIndex = -1;
