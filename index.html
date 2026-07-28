@@ -66,7 +66,12 @@
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- GoatCounter Analytics -->
-    <script data-goatcounter="https://techjeeper.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    <script
+      data-goatcounter="https://techjeeper.goatcounter.com/count"
+      data-goatcounter-settings='{"allow_local": true}'
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
     <!-- Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
     <script src="js/share.js"></script>
@@ -81,6 +86,17 @@
       };
     </script>
     <style>
+      /* Prevent GoatCounter pixel/image elements from disrupting body flex layout */
+      body > img[src*="goatcounter"],
+      #goatcounter-pixel {
+        display: none !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
       /* Custom scrollbar */
       textarea::-webkit-scrollbar {
         width: 8px;
