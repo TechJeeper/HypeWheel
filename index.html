@@ -1706,6 +1706,7 @@
           link.download = `hypewheel_${safeName || "wheel"}.json`;
           link.click();
           URL.revokeObjectURL(link.href);
+          trackGoatCounterEvent("export-wheel", "Export Wheel");
           showToast("Wheel exported!", "success");
         }
 
@@ -1722,6 +1723,10 @@
                 options,
               );
             await navigator.clipboard.writeText(url);
+            trackGoatCounterEvent(
+              options.overlay ? "share-obs-link" : "share-link",
+              options.overlay ? "Share OBS Link" : "Share Link",
+            );
             let msg = options.overlay
               ? "OBS overlay link copied!"
               : "Share link copied!";
@@ -1878,6 +1883,7 @@
               return;
             }
             this.applyBrandPack(pack);
+            trackGoatCounterEvent("brand-pack-apply", "Apply Brand Pack");
             showToast(`Applied "${pack.name}"`, "success");
           });
 
@@ -1898,6 +1904,7 @@
             this.dom.brandPackNameInput.value = "";
             wheelInstances.forEach((w) => w.refreshBrandPackSelect());
             this.dom.brandPackSelect.value = pack.id;
+            trackGoatCounterEvent("brand-pack-save", "Save Brand Pack");
             showToast(`Saved pack "${name}"`, "success");
           });
 
@@ -1912,6 +1919,7 @@
             );
             saveBrandPacks();
             wheelInstances.forEach((w) => w.refreshBrandPackSelect());
+            trackGoatCounterEvent("brand-pack-delete", "Delete Brand Pack");
             showToast("Brand pack deleted", "success");
           });
 
@@ -2128,6 +2136,7 @@
               "Enter a topic for the list (e.g., '10 popular pizza toppings'):",
             );
             if (!promptStr) return;
+            trackGoatCounterEvent("ai-generate-list", "AI Generate List");
 
             const originalHTML = this.dom.btnAIList.innerHTML;
             this.dom.btnAIList.disabled = true;
@@ -3779,6 +3788,10 @@
 
       document.getElementById("btn-slot-mode").addEventListener("click", () => {
         appState.slotMode = !appState.slotMode;
+        trackGoatCounterEvent(
+          appState.slotMode ? "enable-slot-mode" : "disable-slot-mode",
+          appState.slotMode ? "Enable Slot Mode" : "Disable Slot Mode",
+        );
         renderWheels();
       });
 
