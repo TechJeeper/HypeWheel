@@ -2451,6 +2451,10 @@
             maxAllowedSize,
           );
 
+          // Hidden / zero-size containers produce a negative size; assigning that
+          // to canvas.width wraps to a huge unsigned value and can crash the tab.
+          if (!Number.isFinite(size) || size < 32) return;
+
           this.canvasSize = size * this.zoomLevel;
           this.dom.canvas.style.width = `${this.canvasSize + pointerRoom}px`;
           this.dom.canvas.style.height = `${this.canvasSize}px`;
@@ -3665,6 +3669,15 @@
 
       let slotMachineInstance = null;
 
+      const applyPresenterChrome = (isTheater) => {
+        document.getElementById("navbar").style.display = isTheater
+          ? "none"
+          : "flex";
+        const footer = document.getElementById("main-footer");
+        if (footer) footer.style.display = isTheater ? "none" : "block";
+        document.body.style.overflow = isTheater ? "hidden" : "auto";
+      };
+
       const updateSlotModeButton = () => {
         const btn = document.getElementById("btn-slot-mode");
         if (appState.wheelsConfig.length >= 2 && !appState.theaterModeId) {
@@ -3737,29 +3750,36 @@
           return;
         }
 
-        workspace.className = `p-4 md:p-6 w-full max-w-[1920px] mx-auto grid gap-6 flex-1 ${appState.theaterModeId ? "p-0 m-0 !block" : ""}`;
-        if (!appState.theaterModeId) {
-          if (appState.wheelsConfig.length === 1)
-            workspace.classList.add("grid-cols-1");
-          else if (appState.wheelsConfig.length === 2)
-            workspace.classList.add("lg:grid-cols-2");
-          else workspace.classList.add("md:grid-cols-2", "xl:grid-cols-3");
+        if (appState.theaterModeId) {
+          const conf = appState.wheelsConfig.find(
+            (w) => w.id === appState.theaterModeId,
+          );
+          if (!conf) {
+            appState.theaterModeId = null;
+            applyPresenterChrome(false);
+          } else {
+            workspace.className =
+              "p-0 m-0 w-full max-w-[1920px] mx-auto grid gap-6 flex-1 !block";
+            const inst = new WheelApp(conf, workspace);
+            wheelInstances.push(inst);
+            inst.setTheaterMode(true);
+            inst.dom.btnDelete.style.display =
+              appState.wheelsConfig.length > 1 ? "" : "none";
+            return;
+          }
         }
 
+        workspace.className =
+          "p-4 md:p-6 w-full max-w-[1920px] mx-auto grid gap-6 flex-1";
+        if (appState.wheelsConfig.length === 1)
+          workspace.classList.add("grid-cols-1");
+        else if (appState.wheelsConfig.length === 2)
+          workspace.classList.add("lg:grid-cols-2");
+        else workspace.classList.add("md:grid-cols-2", "xl:grid-cols-3");
+
         appState.wheelsConfig.forEach((conf) => {
-          let inst = wheelInstances.find((w) => w.id === conf.id);
-          if (!inst) {
-            inst = new WheelApp(conf, workspace);
-            wheelInstances.push(inst);
-          }
-
-          if (appState.theaterModeId && appState.theaterModeId !== conf.id) {
-            inst.dom.wrapper.style.display = "none";
-          } else {
-            inst.dom.wrapper.style.display = "flex";
-          }
-
-          inst.setTheaterMode(appState.theaterModeId === conf.id);
+          const inst = new WheelApp(conf, workspace);
+          wheelInstances.push(inst);
         });
 
         const showDelete = appState.wheelsConfig.length > 1;
@@ -3778,6 +3798,11 @@
           JSON.stringify(appState.wheelsConfig),
         );
 
+        if (appState.theaterModeId === id) {
+          appState.theaterModeId = null;
+          applyPresenterChrome(false);
+        }
+
         const inst = wheelInstances.find((w) => w.id === id);
         if (inst) {
           inst.destroy();
@@ -3788,17 +3813,7 @@
 
       const toggleTheaterMode = (id) => {
         appState.theaterModeId = appState.theaterModeId === id ? null : id;
-        document.getElementById("navbar").style.display = appState.theaterModeId
-          ? "none"
-          : "flex";
-
-        const footer = document.getElementById("main-footer");
-        if (footer)
-          footer.style.display = appState.theaterModeId ? "none" : "block";
-
-        document.body.style.overflow = appState.theaterModeId
-          ? "hidden"
-          : "auto";
+        applyPresenterChrome(!!appState.theaterModeId);
         renderWheels();
       };
 
@@ -4297,11 +4312,8 @@
               document.title,
               urlObj.pathname + urlObj.search + urlObj.hash,
             );
-            document.getElementById("navbar").style.display = "flex";
-            const footer = document.getElementById("main-footer");
-            if (footer) footer.style.display = "block";
-            document.body.style.overflow = "auto";
             appState.theaterModeId = null;
+            applyPresenterChrome(false);
             renderWheels();
             return;
           }
