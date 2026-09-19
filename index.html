@@ -2585,6 +2585,8 @@
           }
 
           this.dom.btnClear.addEventListener("click", () => {
+            if (this.entries.length === 0 && !this.rawText.trim()) return;
+            if (!confirm("Clear all names from this wheel?")) return;
             this.rawText = "";
             this.entries = [];
             this.dom.entriesInput.value = "";
