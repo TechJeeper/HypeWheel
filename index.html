@@ -247,6 +247,115 @@
       select.settings-control {
         cursor: pointer;
       }
+
+      /* Entries action toolbar */
+      .entries-toolbar {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 0.625rem;
+        background: rgb(243 244 246 / 0.9);
+        border: 1px solid rgb(209 213 219);
+      }
+      .dark .entries-toolbar {
+        background: rgb(31 41 55 / 0.95);
+        border-color: rgb(75 85 99);
+      }
+      .entries-tool-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.45rem;
+        color: rgb(55 65 81);
+        background: transparent;
+        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .dark .entries-tool-btn {
+        color: rgb(209 213 219);
+      }
+      .entries-tool-btn:hover {
+        background: rgb(229 231 235);
+        color: rgb(17 24 39);
+      }
+      .dark .entries-tool-btn:hover {
+        background: rgb(55 65 81);
+        color: rgb(255 255 255);
+      }
+      .entries-tool-btn svg {
+        width: 1.05rem;
+        height: 1.05rem;
+      }
+      .entries-tool-btn.btn-twitch-toggle {
+        color: rgb(147 51 234);
+      }
+      .dark .entries-tool-btn.btn-twitch-toggle {
+        color: rgb(192 132 252);
+      }
+      .entries-tool-btn.btn-twitch-toggle.is-active {
+        background: rgb(147 51 234);
+        color: #fff;
+        box-shadow: 0 1px 2px rgb(88 28 135 / 0.35);
+      }
+      .entries-tool-btn.btn-twitch-toggle.is-active:hover {
+        background: rgb(126 34 206);
+        color: #fff;
+      }
+      .entries-tool-btn.btn-twitch-toggle.is-live::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgb(74 222 128);
+        box-shadow: 0 0 0 1.5px rgb(147 51 234);
+      }
+      .entries-tool-btn.btn-twitch-toggle.is-active.is-live::after {
+        box-shadow: 0 0 0 1.5px rgb(147 51 234);
+        background: rgb(187 247 208);
+      }
+      .entries-tool-btn.btn-ai-list {
+        color: rgb(79 70 229);
+      }
+      .dark .entries-tool-btn.btn-ai-list {
+        color: rgb(129 140 248);
+      }
+      .entries-toolbar-sep {
+        width: 1px;
+        height: 1.15rem;
+        margin: 0 2px;
+        background: rgb(209 213 219);
+        flex-shrink: 0;
+      }
+      .dark .entries-toolbar-sep {
+        background: rgb(75 85 99);
+      }
+      .entries-tool-btn.btn-clear {
+        color: rgb(239 68 68);
+      }
+      .dark .entries-tool-btn.btn-clear {
+        color: rgb(248 113 113);
+      }
+      .entries-tool-btn.btn-clear:hover {
+        background: rgb(239 68 68);
+        color: #fff;
+      }
+      .twitch-watch-panel {
+        border-radius: 0.75rem;
+        border: 1px solid rgb(216 180 254);
+        background: rgb(250 245 255 / 0.65);
+        padding: 0.625rem 0.75rem;
+      }
+      .dark .twitch-watch-panel {
+        border-color: rgb(107 33 168 / 0.55);
+        background: rgb(88 28 135 / 0.18);
+      }
+
       .settings-switch {
         position: relative;
         display: inline-flex;
@@ -1424,40 +1533,12 @@
           const open = this.twitchPanelOpen;
           const watching = this.twitchWatching;
           this.dom.twitchWatchPanel.classList.toggle("hidden", !open);
-          this.dom.btnTwitchToggle.setAttribute("aria-expanded", open ? "true" : "false");
-          this.dom.btnTwitchToggle.classList.toggle(
-            "bg-purple-600",
-            open || watching,
+          this.dom.btnTwitchToggle.setAttribute(
+            "aria-expanded",
+            open ? "true" : "false",
           );
-          this.dom.btnTwitchToggle.classList.toggle("text-white", open || watching);
-          this.dom.btnTwitchToggle.classList.toggle(
-            "hover:bg-purple-700",
-            open || watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "bg-gray-200",
-            !open && !watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "dark:bg-gray-700",
-            !open && !watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "text-purple-600",
-            !open && !watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "dark:text-purple-400",
-            !open && !watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "hover:bg-gray-300",
-            !open && !watching,
-          );
-          this.dom.btnTwitchToggle.classList.toggle(
-            "dark:hover:bg-gray-600",
-            !open && !watching,
-          );
+          this.dom.btnTwitchToggle.classList.toggle("is-active", open);
+          this.dom.btnTwitchToggle.classList.toggle("is-live", watching);
           this.dom.btnTwitchToggle.title = open
             ? "Hide Twitch chat"
             : watching
@@ -1806,34 +1887,36 @@
                         <div class="controls-area flex flex-col p-4 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-300 dark:border-gray-700 transition-all duration-300 w-full lg:w-96">
                             
                             <div class="hide-in-theater flex flex-col flex-1 min-h-0">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="entries-count font-semibold text-gray-900 dark:text-white">Entries (${this.entries.length})</span>
-                                    <div class="flex gap-1.5">
-                                        <button type="button" class="btn-twitch-toggle p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-purple-600 dark:text-purple-400 hover:bg-gray-300 dark:hover:bg-gray-600" title="Show Twitch chat" aria-expanded="false" aria-controls="twitch-watch-panel-${this.id}"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.571 4.714h1.714v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></button>
-                                        <button class="btn-ai-list p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-gray-300 dark:hover:bg-gray-600" title="AI List"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.4 21h-2.154l-2-5H5.754l-2 5H1.6L8 5h2zm4.6-9v9h-2v-9zM6.554 14h4.892L9 7.885zM19.529 2.32a.507.507 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.717.32a.53.53 0 0 1 0 .962l-.758.338a4.36 4.36 0 0 0-2.22 2.25l-.246.566a.506.506 0 0 1-.934 0l-.247-.565a4.36 4.36 0 0 0-2.219-2.251l-.76-.338a.53.53 0 0 1 0-.963l.718-.32a4.37 4.37 0 0 0 2.251-2.325z"/></svg></button>
-                                        <button class="btn-sort p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600" title="Sort A-Z"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 16 16"><path d="M0 0h16v16H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="M4.338 12.274V1.91h1v10.363L7 10.749l.676.737l-2.838 2.603L2 11.486l.676-.737zM10.628 2h1.744l.981 3.271l.02.051a23 23 0 0 1 .29.796c.08.232.161.487.223.72c.058.216.114.465.114.662h-1c0-.053-.022-.187-.08-.404a11 11 0 0 0-.203-.655a20 20 0 0 0-.181-.506h-2.072c-.053.142-.117.319-.181.506c-.076.222-.15.453-.203.655c-.058.217-.08.351-.08.404H9c0-.197.056-.446.114-.663c.062-.232.143-.487.223-.719a22 22 0 0 1 .29-.796l.02-.05zm.164 2.935h1.416L11.628 3h-.256zM9 9h5v1.25L10.333 13H14v1H9v-1.25L12.667 10H9z" clip-rule="evenodd"/></svg></button>
-                                        <button class="btn-dedupe p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600" title="Dedupe"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 26 26"><path d="M0 0h26v26H0z" fill="none"/><g fill="currentColor"><path fill-rule="evenodd" d="M18 10.5h-7a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5m-6.5 7v-6h6v6z" clip-rule="evenodd"/><path d="M8.5 14.5h3v1H8a.5.5 0 0 1-.5-.5V8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v3.5h-1v-3h-6z"/><path d="M4.15 4.878a.514.514 0 0 1 .728-.727l16.971 16.971a.514.514 0 0 1-.727.727z"/><path fill-rule="evenodd" d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5" clip-rule="evenodd"/></g></svg></button>
-                                        <button class="btn-remove-past-winners p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600" title="Remove Past Winners"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0"/><path d="M3 21v-2a4 4 0 0 1 4-4h4c.948 0 1.818.33 2.504.88"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M16 19h6"/></svg></button>
-                                        <button class="btn-clear p-3 rounded-lg hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400" title="Clear"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
+                                <div class="flex justify-between items-center gap-2 mb-2">
+                                    <span class="entries-count font-semibold text-gray-900 dark:text-white shrink-0">Entries (${this.entries.length})</span>
+                                    <div class="entries-toolbar" role="toolbar" aria-label="Entry tools">
+                                        <button type="button" class="entries-tool-btn btn-twitch-toggle" title="Show Twitch chat" aria-expanded="false" aria-controls="twitch-watch-panel-${this.id}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.571 4.714h1.714v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-ai-list" title="AI List"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.4 21h-2.154l-2-5H5.754l-2 5H1.6L8 5h2zm4.6-9v9h-2v-9zM6.554 14h4.892L9 7.885zM19.529 2.32a.507.507 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.717.32a.53.53 0 0 1 0 .962l-.758.338a4.36 4.36 0 0 0-2.22 2.25l-.246.566a.506.506 0 0 1-.934 0l-.247-.565a4.36 4.36 0 0 0-2.219-2.251l-.76-.338a.53.53 0 0 1 0-.963l.718-.32a4.37 4.37 0 0 0 2.251-2.325z"/></svg></button>
+                                        <span class="entries-toolbar-sep" aria-hidden="true"></span>
+                                        <button type="button" class="entries-tool-btn btn-sort" title="Sort A-Z"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 0h16v16H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="M4.338 12.274V1.91h1v10.363L7 10.749l.676.737l-2.838 2.603L2 11.486l.676-.737zM10.628 2h1.744l.981 3.271l.02.051a23 23 0 0 1 .29.796c.08.232.161.487.223.72c.058.216.114.465.114.662h-1c0-.053-.022-.187-.08-.404a11 11 0 0 0-.203-.655a20 20 0 0 0-.181-.506h-2.072c-.053.142-.117.319-.181.506c-.076.222-.15.453-.203.655c-.058.217-.08.351-.08.404H9c0-.197.056-.446.114-.663c.062-.232.143-.487.223-.719a22 22 0 0 1 .29-.796l.02-.05zm.164 2.935h1.416L11.628 3h-.256zM9 9h5v1.25L10.333 13H14v1H9v-1.25L12.667 10H9z" clip-rule="evenodd"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-dedupe" title="Dedupe"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26"><path d="M0 0h26v26H0z" fill="none"/><g fill="currentColor"><path fill-rule="evenodd" d="M18 10.5h-7a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5m-6.5 7v-6h6v6z" clip-rule="evenodd"/><path d="M8.5 14.5h3v1H8a.5.5 0 0 1-.5-.5V8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v3.5h-1v-3h-6z"/><path d="M4.15 4.878a.514.514 0 0 1 .728-.727l16.971 16.971a.514.514 0 0 1-.727.727z"/><path fill-rule="evenodd" d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5" clip-rule="evenodd"/></g></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-remove-past-winners" title="Remove Past Winners"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0"/><path d="M3 21v-2a4 4 0 0 1 4-4h4c.948 0 1.818.33 2.504.88"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M16 19h6"/></svg></button>
+                                        <span class="entries-toolbar-sep" aria-hidden="true"></span>
+                                        <button type="button" class="entries-tool-btn btn-clear" title="Clear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
                                     </div>
                                 </div>
                                 <div id="twitch-watch-panel-${this.id}" class="twitch-watch-panel mb-2 ${this.twitchPanelOpen ? "" : "hidden"}">
                                     <div class="flex flex-wrap gap-2 items-end">
                                         <label class="flex-1 min-w-[7rem]">
-                                            <span class="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">Twitch channel</span>
-                                            <input type="text" class="twitch-channel-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-purple-400" placeholder="channel" value="${escapeHTML(this.twitchChannel)}" autocomplete="off" spellcheck="false">
+                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Twitch channel</span>
+                                            <input type="text" class="twitch-channel-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" placeholder="channel" value="${escapeHTML(this.twitchChannel)}" autocomplete="off" spellcheck="false">
                                         </label>
                                         <label class="w-20">
-                                            <span class="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">Join</span>
-                                            <input type="text" class="twitch-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-purple-400" value="${escapeHTML(this.twitchKeyword)}" autocomplete="off" spellcheck="false" title="Join keyword">
+                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Join</span>
+                                            <input type="text" class="twitch-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchKeyword)}" autocomplete="off" spellcheck="false" title="Join keyword">
                                         </label>
                                         <label class="w-20">
-                                            <span class="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">Leave</span>
-                                            <input type="text" class="twitch-leave-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-purple-400" value="${escapeHTML(this.twitchLeaveKeyword)}" autocomplete="off" spellcheck="false" title="Leave keyword">
+                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Leave</span>
+                                            <input type="text" class="twitch-leave-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchLeaveKeyword)}" autocomplete="off" spellcheck="false" title="Leave keyword">
                                         </label>
-                                        <button type="button" class="btn-twitch-watch px-3 py-1.5 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
+                                        <button type="button" class="btn-twitch-watch h-[34px] px-3 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
                                     </div>
-                                    <p class="twitch-watch-status text-xs text-gray-500 dark:text-gray-400 mt-1">Off — keep this tab open to watch chat.</p>
+                                    <p class="twitch-watch-status text-xs text-purple-800/70 dark:text-purple-200/70 mt-1.5">Off — keep this tab open to watch chat.</p>
                                 </div>
                                 <textarea wrap="off" class="entries-input horizontal-scroll flex-1 w-full p-3 rounded-lg resize-none outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors min-h-[120px] font-medium leading-relaxed" placeholder="Paste your names here...\nOne name per line.">${escapeHTML(this.rawText)}</textarea>
                             </div>
