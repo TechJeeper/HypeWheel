@@ -69,6 +69,7 @@
     const onMessage = options && options.onMessage;
     const onStatus = options && options.onStatus;
     const keywordOpt = options && options.keyword;
+    const leaveKeywordOpt = options && options.leaveKeyword;
 
     let ws = null;
     let wanted = true;
@@ -105,8 +106,20 @@
       }
       const priv = parsePrivmsg(line);
       if (!priv || typeof onMessage !== "function") return;
-      if (!messageHasKeyword(priv.message, resolveKeyword(keywordOpt))) return;
-      onMessage(priv);
+      const joinKw = String(resolveKeyword(keywordOpt) || "").trim();
+      const leaveKw = String(resolveKeyword(leaveKeywordOpt) || "").trim();
+      const hasLeave =
+        leaveKw &&
+        leaveKw.toLowerCase() !== joinKw.toLowerCase() &&
+        messageHasKeyword(priv.message, leaveKw);
+      const hasJoin = joinKw && messageHasKeyword(priv.message, joinKw);
+      if (hasLeave) {
+        onMessage({ ...priv, action: "leave" });
+        return;
+      }
+      if (hasJoin) {
+        onMessage({ ...priv, action: "join" });
+      }
     };
 
     const open = () => {

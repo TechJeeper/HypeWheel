@@ -16,7 +16,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 - **Import / export** — Back up or restore wheels, winners, brand packs, and settings as JSON
 - **Dark mode** — Toggle theme from the navbar
 - **URL import** — Open with `?list=name1,name2,name3&title=My+Giveaway` to preload names
-- **Twitch chat** — Enter a channel and keyword (default `!join`); unique chatters who type it are added to that wheel. The tab must stay open (GitHub Pages has no server).
+- **Twitch chat** — Click the Twitch icon on a wheel to show controls. Enter a channel plus join/leave keywords (default `!join` / `!leave`); unique chatters who type them are added or removed. The tab must stay open (GitHub Pages has no server).
 
 ## Quick start
 
@@ -24,7 +24,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 2. Click a wheel’s text area and paste names, one per line
 3. Click **SPIN** (or click the wheel)
 4. Open **Winners** in the header to review, copy, or export results
-5. For a live Twitch giveaway, enter the channel and keyword, click **Connect**, and keep the tab open while chatters type the keyword
+5. For a live Twitch giveaway, click the Twitch icon on a wheel, enter the channel and join/leave keywords, click **Connect**, and keep the tab open
 
 ### Import names from a URL
 
