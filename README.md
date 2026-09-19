@@ -16,6 +16,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 - **Import / export** — Back up or restore wheels, winners, brand packs, and settings as JSON
 - **Dark mode** — Toggle theme from the navbar
 - **URL import** — Open with `?list=name1,name2,name3&title=My+Giveaway` to preload names
+- **Twitch chat** — Enter a channel and keyword (default `!join`); unique chatters who type it are added to that wheel. The tab must stay open (GitHub Pages has no server).
 
 ## Quick start
 
@@ -23,6 +24,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 2. Click a wheel’s text area and paste names, one per line
 3. Click **SPIN** (or click the wheel)
 4. Open **Winners** in the header to review, copy, or export results
+5. For a live Twitch giveaway, enter the channel and keyword, click **Connect**, and keep the tab open while chatters type the keyword
 
 ### Import names from a URL
 
@@ -51,6 +53,7 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 |------|-------------|
 | `index.html` | Main HypeWheel web app (single-page, static) |
 | `js/share.js` | Compress/encode share-link payloads |
+| `js/twitch-chat.js` | Anonymous Twitch IRC client for keyword joins |
 | `logo.png` | Site logo |
 | `privacy.html` | Privacy policy |
 | `404.html` | GitHub Pages 404 page |

@@ -99,6 +99,7 @@
     <!-- Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
     <script src="js/share.js"></script>
+    <script src="js/twitch-chat.js"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
@@ -1083,6 +1084,10 @@
         pointerStyle: "classic",
         layout: "right",
         zoomLevel: 1.0,
+        twitchChannel: "",
+        twitchKeyword: "!join",
+        twitchWatching: false,
+        twitchJoinedCount: 0,
         ...overrides,
       });
 
@@ -1229,6 +1234,12 @@
           this.seed = config.seed || generateSeed();
           this.layout = config.layout || "right";
           this.zoomLevel = config.zoomLevel || 1.0;
+          this.twitchChannel = config.twitchChannel || "";
+          this.twitchKeyword = config.twitchKeyword || "!join";
+          this.twitchWatching = !!config.twitchWatching;
+          this.twitchJoinedCount = config.twitchJoinedCount || 0;
+          this.twitchClient = null;
+          this.twitchStatus = "idle";
 
           this.entries = this.parseEntries(this.rawText);
           this.isSpinning = false;
@@ -1246,6 +1257,7 @@
           this.bindEvents();
           this.applyLayout();
           this.draw();
+          if (this.twitchWatching) this.startTwitchWatch({ silent: true });
 
           this.resizeObserver = new ResizeObserver(() => this.handleResize());
           this.resizeObserver.observe(this.dom.canvasContainer);
@@ -1256,6 +1268,139 @@
             .split("\n")
             .map((e) => e.trim())
             .filter((e) => e !== "");
+        }
+
+        addEntryFromChat(name) {
+          const trimmed = String(name || "").trim();
+          if (!trimmed) return false;
+          const exists = this.entries.some(
+            (entry) => entry.toLowerCase() === trimmed.toLowerCase(),
+          );
+          if (exists) return false;
+          this.entries.push(trimmed);
+          this.rawText = this.rawText.trimEnd()
+            ? this.rawText.replace(/\s*$/, "") + "\n" + trimmed
+            : trimmed;
+          if (this.dom.entriesInput) this.dom.entriesInput.value = this.rawText;
+          if (this.dom.entriesCount) {
+            this.dom.entriesCount.innerText = `Entries (${this.entries.length})`;
+          }
+          this.twitchJoinedCount += 1;
+          this.saveConfig();
+          if (!this.isSpinning) this.draw();
+          this.updateUIState();
+          this.updateTwitchWatchUI();
+          return true;
+        }
+
+        disconnectTwitchClient() {
+          if (this.twitchClient) {
+            try {
+              this.twitchClient.disconnect();
+            } catch {
+              /* ignore */
+            }
+            this.twitchClient = null;
+          }
+          this.twitchStatus = "idle";
+        }
+
+        startTwitchWatch(options = {}) {
+          if (typeof TwitchChat === "undefined") {
+            if (!options.silent) {
+              showToast("Twitch helper unavailable", "error");
+            }
+            return;
+          }
+          const channel = TwitchChat.normalizeChannel(
+            this.dom.twitchChannelInput
+              ? this.dom.twitchChannelInput.value
+              : this.twitchChannel,
+          );
+          if (!channel) {
+            this.twitchWatching = false;
+            this.saveConfig();
+            this.updateTwitchWatchUI();
+            if (!options.silent) {
+              showToast("Enter a valid Twitch channel", "error");
+            }
+            return;
+          }
+          const keyword = (
+            this.dom.twitchKeywordInput
+              ? this.dom.twitchKeywordInput.value
+              : this.twitchKeyword
+          ).trim() || "!join";
+          this.twitchChannel = channel;
+          this.twitchKeyword = keyword;
+          this.twitchWatching = true;
+          if (!options.silent) this.twitchJoinedCount = 0;
+          if (this.dom.twitchChannelInput) {
+            this.dom.twitchChannelInput.value = channel;
+          }
+          if (this.dom.twitchKeywordInput) {
+            this.dom.twitchKeywordInput.value = keyword;
+          }
+          this.saveConfig();
+          this.disconnectTwitchClient();
+          this.twitchClient = TwitchChat.createClient({
+            channel,
+            keyword: () => this.twitchKeyword,
+            onMessage: (msg) => this.addEntryFromChat(msg.displayName),
+            onStatus: (state) => {
+              this.twitchStatus = state;
+              this.updateTwitchWatchUI();
+            },
+          });
+          if (!options.silent) {
+            trackGoatCounterEvent("twitch-watch-connect", "Twitch Watch Connect");
+          }
+        }
+
+        stopTwitchWatch() {
+          this.twitchWatching = false;
+          this.disconnectTwitchClient();
+          this.saveConfig();
+          this.updateTwitchWatchUI();
+        }
+
+        updateTwitchWatchUI() {
+          if (!this.dom.twitchWatchBtn || !this.dom.twitchWatchStatus) return;
+          const watching = this.twitchWatching;
+          const channel = this.twitchChannel || "channel";
+          const joined = this.twitchJoinedCount || 0;
+          this.dom.twitchWatchBtn.textContent = watching
+            ? "Disconnect"
+            : "Connect";
+          this.dom.twitchWatchBtn.classList.toggle("bg-purple-600", !watching);
+          this.dom.twitchWatchBtn.classList.toggle(
+            "hover:bg-purple-700",
+            !watching,
+          );
+          this.dom.twitchWatchBtn.classList.toggle("bg-red-500", watching);
+          this.dom.twitchWatchBtn.classList.toggle(
+            "hover:bg-red-600",
+            watching,
+          );
+          if (this.dom.twitchChannelInput) {
+            this.dom.twitchChannelInput.disabled = watching;
+          }
+          let status = "Off — keep this tab open to watch chat.";
+          if (this.twitchStatus === "connecting") {
+            status = `Connecting to #${channel}…`;
+          } else if (this.twitchStatus === "connected") {
+            status = `Watching #${channel} · ${joined} joined`;
+          } else if (
+            this.twitchStatus === "reconnecting" ||
+            this.twitchStatus === "disconnected"
+          ) {
+            status = `Reconnecting to #${channel}…`;
+          } else if (this.twitchStatus === "error") {
+            status = "Could not join that channel.";
+          } else if (watching) {
+            status = `Watching #${channel} · ${joined} joined`;
+          }
+          this.dom.twitchWatchStatus.textContent = status;
         }
 
         getWheelEntries() {
@@ -1292,6 +1437,10 @@
             conf.seed = this.seed;
             conf.layout = this.layout;
             conf.zoomLevel = this.zoomLevel;
+            conf.twitchChannel = this.twitchChannel;
+            conf.twitchKeyword = this.twitchKeyword;
+            conf.twitchWatching = this.twitchWatching;
+            conf.twitchJoinedCount = this.twitchJoinedCount;
             localStorage.setItem(
               "wheelsData",
               JSON.stringify(appState.wheelsConfig),
@@ -1563,6 +1712,20 @@
                                         <button class="btn-clear p-3 rounded-lg hover:bg-red-600 hover:text-white bg-red-500/10 text-red-500 dark:text-red-400" title="Clear"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
                                     </div>
                                 </div>
+                                <div class="twitch-watch mb-2">
+                                    <div class="flex flex-wrap gap-2 items-end">
+                                        <label class="flex-1 min-w-[7rem]">
+                                            <span class="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">Twitch channel</span>
+                                            <input type="text" class="twitch-channel-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-purple-400" placeholder="channel" value="${escapeHTML(this.twitchChannel)}" autocomplete="off" spellcheck="false">
+                                        </label>
+                                        <label class="w-24">
+                                            <span class="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">Keyword</span>
+                                            <input type="text" class="twitch-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 focus:border-purple-400" value="${escapeHTML(this.twitchKeyword)}" autocomplete="off" spellcheck="false">
+                                        </label>
+                                        <button type="button" class="btn-twitch-watch px-3 py-1.5 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
+                                    </div>
+                                    <p class="twitch-watch-status text-xs text-gray-500 dark:text-gray-400 mt-1">Off — keep this tab open to watch chat.</p>
+                                </div>
                                 <textarea wrap="off" class="entries-input horizontal-scroll flex-1 w-full p-3 rounded-lg resize-none outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors min-h-[120px] font-medium leading-relaxed" placeholder="Paste your names here...\nOne name per line.">${escapeHTML(this.rawText)}</textarea>
                             </div>
 
@@ -1652,6 +1815,10 @@
               ".btn-remove-past-winners",
             ),
             btnClear: wrapper.querySelector(".btn-clear"),
+            twitchChannelInput: wrapper.querySelector(".twitch-channel-input"),
+            twitchKeywordInput: wrapper.querySelector(".twitch-keyword-input"),
+            twitchWatchBtn: wrapper.querySelector(".btn-twitch-watch"),
+            twitchWatchStatus: wrapper.querySelector(".twitch-watch-status"),
             entriesInput: wrapper.querySelector(".entries-input"),
             btnShuffle: wrapper.querySelector(".btn-shuffle"),
             shuffleCountDisplay: wrapper.querySelector(
@@ -1681,6 +1848,7 @@
           lucide.createIcons({ root: wrapper });
           this.refreshBrandPackSelect();
           this.updateUIState();
+          this.updateTwitchWatchUI();
         }
 
         refreshBrandPackSelect() {
@@ -1772,6 +1940,8 @@
             pointerStyle: this.pointerStyle,
             layout: this.layout,
             zoomLevel: this.zoomLevel,
+            twitchChannel: this.twitchChannel,
+            twitchKeyword: this.twitchKeyword,
           };
         }
 
@@ -1875,6 +2045,11 @@
           this.zoomLevel =
             wheel.zoomLevel !== undefined ? wheel.zoomLevel : this.zoomLevel;
           if (wheel.seed) this.seed = wheel.seed;
+          this.twitchChannel =
+            wheel.twitchChannel !== undefined
+              ? wheel.twitchChannel
+              : this.twitchChannel;
+          this.twitchKeyword = wheel.twitchKeyword || this.twitchKeyword;
 
           this.entries = this.parseEntries(this.rawText);
 
@@ -1900,6 +2075,13 @@
           this.dom.layoutSelect.value = this.layout;
           this.dom.seedInput.value = this.seed;
           this.dom.zoomDisplay.innerText = `${Math.round(this.zoomLevel * 100)}%`;
+          if (this.dom.twitchChannelInput) {
+            this.dom.twitchChannelInput.value = this.twitchChannel;
+          }
+          if (this.dom.twitchKeywordInput) {
+            this.dom.twitchKeywordInput.value = this.twitchKeyword;
+          }
+          this.updateTwitchWatchUI();
           if (this.palette === "image") {
             this.dom.customImageContainer.classList.remove("hidden");
           } else {
@@ -2162,6 +2344,31 @@
             this.draw();
             this.updateUIState();
           });
+
+          if (this.dom.twitchChannelInput) {
+            this.dom.twitchChannelInput.addEventListener("input", (e) => {
+              this.twitchChannel = e.target.value;
+              this.saveConfig();
+            });
+            this.dom.twitchChannelInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (!this.twitchWatching) this.startTwitchWatch();
+              }
+            });
+          }
+          if (this.dom.twitchKeywordInput) {
+            this.dom.twitchKeywordInput.addEventListener("input", (e) => {
+              this.twitchKeyword = e.target.value.trim() || "!join";
+              this.saveConfig();
+            });
+          }
+          if (this.dom.twitchWatchBtn) {
+            this.dom.twitchWatchBtn.addEventListener("click", () => {
+              if (this.twitchWatching) this.stopTwitchWatch();
+              else this.startTwitchWatch();
+            });
+          }
 
           this.dom.btnClear.addEventListener("click", () => {
             this.rawText = "";
@@ -3197,6 +3404,7 @@
         }
 
         destroy() {
+          this.disconnectTwitchClient();
           if (this.resizeObserver) this.resizeObserver.disconnect();
           if (this.animationRef) cancelAnimationFrame(this.animationRef);
           this.dom.wrapper.remove();
