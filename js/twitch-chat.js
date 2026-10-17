@@ -13,7 +13,7 @@
   "use strict";
 
   // --- Site owner: set your Twitch Application Client ID ---
-  const TWITCH_CLIENT_ID = "";
+  const TWITCH_CLIENT_ID = "zrz7jjtnzbrcjols4c4nr6ncqdp9l8";
 
   const WS_URL = "wss://irc-ws.chat.twitch.tv:443";
   const MIN_BACKOFF_MS = 1000;
