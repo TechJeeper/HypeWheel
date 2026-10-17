@@ -21,7 +21,8 @@
   const SEND_GAP_MS = 1600;
   const AUTH_STORAGE_KEY = "hypewheel_twitch_auth";
   const OAUTH_STATE_KEY = "hypewheel_twitch_oauth_state";
-  const OAUTH_SCOPES = "chat:read chat:write";
+  // IRC scopes (not Helix user:write:chat) — chat:write is invalid
+  const OAUTH_SCOPES = "chat:read chat:edit";
 
   const normalizeChannel = (raw) => {
     if (!raw) return "";

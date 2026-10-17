@@ -81,7 +81,7 @@ To enable **Login with Twitch** (so join/leave replies can post in chat), regist
    - plus any local URL you use while testing
 3. Paste the Client ID into `TWITCH_CLIENT_ID` in `js/twitch-chat.js`
 
-Streamers then click **Login with Twitch** in the wheel panel (scopes: `chat:read`, `chat:write`). The token stays in their browser only.
+Streamers then click **Login with Twitch** in the wheel panel (scopes: `chat:read`, `chat:edit`). The token stays in their browser only.
 
 To work on the extension, see [Extension/README.md](./Extension/README.md).
 
