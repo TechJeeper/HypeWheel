@@ -1196,6 +1196,9 @@
         twitchChannel: "",
         twitchKeyword: "!join",
         twitchLeaveKeyword: "!leave",
+        twitchBotUsername: "",
+        twitchOAuthToken: "",
+        twitchReplyEnabled: false,
         twitchWatching: false,
         twitchJoinedCount: 0,
         twitchPanelOpen: false,
@@ -1348,6 +1351,9 @@
           this.twitchChannel = config.twitchChannel || "";
           this.twitchKeyword = config.twitchKeyword || "!join";
           this.twitchLeaveKeyword = config.twitchLeaveKeyword || "!leave";
+          this.twitchBotUsername = config.twitchBotUsername || "";
+          this.twitchOAuthToken = config.twitchOAuthToken || "";
+          this.twitchReplyEnabled = !!config.twitchReplyEnabled;
           this.twitchWatching = !!config.twitchWatching;
           this.twitchJoinedCount = config.twitchJoinedCount || 0;
           this.twitchPanelOpen =
@@ -1437,7 +1443,10 @@
             this.removeEntryFromChat(msg.displayName);
             return;
           }
-          this.addEntryFromChat(msg.displayName);
+          const added = this.addEntryFromChat(msg.displayName);
+          if (added && this.twitchReplyEnabled && this.twitchClient) {
+            this.twitchClient.sendMessage("@" + msg.displayName + " you have been added to the wheel!");
+          }
         }
 
         disconnectTwitchClient() {
@@ -1502,6 +1511,8 @@
           this.disconnectTwitchClient();
           this.twitchClient = TwitchChat.createClient({
             channel,
+            botUsername: this.twitchBotUsername,
+            oauthToken: this.twitchOAuthToken,
             keyword: () => this.twitchKeyword,
             leaveKeyword: () => this.twitchLeaveKeyword,
             onMessage: (msg) => this.handleTwitchChatMessage(msg),
@@ -1901,20 +1912,36 @@
                                     </div>
                                 </div>
                                 <div id="twitch-watch-panel-${this.id}" class="twitch-watch-panel mb-2 ${this.twitchPanelOpen ? "" : "hidden"}">
-                                    <div class="flex flex-wrap gap-2 items-end">
-                                        <label class="flex-1 min-w-[7rem]">
-                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Twitch channel</span>
-                                            <input type="text" class="twitch-channel-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" placeholder="channel" value="${escapeHTML(this.twitchChannel)}" autocomplete="off" spellcheck="false">
-                                        </label>
-                                        <label class="w-20">
-                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Join</span>
-                                            <input type="text" class="twitch-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchKeyword)}" autocomplete="off" spellcheck="false" title="Join keyword">
-                                        </label>
-                                        <label class="w-20">
-                                            <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Leave</span>
-                                            <input type="text" class="twitch-leave-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchLeaveKeyword)}" autocomplete="off" spellcheck="false" title="Leave keyword">
-                                        </label>
-                                        <button type="button" class="btn-twitch-watch h-[34px] px-3 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex flex-wrap gap-2 items-end">
+                                            <label class="flex-1 min-w-[7rem]">
+                                                <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Twitch channel</span>
+                                                <input type="text" class="twitch-channel-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" placeholder="channel" value="${escapeHTML(this.twitchChannel)}" autocomplete="off" spellcheck="false">
+                                            </label>
+                                            <label class="w-20">
+                                                <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Join</span>
+                                                <input type="text" class="twitch-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchKeyword)}" autocomplete="off" spellcheck="false" title="Join keyword">
+                                            </label>
+                                            <label class="w-20">
+                                                <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Leave</span>
+                                                <input type="text" class="twitch-leave-keyword-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" value="${escapeHTML(this.twitchLeaveKeyword)}" autocomplete="off" spellcheck="false" title="Leave keyword">
+                                            </label>
+                                            <button type="button" class="btn-twitch-watch h-[34px] px-3 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2 items-end">
+                                            <label class="flex-1 min-w-[5rem]">
+                                                <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">Bot Username (opt)</span>
+                                                <input type="text" class="twitch-bot-username-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" placeholder="Bot name" value="${escapeHTML(this.twitchBotUsername)}" autocomplete="off" spellcheck="false">
+                                            </label>
+                                            <label class="flex-1 min-w-[7rem]">
+                                                <span class="block text-[11px] font-medium text-purple-700/80 dark:text-purple-200/80 mb-0.5">OAuth Token (<a href="https://twitchapps.com/tmi/" target="_blank" class="underline text-purple-600 dark:text-purple-400" title="Get OAuth token">get</a>)</span>
+                                                <input type="password" class="twitch-oauth-token-input w-full px-2 py-1.5 rounded-lg text-sm outline-none bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-white border border-purple-200 dark:border-purple-800/60 focus:border-purple-400" placeholder="oauth:..." value="${escapeHTML(this.twitchOAuthToken)}" autocomplete="off" spellcheck="false">
+                                            </label>
+                                            <label class="flex items-center gap-1.5 text-xs text-purple-800/80 dark:text-purple-200/80 cursor-pointer h-[34px] px-1">
+                                                <input type="checkbox" class="twitch-reply-enabled-input rounded border-gray-300 text-purple-600 focus:ring-purple-500" ${this.twitchReplyEnabled ? "checked" : ""}>
+                                                Reply in chat
+                                            </label>
+                                        </div>
                                     </div>
                                     <p class="twitch-watch-status text-xs text-purple-800/70 dark:text-purple-200/70 mt-1.5">Off — keep this tab open to watch chat.</p>
                                 </div>
@@ -2014,6 +2041,9 @@
             twitchLeaveKeywordInput: wrapper.querySelector(
               ".twitch-leave-keyword-input",
             ),
+            twitchBotUsernameInput: wrapper.querySelector(".twitch-bot-username-input"),
+            twitchOAuthTokenInput: wrapper.querySelector(".twitch-oauth-token-input"),
+            twitchReplyEnabledInput: wrapper.querySelector(".twitch-reply-enabled-input"),
             twitchWatchBtn: wrapper.querySelector(".btn-twitch-watch"),
             twitchWatchStatus: wrapper.querySelector(".twitch-watch-status"),
             entriesInput: wrapper.querySelector(".entries-input"),
@@ -2140,6 +2170,9 @@
             twitchChannel: this.twitchChannel,
             twitchKeyword: this.twitchKeyword,
             twitchLeaveKeyword: this.twitchLeaveKeyword,
+            twitchBotUsername: this.twitchBotUsername,
+            twitchOAuthToken: this.twitchOAuthToken,
+            twitchReplyEnabled: this.twitchReplyEnabled,
           };
         }
 
@@ -2250,6 +2283,12 @@
           this.twitchKeyword = wheel.twitchKeyword || this.twitchKeyword;
           this.twitchLeaveKeyword =
             wheel.twitchLeaveKeyword || this.twitchLeaveKeyword;
+          this.twitchBotUsername =
+            wheel.twitchBotUsername !== undefined ? wheel.twitchBotUsername : this.twitchBotUsername;
+          this.twitchOAuthToken =
+            wheel.twitchOAuthToken !== undefined ? wheel.twitchOAuthToken : this.twitchOAuthToken;
+          this.twitchReplyEnabled =
+            wheel.twitchReplyEnabled !== undefined ? wheel.twitchReplyEnabled : this.twitchReplyEnabled;
 
           this.entries = this.parseEntries(this.rawText);
 
@@ -2283,6 +2322,15 @@
           }
           if (this.dom.twitchLeaveKeywordInput) {
             this.dom.twitchLeaveKeywordInput.value = this.twitchLeaveKeyword;
+          }
+          if (this.dom.twitchBotUsernameInput) {
+            this.dom.twitchBotUsernameInput.value = this.twitchBotUsername;
+          }
+          if (this.dom.twitchOAuthTokenInput) {
+            this.dom.twitchOAuthTokenInput.value = this.twitchOAuthToken;
+          }
+          if (this.dom.twitchReplyEnabledInput) {
+            this.dom.twitchReplyEnabledInput.checked = this.twitchReplyEnabled;
           }
           this.updateTwitchWatchUI();
           if (this.palette === "image") {
@@ -2574,6 +2622,24 @@
           if (this.dom.twitchLeaveKeywordInput) {
             this.dom.twitchLeaveKeywordInput.addEventListener("input", (e) => {
               this.twitchLeaveKeyword = e.target.value.trim() || "!leave";
+              this.saveConfig();
+            });
+          }
+          if (this.dom.twitchBotUsernameInput) {
+            this.dom.twitchBotUsernameInput.addEventListener("input", (e) => {
+              this.twitchBotUsername = e.target.value.trim();
+              this.saveConfig();
+            });
+          }
+          if (this.dom.twitchOAuthTokenInput) {
+            this.dom.twitchOAuthTokenInput.addEventListener("input", (e) => {
+              this.twitchOAuthToken = e.target.value.trim();
+              this.saveConfig();
+            });
+          }
+          if (this.dom.twitchReplyEnabledInput) {
+            this.dom.twitchReplyEnabledInput.addEventListener("change", (e) => {
+              this.twitchReplyEnabled = e.target.checked;
               this.saveConfig();
             });
           }

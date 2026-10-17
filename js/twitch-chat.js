@@ -70,6 +70,12 @@
     const onStatus = options && options.onStatus;
     const keywordOpt = options && options.keyword;
     const leaveKeywordOpt = options && options.leaveKeyword;
+    const botUsername = options && options.botUsername ? String(options.botUsername).trim() : "";
+    let oauthToken = options && options.oauthToken ? String(options.oauthToken).trim() : "";
+
+    if (oauthToken && !oauthToken.startsWith("oauth:")) {
+      oauthToken = "oauth:" + oauthToken;
+    }
 
     let ws = null;
     let wanted = true;
@@ -134,9 +140,12 @@
       setStatus("connecting", { channel });
       ws.onopen = () => {
         backoff = MIN_BACKOFF_MS;
-        const nick = "justinfan" + Math.floor(Math.random() * 90000 + 10000);
+        const isAuth = !!(botUsername && oauthToken);
+        const nick = isAuth ? botUsername.toLowerCase() : "justinfan" + Math.floor(Math.random() * 90000 + 10000);
+        const pass = isAuth ? oauthToken : "SCHMOOPIE";
+
         ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
-        ws.send("PASS SCHMOOPIE");
+        ws.send("PASS " + pass);
         ws.send("NICK " + nick);
         ws.send("JOIN #" + channel);
         setStatus("connected", { channel });
@@ -171,14 +180,20 @@
       setStatus("idle", { channel });
     };
 
+    const sendMessage = (message) => {
+      if (ws && ws.readyState === WebSocket.OPEN && channel) {
+        ws.send(`PRIVMSG #${channel} :${message}`);
+      }
+    };
+
     if (!channel) {
       wanted = false;
       setStatus("error", { message: "Invalid channel" });
-      return { disconnect };
+      return { disconnect, sendMessage };
     }
 
     open();
-    return { disconnect };
+    return { disconnect, sendMessage };
   };
 
   global.TwitchChat = {
