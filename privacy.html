@@ -200,11 +200,15 @@
             </li>
             <li>
               <strong>Twitch chat:</strong> If you use Watch Chat, your browser
-              connects directly to Twitch IRC as an anonymous read-only user.
-              Chat display names that match your keyword are added to the wheel
-              and stored in local storage like any other entries. We do not
-              receive that traffic on our servers. The connection stops when
-              you disconnect or close the tab.
+              connects directly to Twitch IRC. Without login it is anonymous and
+              read-only. If you use Login with Twitch, Twitch issues an OAuth
+              token (chat read/write) that stays in your browser’s local storage
+              so HypeWheel can post join/leave confirmations in chat. Chat
+              display names that match your keyword are added to the wheel and
+              stored locally like any other entries. We do not receive that
+              traffic or your token on our servers. Disconnect or clear site
+              data to remove the token; watching stops when you disconnect or
+              close the tab.
             </li>
           </ul>
         </section>

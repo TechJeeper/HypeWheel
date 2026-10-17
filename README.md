@@ -53,7 +53,7 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 |------|-------------|
 | `index.html` | Main HypeWheel web app (single-page, static) |
 | `js/share.js` | Compress/encode share-link payloads |
-| `js/twitch-chat.js` | Anonymous Twitch IRC client for keyword joins |
+| `js/twitch-chat.js` | Twitch IRC + Implicit OAuth for keyword joins / chat confirms |
 | `logo.png` | Site logo |
 | `privacy.html` | Privacy policy |
 | `404.html` | GitHub Pages 404 page |
@@ -69,6 +69,19 @@ git clone https://github.com/TechJeeper/HypeWheel.git
 cd HypeWheel
 # Open index.html locally, or serve with any static file server
 ```
+
+### Twitch chat confirmations (optional)
+
+To enable **Login with Twitch** (so join/leave replies can post in chat), register a Twitch application and set its Client ID in `js/twitch-chat.js`:
+
+1. Create an app at [dev.twitch.tv/console](https://dev.twitch.tv/console/apps)
+2. Add OAuth Redirect URLs (exact match, including trailing slash):
+   - `https://hypewheel.app/`
+   - `https://www.hypewheel.app/`
+   - plus any local URL you use while testing
+3. Paste the Client ID into `TWITCH_CLIENT_ID` in `js/twitch-chat.js`
+
+Streamers then click **Login with Twitch** in the wheel panel (scopes: `chat:read`, `chat:write`). The token stays in their browser only.
 
 To work on the extension, see [Extension/README.md](./Extension/README.md).
 

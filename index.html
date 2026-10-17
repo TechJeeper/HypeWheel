@@ -1199,6 +1199,7 @@
         twitchWatching: false,
         twitchJoinedCount: 0,
         twitchPanelOpen: false,
+        twitchChatConfirm: true,
         ...overrides,
       });
 
@@ -1354,6 +1355,10 @@
             config.twitchPanelOpen !== undefined
               ? !!config.twitchPanelOpen
               : !!config.twitchWatching;
+          this.twitchChatConfirm =
+            config.twitchChatConfirm !== undefined
+              ? !!config.twitchChatConfirm
+              : true;
           this.twitchClient = null;
           this.twitchStatus = "idle";
 
@@ -1431,13 +1436,29 @@
           return true;
         }
 
+        sendTwitchChatConfirm(action, displayName) {
+          if (!this.twitchChatConfirm) return;
+          if (!this.twitchClient || !this.twitchClient.canSend) return;
+          const name = String(displayName || "").trim();
+          if (!name) return;
+          const text =
+            action === "leave"
+              ? `@${name} you've left the Hypewheel.`
+              : `@${name} you're in the Hypewheel!`;
+          this.twitchClient.send(text);
+        }
+
         handleTwitchChatMessage(msg) {
           if (!msg) return;
           if (msg.action === "leave") {
-            this.removeEntryFromChat(msg.displayName);
+            if (this.removeEntryFromChat(msg.displayName)) {
+              this.sendTwitchChatConfirm("leave", msg.displayName);
+            }
             return;
           }
-          this.addEntryFromChat(msg.displayName);
+          if (this.addEntryFromChat(msg.displayName)) {
+            this.sendTwitchChatConfirm("join", msg.displayName);
+          }
         }
 
         disconnectTwitchClient() {
@@ -1500,10 +1521,13 @@
           }
           this.saveConfig();
           this.disconnectTwitchClient();
+          const auth =
+            typeof TwitchChat.getAuth === "function" ? TwitchChat.getAuth() : null;
           this.twitchClient = TwitchChat.createClient({
             channel,
             keyword: () => this.twitchKeyword,
             leaveKeyword: () => this.twitchLeaveKeyword,
+            auth: auth || undefined,
             onMessage: (msg) => this.handleTwitchChatMessage(msg),
             onStatus: (state) => {
               this.twitchStatus = state;
@@ -1512,6 +1536,32 @@
           });
           if (!options.silent) {
             trackGoatCounterEvent("twitch-watch-connect", "Twitch Watch Connect");
+          }
+        }
+
+        handleTwitchAuthClick() {
+          if (typeof TwitchChat === "undefined") {
+            showToast("Twitch helper unavailable", "error");
+            return;
+          }
+          const auth = TwitchChat.getAuth();
+          if (auth) {
+            TwitchChat.logout();
+            showToast("Twitch account disconnected", "info");
+            if (this.twitchWatching) this.startTwitchWatch({ silent: true });
+            this.updateTwitchWatchUI();
+            return;
+          }
+          if (!TwitchChat.isOAuthConfigured()) {
+            showToast(
+              "Add your Twitch Client ID in js/twitch-chat.js first",
+              "error",
+            );
+            return;
+          }
+          const result = TwitchChat.startOAuthLogin();
+          if (!result.ok) {
+            showToast(result.error || "Could not start Twitch login", "error");
           }
         }
 
@@ -1552,6 +1602,11 @@
           const watching = this.twitchWatching;
           const channel = this.twitchChannel || "channel";
           const joined = this.twitchJoinedCount || 0;
+          const auth =
+            typeof TwitchChat !== "undefined" && TwitchChat.getAuth
+              ? TwitchChat.getAuth()
+              : null;
+          const canConfirm = !!(auth && this.twitchClient && this.twitchClient.canSend);
           this.dom.twitchWatchBtn.textContent = watching
             ? "Disconnect"
             : "Connect";
@@ -1568,11 +1623,32 @@
           if (this.dom.twitchChannelInput) {
             this.dom.twitchChannelInput.disabled = watching;
           }
+          if (this.dom.twitchAuthBtn) {
+            const configured =
+              typeof TwitchChat !== "undefined" &&
+              TwitchChat.isOAuthConfigured &&
+              TwitchChat.isOAuthConfigured();
+            this.dom.twitchAuthBtn.textContent = auth
+              ? `Log out (${auth.login})`
+              : "Login with Twitch";
+            this.dom.twitchAuthBtn.disabled = !auth && !configured;
+            this.dom.twitchAuthBtn.title = !auth && !configured
+              ? "Set TWITCH_CLIENT_ID in js/twitch-chat.js"
+              : auth
+                ? "Disconnect Twitch account used for chat replies"
+                : "Authorize HypeWheel to reply in chat";
+          }
+          if (this.dom.twitchConfirmCheckbox) {
+            this.dom.twitchConfirmCheckbox.checked = !!this.twitchChatConfirm;
+            this.dom.twitchConfirmCheckbox.disabled = !auth;
+          }
           let status = "Off — keep this tab open to watch chat.";
           if (this.twitchStatus === "connecting") {
             status = `Connecting to #${channel}…`;
           } else if (this.twitchStatus === "connected") {
-            status = `Watching #${channel} · ${joined} joined`;
+            status = canConfirm
+              ? `Watching #${channel} · ${joined} joined · chat replies on`
+              : `Watching #${channel} · ${joined} joined`;
           } else if (
             this.twitchStatus === "reconnecting" ||
             this.twitchStatus === "disconnected"
@@ -1582,6 +1658,13 @@
             status = "Could not join that channel.";
           } else if (watching) {
             status = `Watching #${channel} · ${joined} joined`;
+          }
+          if (!watching && auth) {
+            status =
+              "Twitch logged in — Connect to watch chat and send join confirmations.";
+          } else if (!watching && !auth) {
+            status =
+              "Off — Login with Twitch to confirm entries in chat.";
           }
           this.dom.twitchWatchStatus.textContent = status;
         }
@@ -1626,6 +1709,7 @@
             conf.twitchWatching = this.twitchWatching;
             conf.twitchJoinedCount = this.twitchJoinedCount;
             conf.twitchPanelOpen = this.twitchPanelOpen;
+            conf.twitchChatConfirm = this.twitchChatConfirm;
             localStorage.setItem(
               "wheelsData",
               JSON.stringify(appState.wheelsConfig),
@@ -1916,7 +2000,14 @@
                                         </label>
                                         <button type="button" class="btn-twitch-watch h-[34px] px-3 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shrink-0">Connect</button>
                                     </div>
-                                    <p class="twitch-watch-status text-xs text-purple-800/70 dark:text-purple-200/70 mt-1.5">Off — keep this tab open to watch chat.</p>
+                                    <div class="flex flex-wrap gap-2 items-center mt-1.5">
+                                        <button type="button" class="btn-twitch-auth h-[30px] px-2.5 rounded-lg text-xs font-bold text-white bg-[#9146FF] hover:bg-[#772ce8] shrink-0 disabled:opacity-50">Login with Twitch</button>
+                                        <label class="inline-flex items-center gap-1.5 text-xs text-purple-800/80 dark:text-purple-200/80 cursor-pointer select-none">
+                                            <input type="checkbox" class="twitch-confirm-checkbox rounded border-purple-300 text-purple-600 focus:ring-purple-500" ${this.twitchChatConfirm ? "checked" : ""}>
+                                            Confirm in chat
+                                        </label>
+                                    </div>
+                                    <p class="twitch-watch-status text-xs text-purple-800/70 dark:text-purple-200/70 mt-1.5">Off — Login with Twitch to confirm entries in chat.</p>
                                 </div>
                                 <textarea wrap="off" class="entries-input horizontal-scroll flex-1 w-full p-3 rounded-lg resize-none outline-none bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors min-h-[120px] font-medium leading-relaxed" placeholder="Paste your names here...\nOne name per line.">${escapeHTML(this.rawText)}</textarea>
                             </div>
@@ -2015,6 +2106,10 @@
               ".twitch-leave-keyword-input",
             ),
             twitchWatchBtn: wrapper.querySelector(".btn-twitch-watch"),
+            twitchAuthBtn: wrapper.querySelector(".btn-twitch-auth"),
+            twitchConfirmCheckbox: wrapper.querySelector(
+              ".twitch-confirm-checkbox",
+            ),
             twitchWatchStatus: wrapper.querySelector(".twitch-watch-status"),
             entriesInput: wrapper.querySelector(".entries-input"),
             btnShuffle: wrapper.querySelector(".btn-shuffle"),
@@ -2140,6 +2235,7 @@
             twitchChannel: this.twitchChannel,
             twitchKeyword: this.twitchKeyword,
             twitchLeaveKeyword: this.twitchLeaveKeyword,
+            twitchChatConfirm: this.twitchChatConfirm,
           };
         }
 
@@ -2250,6 +2346,9 @@
           this.twitchKeyword = wheel.twitchKeyword || this.twitchKeyword;
           this.twitchLeaveKeyword =
             wheel.twitchLeaveKeyword || this.twitchLeaveKeyword;
+          if (wheel.twitchChatConfirm !== undefined) {
+            this.twitchChatConfirm = !!wheel.twitchChatConfirm;
+          }
 
           this.entries = this.parseEntries(this.rawText);
 
@@ -2283,6 +2382,9 @@
           }
           if (this.dom.twitchLeaveKeywordInput) {
             this.dom.twitchLeaveKeywordInput.value = this.twitchLeaveKeyword;
+          }
+          if (this.dom.twitchConfirmCheckbox) {
+            this.dom.twitchConfirmCheckbox.checked = !!this.twitchChatConfirm;
           }
           this.updateTwitchWatchUI();
           if (this.palette === "image") {
@@ -2581,6 +2683,17 @@
             this.dom.twitchWatchBtn.addEventListener("click", () => {
               if (this.twitchWatching) this.stopTwitchWatch();
               else this.startTwitchWatch();
+            });
+          }
+          if (this.dom.twitchAuthBtn) {
+            this.dom.twitchAuthBtn.addEventListener("click", () => {
+              this.handleTwitchAuthClick();
+            });
+          }
+          if (this.dom.twitchConfirmCheckbox) {
+            this.dom.twitchConfirmCheckbox.addEventListener("change", (e) => {
+              this.twitchChatConfirm = !!e.target.checked;
+              this.saveConfig();
             });
           }
 
@@ -4835,6 +4948,24 @@
       renderWheels();
       updateWinnersUI();
       lucide.createIcons();
+
+      (async () => {
+        if (typeof TwitchChat === "undefined" || !TwitchChat.consumeOAuthCallback) {
+          return;
+        }
+        const result = await TwitchChat.consumeOAuthCallback();
+        if (!result) return;
+        if (result.ok) {
+          showToast(`Twitch connected as ${result.login}`, "success");
+          trackGoatCounterEvent("twitch-oauth-login", "Twitch OAuth Login");
+          wheelInstances.forEach((w) => {
+            if (w.twitchWatching) w.startTwitchWatch({ silent: true });
+            else w.updateTwitchWatchUI();
+          });
+        } else {
+          showToast(result.error || "Twitch login failed", "error");
+        }
+      })();
 
       if (!appState.overlayMode && !localStorage.getItem("hideQuickStart")) {
         // slight delay so animations run smoothly
