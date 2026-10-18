@@ -31,10 +31,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind CSS (prebuilt: npm run build:css) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
     <!-- GoatCounter Analytics -->
     <script
       data-goatcounter="https://techjeeper.goatcounter.com/count"
@@ -53,16 +51,6 @@
         pointer-events: none !important;
       }
     </style>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            fontFamily: { sans: ["system-ui", "-apple-system", "sans-serif"] },
-          },
-        },
-      };
-    </script>
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -91,7 +79,9 @@
           class="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
           <img
-            src="logo.png"
+            src="logo-96.png"
+            width="40"
+            height="40"
             alt="HypeWheel Logo"
             class="w-8 h-8 md:w-10 md:h-10 object-contain"
           />
@@ -289,9 +279,5 @@
         >
       </div>
     </footer>
-
-    <script>
-      lucide.createIcons();
-    </script>
   </body>
 </html>

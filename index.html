@@ -34,8 +34,8 @@
       content="Free customizable random name picker wheel for giveaways, classroom picks, raffles, and OBS streamer overlays. Spin the wheel to pick a winner instantly!"
     />
     <meta property="og:image" content="https://hypewheel.app/logo.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
+    <meta property="og:image:width" content="509" />
+    <meta property="og:image:height" content="490" />
     <meta
       property="og:image:alt"
       content="HypeWheel Logo - Random Name Picker"
@@ -83,12 +83,15 @@
         }
       }
     </script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (prebuilt: npm run build:css) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.59.0/dist/umd/lucide.min.js"></script>
     <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"
+    ></script>
     <!-- GoatCounter Analytics -->
     <script
       data-goatcounter="https://techjeeper.goatcounter.com/count"
@@ -96,20 +99,9 @@
       async
       src="https://gc.zgo.at/count.js"
     ></script>
-    <!-- Puter.js -->
-    <script src="https://js.puter.com/v2/"></script>
+    <!-- Puter.js is loaded on demand by the AI list button (loadPuter) -->
     <script src="js/share.js"></script>
     <script src="js/twitch-chat.js"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            fontFamily: { sans: ["system-ui", "-apple-system", "sans-serif"] },
-          },
-        },
-      };
-    </script>
     <style>
       /* Prevent GoatCounter pixel/image elements from disrupting body flex layout */
       body > img[src*="goatcounter"],
@@ -120,6 +112,12 @@
         height: 0 !important;
         opacity: 0 !important;
         pointer-events: none !important;
+      }
+
+      /* Visible focus ring for keyboard users */
+      :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+        outline: 2px solid #6366f1;
+        outline-offset: 2px;
       }
 
       /* Custom scrollbar */
@@ -505,7 +503,9 @@
     >
       <div class="flex items-center space-x-3">
         <img
-          src="logo.png"
+          src="logo-96.png"
+          width="40"
+          height="40"
           alt="HypeWheel Logo"
           class="w-8 h-8 md:w-10 md:h-10 object-contain"
         />
@@ -518,6 +518,7 @@
       <div class="flex items-center space-x-2 md:space-x-3">
         <button
           id="btn-winners"
+          aria-label="Winners history"
           class="flex items-center p-2 md:px-4 md:py-2 rounded-full font-bold transition-all bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-sm md:text-base"
         >
           <i data-lucide="trophy" class="w-4 h-4 text-yellow-500 md:mr-2"></i>
@@ -530,6 +531,7 @@
         </button>
         <button
           id="btn-add-wheel"
+          aria-label="Add wheel"
           class="flex items-center px-3 py-2 md:px-4 md:py-2 rounded-full font-bold shadow transition-all bg-indigo-600 hover:bg-indigo-700 text-white text-sm md:text-base"
         >
           <i data-lucide="plus-circle" class="w-4 h-4 md:mr-2"></i>
@@ -537,6 +539,7 @@
         </button>
         <button
           id="btn-slot-mode"
+          aria-label="Slot mode"
           class="hidden items-center px-3 py-2 md:px-4 md:py-2 rounded-full font-bold shadow transition-all bg-purple-600 hover:bg-purple-700 text-white text-sm md:text-base"
           style="display: none"
         >
@@ -547,6 +550,7 @@
           id="btn-open-import-export-modal"
           class="flex items-center p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all"
           title="Import / Export Settings"
+          aria-label="Import / Export settings"
         >
           <i data-lucide="folder-sync" class="w-4 h-4"></i>
         </button>
@@ -560,8 +564,9 @@
           id="btn-theme"
           class="p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all"
           title="Toggle Theme"
+          aria-label="Toggle dark mode"
         >
-          <span id="theme-icon">☀️</span>
+          <span id="theme-icon" aria-hidden="true">☀️</span>
         </button>
         <a
           id="btn-chrome-extension"
@@ -570,6 +575,7 @@
           rel="noopener noreferrer"
           class="hidden p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all w-10 h-10 items-center justify-center"
           title="Get the Chrome Extension"
+          aria-label="Get the Chrome extension"
         >
           <i data-lucide="puzzle" class="w-4 h-4"></i>
         </a>
@@ -577,6 +583,7 @@
           id="btn-quickstart"
           class="p-2 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all w-10 h-10 flex items-center justify-center font-bold"
           title="Quick Start Guide"
+          aria-label="Quick start guide"
         >
           ?
         </button>
@@ -654,6 +661,8 @@
     <!-- WINNERS MODAL -->
     <div
       id="winners-modal"
+      role="dialog"
+      aria-modal="true"
       class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300"
     >
       <div
@@ -669,6 +678,7 @@
           </h2>
           <button
             id="btn-close-winners"
+            aria-label="Close"
             class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
           >
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -707,6 +717,8 @@
     <!-- IMPORT/EXPORT MODAL -->
     <div
       id="import-export-modal"
+      role="dialog"
+      aria-modal="true"
       class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300"
     >
       <div
@@ -725,6 +737,7 @@
           </h2>
           <button
             id="btn-close-import-export"
+            aria-label="Close"
             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           >
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -786,6 +799,8 @@
     <!-- QUICK START MODAL -->
     <div
       id="quickstart-modal"
+      role="dialog"
+      aria-modal="true"
       class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300"
     >
       <div
@@ -801,6 +816,7 @@
           </h2>
           <button
             id="btn-close-quickstart"
+            aria-label="Close"
             class="p-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
           >
             <i data-lucide="x" class="w-4 h-4"></i>
@@ -930,6 +946,8 @@
     <!-- TOAST CONTAINER -->
     <div
       id="toast-container"
+      role="status"
+      aria-live="polite"
       class="fixed bottom-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none"
     ></div>
 
@@ -949,9 +967,32 @@
         }
       };
 
+      // --- PUTER.JS (lazy: only needed for AI list generation) ---
+      let puterPromise = null;
+      const loadPuter = () => {
+        if (window.puter) return Promise.resolve(window.puter);
+        if (!puterPromise) {
+          puterPromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://js.puter.com/v2/";
+            script.onload = () => resolve(window.puter);
+            script.onerror = () => {
+              puterPromise = null;
+              script.remove();
+              reject(new Error("Failed to load Puter.js"));
+            };
+            document.head.appendChild(script);
+          });
+        }
+        return puterPromise;
+      };
+
       // --- AUDIO ---
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // Created on first tick so page load doesn't trigger autoplay warnings.
+      let audioCtx = null;
       const playTickSound = () => {
+        if (!audioCtx)
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === "suspended") audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -1315,6 +1356,32 @@
           JSON.stringify(appState.brandPacks || []),
         );
       };
+
+      // Wheel configs can hold large image data URLs, so coalesce rapid
+      // saves (typing, spins) into one write and flush when the page hides.
+      let wheelsSaveTimer = null;
+      const flushWheelsSave = () => {
+        if (wheelsSaveTimer === null) return;
+        clearTimeout(wheelsSaveTimer);
+        wheelsSaveTimer = null;
+        try {
+          localStorage.setItem(
+            "wheelsData",
+            JSON.stringify(appState.wheelsConfig),
+          );
+        } catch (err) {
+          console.error(err);
+          showToast("Couldn't save wheels (storage full?)", "error");
+        }
+      };
+      const scheduleWheelsSave = () => {
+        if (wheelsSaveTimer !== null) clearTimeout(wheelsSaveTimer);
+        wheelsSaveTimer = setTimeout(flushWheelsSave, 300);
+      };
+      window.addEventListener("pagehide", flushWheelsSave);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") flushWheelsSave();
+      });
 
       const saveState = () => {
         localStorage.setItem("appTheme", appState.theme);
@@ -1710,10 +1777,7 @@
             conf.twitchJoinedCount = this.twitchJoinedCount;
             conf.twitchPanelOpen = this.twitchPanelOpen;
             conf.twitchChatConfirm = this.twitchChatConfirm;
-            localStorage.setItem(
-              "wheelsData",
-              JSON.stringify(appState.wheelsConfig),
-            );
+            scheduleWheelsSave();
           }
         }
 
@@ -1753,9 +1817,9 @@
                             <i data-lucide="pen" class="title-edit-icon cursor-pointer w-4 h-4 text-gray-400 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"></i>
                         </div>
                         <div class="flex space-x-2 shrink-0">
-                            <button class="btn-settings p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
-                            <button class="btn-theater p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white" title="Theater Mode"><i data-lucide="maximize" class="w-4 h-4 theater-icon"></i></button>
-                            <button class="btn-delete p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-500 dark:text-red-400 transition-colors" title="Delete Wheel"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                            <button class="btn-settings p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white" title="Settings" aria-label="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
+                            <button class="btn-theater p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white" title="Theater Mode" aria-label="Theater Mode"><i data-lucide="maximize" class="w-4 h-4 theater-icon"></i></button>
+                            <button class="btn-delete p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-500 dark:text-red-400 transition-colors" title="Delete Wheel" aria-label="Delete Wheel"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                         </div>
                     </div>
 
@@ -1829,7 +1893,7 @@
                                 <div class="flex rounded-lg overflow-hidden">
                                     <span class="px-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
                                     <input type="text" class="custom-image-input settings-control flex-1 rounded-none" placeholder="https://..." value="${this.customImage}">
-                                    <button class="btn-custom-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                    <button class="btn-custom-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image" aria-label="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                     <input type="file" class="custom-image-upload-input hidden" accept="image/*">
                                 </div>
                             </div>
@@ -1838,7 +1902,7 @@
                                 <div class="flex rounded-lg overflow-hidden">
                                     <span class="px-2 bg-gray-200 dark:bg-gray-600 flex items-center"><i data-lucide="image" class="w-4 h-4"></i></span>
                                     <input type="text" class="image-input settings-control flex-1 rounded-none" placeholder="URL or upload…" value="${escapeHTML(this.centerImage)}">
-                                    <button class="btn-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                    <button class="btn-image-upload px-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors" title="Upload Image" aria-label="Upload Image"><i data-lucide="upload" class="w-4 h-4"></i></button>
                                     <input type="file" class="image-upload-input hidden" accept="image/*">
                                 </div>
                             </div>
@@ -1901,7 +1965,7 @@
                                         <option value="">Select a pack…</option>
                                     </select>
                                     <button type="button" class="btn-apply-brand-pack px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shrink-0">Apply</button>
-                                    <button type="button" class="btn-delete-brand-pack px-2.5 py-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs shrink-0" title="Delete selected pack">Delete</button>
+                                    <button type="button" class="btn-delete-brand-pack px-2.5 py-1.5 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 font-semibold text-xs shrink-0" title="Delete selected pack" aria-label="Delete selected pack">Delete</button>
                                 </div>
                                 <div class="flex gap-2">
                                     <input type="text" class="brand-pack-name-input settings-control flex-1 min-w-0 text-sm" placeholder="New pack name">
@@ -1933,7 +1997,7 @@
                                 <span>Seed:</span>
                                 <input type="text" class="seed-input bg-transparent border-b border-white/30 focus:border-white focus:outline-none text-green-400 font-bold w-24 text-center" value="${this.seed}" readonly>
                                 <div class="relative flex items-center">
-                                    <button class="text-white/70 hover:text-white transition-colors" title="About Randomness">
+                                    <button class="text-white/70 hover:text-white transition-colors" title="About Randomness" aria-label="About Randomness">
                                         <i data-lucide="help-circle" class="w-4 h-4"></i>
                                     </button>
                                     <div class="seed-tooltip absolute left-full ml-2 w-56 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[100]">
@@ -1944,9 +2008,9 @@
 
                             <!-- ZOOM CONTROLS -->
                             <div class="absolute bottom-2 right-2 md:bottom-4 md:right-4 z-10 flex items-center space-x-1 bg-black/50 backdrop-blur px-2 py-1.5 rounded-full text-white shadow">
-                                <button class="btn-zoom-out p-1 hover:text-gray-300 transition-colors" title="Zoom Out"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                                <button class="btn-zoom-out p-1 hover:text-gray-300 transition-colors" title="Zoom Out" aria-label="Zoom Out"><i data-lucide="minus" class="w-4 h-4"></i></button>
                                 <span class="zoom-display font-mono text-xs w-8 text-center">${Math.round(this.zoomLevel * 100)}%</span>
-                                <button class="btn-zoom-in p-1 hover:text-gray-300 transition-colors" title="Zoom In"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                <button class="btn-zoom-in p-1 hover:text-gray-300 transition-colors" title="Zoom In" aria-label="Zoom In"><i data-lucide="plus" class="w-4 h-4"></i></button>
                             </div>
 
                             <canvas class="wheel-canvas transition-transform active:scale-[0.98] cursor-pointer hover:scale-[1.02]"></canvas>
@@ -1975,13 +2039,13 @@
                                     <span class="entries-count font-semibold text-gray-900 dark:text-white shrink-0">Entries (${this.entries.length})</span>
                                     <div class="entries-toolbar" role="toolbar" aria-label="Entry tools">
                                         <button type="button" class="entries-tool-btn btn-twitch-toggle" title="Show Twitch chat" aria-expanded="false" aria-controls="twitch-watch-panel-${this.id}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.571 4.714h1.714v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></button>
-                                        <button type="button" class="entries-tool-btn btn-ai-list" title="AI List"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.4 21h-2.154l-2-5H5.754l-2 5H1.6L8 5h2zm4.6-9v9h-2v-9zM6.554 14h4.892L9 7.885zM19.529 2.32a.507.507 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.717.32a.53.53 0 0 1 0 .962l-.758.338a4.36 4.36 0 0 0-2.22 2.25l-.246.566a.506.506 0 0 1-.934 0l-.247-.565a4.36 4.36 0 0 0-2.219-2.251l-.76-.338a.53.53 0 0 1 0-.963l.718-.32a4.37 4.37 0 0 0 2.251-2.325z"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-ai-list" title="AI List" aria-label="AI List"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M16.4 21h-2.154l-2-5H5.754l-2 5H1.6L8 5h2zm4.6-9v9h-2v-9zM6.554 14h4.892L9 7.885zM19.529 2.32a.507.507 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.717.32a.53.53 0 0 1 0 .962l-.758.338a4.36 4.36 0 0 0-2.22 2.25l-.246.566a.506.506 0 0 1-.934 0l-.247-.565a4.36 4.36 0 0 0-2.219-2.251l-.76-.338a.53.53 0 0 1 0-.963l.718-.32a4.37 4.37 0 0 0 2.251-2.325z"/></svg></button>
                                         <span class="entries-toolbar-sep" aria-hidden="true"></span>
-                                        <button type="button" class="entries-tool-btn btn-sort" title="Sort A-Z"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 0h16v16H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="M4.338 12.274V1.91h1v10.363L7 10.749l.676.737l-2.838 2.603L2 11.486l.676-.737zM10.628 2h1.744l.981 3.271l.02.051a23 23 0 0 1 .29.796c.08.232.161.487.223.72c.058.216.114.465.114.662h-1c0-.053-.022-.187-.08-.404a11 11 0 0 0-.203-.655a20 20 0 0 0-.181-.506h-2.072c-.053.142-.117.319-.181.506c-.076.222-.15.453-.203.655c-.058.217-.08.351-.08.404H9c0-.197.056-.446.114-.663c.062-.232.143-.487.223-.719a22 22 0 0 1 .29-.796l.02-.05zm.164 2.935h1.416L11.628 3h-.256zM9 9h5v1.25L10.333 13H14v1H9v-1.25L12.667 10H9z" clip-rule="evenodd"/></svg></button>
-                                        <button type="button" class="entries-tool-btn btn-dedupe" title="Dedupe"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26"><path d="M0 0h26v26H0z" fill="none"/><g fill="currentColor"><path fill-rule="evenodd" d="M18 10.5h-7a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5m-6.5 7v-6h6v6z" clip-rule="evenodd"/><path d="M8.5 14.5h3v1H8a.5.5 0 0 1-.5-.5V8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v3.5h-1v-3h-6z"/><path d="M4.15 4.878a.514.514 0 0 1 .728-.727l16.971 16.971a.514.514 0 0 1-.727.727z"/><path fill-rule="evenodd" d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5" clip-rule="evenodd"/></g></svg></button>
-                                        <button type="button" class="entries-tool-btn btn-remove-past-winners" title="Remove Past Winners"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0"/><path d="M3 21v-2a4 4 0 0 1 4-4h4c.948 0 1.818.33 2.504.88"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M16 19h6"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-sort" title="Sort A-Z" aria-label="Sort A-Z"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 0h16v16H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="M4.338 12.274V1.91h1v10.363L7 10.749l.676.737l-2.838 2.603L2 11.486l.676-.737zM10.628 2h1.744l.981 3.271l.02.051a23 23 0 0 1 .29.796c.08.232.161.487.223.72c.058.216.114.465.114.662h-1c0-.053-.022-.187-.08-.404a11 11 0 0 0-.203-.655a20 20 0 0 0-.181-.506h-2.072c-.053.142-.117.319-.181.506c-.076.222-.15.453-.203.655c-.058.217-.08.351-.08.404H9c0-.197.056-.446.114-.663c.062-.232.143-.487.223-.719a22 22 0 0 1 .29-.796l.02-.05zm.164 2.935h1.416L11.628 3h-.256zM9 9h5v1.25L10.333 13H14v1H9v-1.25L12.667 10H9z" clip-rule="evenodd"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-dedupe" title="Dedupe" aria-label="Dedupe"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26"><path d="M0 0h26v26H0z" fill="none"/><g fill="currentColor"><path fill-rule="evenodd" d="M18 10.5h-7a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5m-6.5 7v-6h6v6z" clip-rule="evenodd"/><path d="M8.5 14.5h3v1H8a.5.5 0 0 1-.5-.5V8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v3.5h-1v-3h-6z"/><path d="M4.15 4.878a.514.514 0 0 1 .728-.727l16.971 16.971a.514.514 0 0 1-.727.727z"/><path fill-rule="evenodd" d="M13 24.5c6.351 0 11.5-5.149 11.5-11.5S19.351 1.5 13 1.5S1.5 6.649 1.5 13S6.649 24.5 13 24.5m0 1c6.904 0 12.5-5.596 12.5-12.5S19.904.5 13 .5S.5 6.096.5 13S6.096 25.5 13 25.5" clip-rule="evenodd"/></g></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-remove-past-winners" title="Remove Past Winners" aria-label="Remove Past Winners"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0"/><path d="M3 21v-2a4 4 0 0 1 4-4h4c.948 0 1.818.33 2.504.88"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M16 19h6"/></svg></button>
                                         <span class="entries-toolbar-sep" aria-hidden="true"></span>
-                                        <button type="button" class="entries-tool-btn btn-clear" title="Clear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
+                                        <button type="button" class="entries-tool-btn btn-clear" title="Clear" aria-label="Clear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16m-10 4v6m4-6v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
                                     </div>
                                 </div>
                                 <div id="twitch-watch-panel-${this.id}" class="twitch-watch-panel mb-2 ${this.twitchPanelOpen ? "" : "hidden"}">
@@ -2425,10 +2489,12 @@
               this.dom.btnSettings.innerHTML =
                 '<i data-lucide="save" class="w-4 h-4"></i>';
               this.dom.btnSettings.title = "Save Settings";
+              this.dom.btnSettings.setAttribute("aria-label", "Save Settings");
             } else {
               this.dom.btnSettings.innerHTML =
                 '<i data-lucide="settings" class="w-4 h-4"></i>';
               this.dom.btnSettings.title = "Settings";
+              this.dom.btnSettings.setAttribute("aria-label", "Settings");
             }
             lucide.createIcons({ root: this.dom.btnSettings });
           });
@@ -2770,6 +2836,7 @@
             try {
               const systemPrompt =
                 "You are a helpful assistant. Provide a plain list separated by newlines based on the user's prompt. Do NOT include markdown formatting, bullet points, numbers, introductory text, or concluding text. Just return the raw items.";
+              const puter = await loadPuter();
               const response = await puter.ai.chat([
                 { role: "system", content: systemPrompt },
                 { role: "user", content: promptStr },
@@ -3077,9 +3144,18 @@
           const drawWidth = size + pointerRoom;
 
           const dpr = window.devicePixelRatio || 1;
-          canvas.width = drawWidth * dpr;
-          canvas.height = size * dpr;
-          ctx.scale(dpr, dpr);
+          const pxWidth = Math.floor(drawWidth * dpr);
+          const pxHeight = Math.floor(size * dpr);
+          // Assigning width/height reallocates the bitmap, so skip it per frame.
+          if (canvas.width !== pxWidth || canvas.height !== pxHeight) {
+            canvas.width = pxWidth;
+            canvas.height = pxHeight;
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
           ctx.clearRect(0, 0, drawWidth, size);
 
           // Center the wheel with leftover space reserved on the right for the pointer
@@ -3119,6 +3195,181 @@
             return;
           }
 
+          if (this.isSpinning) {
+            // While spinning, rotate a pre-rendered bitmap of the slices and
+            // labels instead of re-filling every slice and label each frame.
+            const layer = this.getSpinLayer(wheelEntries, radius, dpr);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(angleOffset);
+            ctx.drawImage(
+              layer.canvas,
+              -layer.half,
+              -layer.half,
+              layer.half * 2,
+              layer.half * 2,
+            );
+            ctx.restore();
+          } else {
+            this.drawSlices(
+              ctx,
+              wheelEntries,
+              centerX,
+              centerY,
+              radius,
+              angleOffset,
+            );
+          }
+
+          // Glossy overlay over the wheel (adds 3D lighting)
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          const glossGrad = ctx.createRadialGradient(
+            centerX - radius * 0.3,
+            centerY - radius * 0.3,
+            0,
+            centerX,
+            centerY,
+            radius,
+          );
+          glossGrad.addColorStop(0, "rgba(255, 255, 255, 0.5)"); // Highlight top-left
+          glossGrad.addColorStop(0.4, "rgba(255, 255, 255, 0)");
+          glossGrad.addColorStop(1, "rgba(0, 0, 0, 0.4)"); // Shadow bottom-right
+          ctx.fillStyle = glossGrad;
+          ctx.fill();
+
+          // Outer Border
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          const outerRingGrad = ctx.createLinearGradient(
+            centerX - radius,
+            centerY - radius,
+            centerX + radius,
+            centerY + radius,
+          );
+          if (document.documentElement.classList.contains("dark")) {
+            outerRingGrad.addColorStop(0, "#64748b");
+            outerRingGrad.addColorStop(1, "#1e293b");
+          } else {
+            outerRingGrad.addColorStop(0, "#ffffff");
+            outerRingGrad.addColorStop(1, "#cbd5e1");
+          }
+          ctx.lineWidth = 12;
+          ctx.strokeStyle = outerRingGrad;
+          ctx.stroke();
+
+          // Inner ring border to give depth
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius - 6, 0, 2 * Math.PI);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "rgba(0,0,0,0.2)";
+          ctx.stroke();
+
+          // Outer ring edge
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius + 6, 0, 2 * Math.PI);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "rgba(0,0,0,0.4)";
+          ctx.stroke();
+
+          // Center Hub
+          const hubRadius = radius * 0.12;
+          const hubRadiusOuter = hubRadius + 6;
+
+          // Hub shadow
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
+          ctx.shadowColor = "rgba(0,0,0,0.4)";
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetY = 4;
+          ctx.fillStyle = "#000";
+          ctx.fill();
+          ctx.shadowColor = "transparent";
+
+          // Hub Outer Ring
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
+          const hubRingGrad = ctx.createLinearGradient(
+            centerX - hubRadiusOuter,
+            centerY - hubRadiusOuter,
+            centerX + hubRadiusOuter,
+            centerY + hubRadiusOuter,
+          );
+          if (document.documentElement.classList.contains("dark")) {
+            hubRingGrad.addColorStop(0, "#94a3b8");
+            hubRingGrad.addColorStop(1, "#334155");
+          } else {
+            hubRingGrad.addColorStop(0, "#ffffff");
+            hubRingGrad.addColorStop(1, "#94a3b8");
+          }
+          ctx.fillStyle = hubRingGrad;
+          ctx.fill();
+
+          // Hub Inner
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
+          const hubInnerGrad = ctx.createRadialGradient(
+            centerX,
+            centerY - hubRadius / 3,
+            hubRadius / 4,
+            centerX,
+            centerY,
+            hubRadius,
+          );
+          hubInnerGrad.addColorStop(0, "#475569");
+          hubInnerGrad.addColorStop(1, "#0f172a");
+          ctx.fillStyle = hubInnerGrad;
+          ctx.fill();
+
+          if (this.centerImage) {
+            if (
+              !this._centerImageObj ||
+              this._centerImageSrc !== this.centerImage
+            ) {
+              this._centerImageObj = new window.Image();
+              this._centerImageObj.onload = () => this.draw();
+              this._centerImageObj.src = this.centerImage;
+              this._centerImageSrc = this.centerImage;
+            }
+            const img = this._centerImageObj;
+            if (img.complete && img.naturalWidth !== 0) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, hubRadius - 2, 0, 2 * Math.PI);
+              ctx.clip();
+              ctx.drawImage(
+                img,
+                centerX - hubRadius,
+                centerY - hubRadius,
+                hubRadius * 2,
+                hubRadius * 2,
+              );
+              ctx.restore();
+            }
+          }
+
+          // Pointer — sit just outside the rim, fully inside the reserved right margin
+          const rightEdge = centerX + radius;
+          ctx.save();
+          ctx.translate(rightEdge + 6, centerY);
+          if (!this.isSpinning) {
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetX = -4;
+            ctx.shadowOffsetY = 4;
+          } else {
+            ctx.shadowColor = "transparent";
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          }
+
+          this.drawPointerShape(ctx, this.pointerStyle);
+
+          ctx.restore();
+        }
+
+        drawSlices(ctx, wheelEntries, centerX, centerY, radius, angleOffset) {
           const sliceAngle = (2 * Math.PI) / wheelEntries.length;
           const colors = PALETTES[this.palette] || PALETTES.rainbow;
 
@@ -3224,16 +3475,16 @@
           }
 
           for (let i = 0; i < wheelEntries.length; i++) {
+            const { text: displayString, fontSize } =
+              this._cachedSliceLabels[i];
+            if (!displayString) continue;
+
             const startAngle = i * sliceAngle + angleOffset;
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(startAngle + sliceAngle / 2);
             ctx.textAlign = "right";
             ctx.textBaseline = "middle";
-
-            const { text: displayString, fontSize } =
-              this._cachedSliceLabels[i];
-            if (!displayString) continue;
 
             ctx.font = this.sliceLabelFont(fontSize);
             ctx.fillStyle = this.customTextColor;
@@ -3254,147 +3505,44 @@
             ctx.fillText(displayString, textRadius, 0);
             ctx.restore();
           }
+        }
 
-          // Glossy overlay over the wheel (adds 3D lighting)
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          const glossGrad = ctx.createRadialGradient(
-            centerX - radius * 0.3,
-            centerY - radius * 0.3,
-            0,
-            centerX,
-            centerY,
+        getSpinLayer(wheelEntries, radius, dpr) {
+          const imageReady =
+            this.palette !== "image" ||
+            !this.customImage ||
+            (this._customImageObj &&
+              this._customImageObj.src === this.customImage &&
+              this._customImageObj.complete &&
+              this._customImageObj.naturalWidth !== 0);
+          const key = [
             radius,
-          );
-          glossGrad.addColorStop(0, "rgba(255, 255, 255, 0.5)"); // Highlight top-left
-          glossGrad.addColorStop(0.4, "rgba(255, 255, 255, 0)");
-          glossGrad.addColorStop(1, "rgba(0, 0, 0, 0.4)"); // Shadow bottom-right
-          ctx.fillStyle = glossGrad;
-          ctx.fill();
-
-          // Outer Border
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          const outerRingGrad = ctx.createLinearGradient(
-            centerX - radius,
-            centerY - radius,
-            centerX + radius,
-            centerY + radius,
-          );
-          if (document.documentElement.classList.contains("dark")) {
-            outerRingGrad.addColorStop(0, "#64748b");
-            outerRingGrad.addColorStop(1, "#1e293b");
-          } else {
-            outerRingGrad.addColorStop(0, "#ffffff");
-            outerRingGrad.addColorStop(1, "#cbd5e1");
-          }
-          ctx.lineWidth = 12;
-          ctx.strokeStyle = outerRingGrad;
-          ctx.stroke();
-
-          // Inner ring border to give depth
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius - 6, 0, 2 * Math.PI);
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = "rgba(0,0,0,0.2)";
-          ctx.stroke();
-
-          // Outer ring edge
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius + 6, 0, 2 * Math.PI);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = "rgba(0,0,0,0.4)";
-          ctx.stroke();
-
-          // Center Hub
-          const hubRadiusOuter = hubRadius + 6;
-
-          // Hub shadow
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
-          ctx.shadowColor = "rgba(0,0,0,0.4)";
-          ctx.shadowBlur = 10;
-          ctx.shadowOffsetY = 4;
-          ctx.fillStyle = "#000";
-          ctx.fill();
-          ctx.shadowColor = "transparent";
-
-          // Hub Outer Ring
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadiusOuter, 0, 2 * Math.PI);
-          const hubRingGrad = ctx.createLinearGradient(
-            centerX - hubRadiusOuter,
-            centerY - hubRadiusOuter,
-            centerX + hubRadiusOuter,
-            centerY + hubRadiusOuter,
-          );
-          if (document.documentElement.classList.contains("dark")) {
-            hubRingGrad.addColorStop(0, "#94a3b8");
-            hubRingGrad.addColorStop(1, "#334155");
-          } else {
-            hubRingGrad.addColorStop(0, "#ffffff");
-            hubRingGrad.addColorStop(1, "#94a3b8");
-          }
-          ctx.fillStyle = hubRingGrad;
-          ctx.fill();
-
-          // Hub Inner
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, hubRadius, 0, 2 * Math.PI);
-          const hubInnerGrad = ctx.createRadialGradient(
-            centerX,
-            centerY - hubRadius / 3,
-            hubRadius / 4,
-            centerX,
-            centerY,
-            hubRadius,
-          );
-          hubInnerGrad.addColorStop(0, "#475569");
-          hubInnerGrad.addColorStop(1, "#0f172a");
-          ctx.fillStyle = hubInnerGrad;
-          ctx.fill();
-
-          if (this.centerImage) {
-            const img = new window.Image();
-            img.src = this.centerImage;
-            if (img.complete && img.naturalWidth !== 0) {
-              ctx.save();
-              ctx.beginPath();
-              ctx.arc(centerX, centerY, hubRadius - 2, 0, 2 * Math.PI);
-              ctx.clip();
-              ctx.drawImage(
-                img,
-                centerX - hubRadius,
-                centerY - hubRadius,
-                hubRadius * 2,
-                hubRadius * 2,
-              );
-              ctx.restore();
-            } else if (!img.dataset.loading) {
-              img.dataset.loading = "true";
-              img.onload = () => this.draw();
-            }
+            dpr,
+            this.palette,
+            this.customTextColor,
+            this.fontFamily,
+            appState.theme,
+            this.customImage,
+            imageReady,
+            wheelEntries.length,
+            this.canvasSize,
+          ].join("|");
+          const cached = this._spinLayer;
+          if (cached && cached.key === key && cached.rawText === this.rawText) {
+            return cached;
           }
 
-          // Pointer — sit just outside the rim, fully inside the reserved right margin
-          const rightEdge = centerX + radius;
-          ctx.save();
-          ctx.translate(rightEdge + 6, centerY);
-          if (!this.isSpinning) {
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetX = -4;
-            ctx.shadowOffsetY = 4;
-          } else {
-            ctx.shadowColor = "transparent";
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-          }
+          // A little padding so slice strokes on the rim aren't clipped.
+          const half = radius + 2;
+          const canvas = cached ? cached.canvas : document.createElement("canvas");
+          canvas.width = Math.ceil(half * 2 * dpr);
+          canvas.height = canvas.width;
+          const layerCtx = canvas.getContext("2d");
+          layerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          this.drawSlices(layerCtx, wheelEntries, half, half, radius, 0);
 
-          this.drawPointerShape(ctx, this.pointerStyle);
-
-          ctx.restore();
+          this._spinLayer = { canvas, half, key, rawText: this.rawText };
+          return this._spinLayer;
         }
 
         drawPointerPreview() {
@@ -3790,7 +3938,7 @@
             "p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center";
           this.dom.header.innerHTML = `
             <div class="flex items-center space-x-3">
-                <button id="btn-exit-slot" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Exit Slot Mode">
+                <button id="btn-exit-slot" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Exit Slot Mode" aria-label="Exit Slot Mode">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </button>
                 <h2 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-500">Slot Machine</h2>

@@ -54,7 +54,8 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 | `index.html` | Main HypeWheel web app (single-page, static) |
 | `js/share.js` | Compress/encode share-link payloads |
 | `js/twitch-chat.js` | Twitch IRC + Implicit OAuth for keyword joins / chat confirms |
-| `logo.png` | Site logo |
+| `css/tailwind.css` | Prebuilt Tailwind CSS (`npm run build:css`) |
+| `logo.png` | Site logo (social previews); `logo-96.png` is the navbar size |
 | `privacy.html` | Privacy policy |
 | `404.html` | GitHub Pages 404 page |
 | `CNAME` | Custom domain (`hypewheel.app`) |
@@ -62,7 +63,14 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 
 ## Development
 
-HypeWheel is a static site hosted on **GitHub Pages**. No build step is required for the web app—edit `index.html` (and `js/`) and push to `main`.
+HypeWheel is a static site hosted on **GitHub Pages**. Edit `index.html` (and `js/`) and push to `main`.
+
+Styles come from a prebuilt Tailwind stylesheet (`css/tailwind.css`, committed). If you add or change Tailwind classes, rebuild it before pushing:
+
+```bash
+npm install
+npm run build:css
+```
 
 ```bash
 git clone https://github.com/TechJeeper/HypeWheel.git
