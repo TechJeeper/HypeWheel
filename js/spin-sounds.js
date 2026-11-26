@@ -4,6 +4,10 @@
     { id: "wood", label: "Wood", type: "triangle", from: 350, to: 110, duration: 0.04 },
     { id: "digital", label: "Digital", type: "square", from: 1100, to: 750, duration: 0.035 },
     { id: "bell", label: "Bell", type: "sine", from: 1600, to: 1400, duration: 0.12 },
+    { id: "pop", label: "Pop", type: "sine", from: 600, to: 90, duration: 0.06 },
+    { id: "laser", label: "Laser", type: "sawtooth", from: 1800, to: 250, duration: 0.09 },
+    { id: "chime", label: "Chime", type: "triangle", from: 1200, to: 1500, duration: 0.16 },
+    { id: "arcade", label: "Arcade", type: "square", from: 450, to: 900, duration: 0.07 },
   ];
 
   const normalize = (value) =>

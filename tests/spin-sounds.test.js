@@ -56,12 +56,13 @@ test("spin sounds have distinct playback, preserve classic, and respect volume",
   sounds.play("bell", 0);
   assert.equal(getContexts(), 0);
   for (const preset of sounds.presets) sounds.play(preset.id, 0.5);
-  assert.equal(new Set(notes.map((note) => `${note.type}:${note.frequencies}`)).size, 4);
+  assert.equal(notes.length, 8);
+  assert.equal(new Set(notes.map((note) => `${note.type}:${note.frequencies}`)).size, 8);
   assert.deepEqual(notes[0].frequencies, [800, 400]);
   assert.deepEqual(notes[0].gains, [0.15, 0.005]);
   sounds.play("invalid", 1, 0.1);
-  assert.deepEqual(notes[4].frequencies, [800, 400]);
-  assert.deepEqual(notes[4].gains, [0.1, 0.01]);
+  assert.deepEqual(notes[8].frequencies, [800, 400]);
+  assert.deepEqual(notes[8].gains, [0.1, 0.01]);
 });
 
 test("wheel sound survives save, import and share; old data remains compatible", async () => {
@@ -160,17 +161,18 @@ test("settings selection saves and preview respects the sound toggle and volume"
     drawPointerPreview() {},
   });
   wheel.bindEvents();
-  wheel.dom.soundTypeSelect.events.change({ target: { value: "digital" } });
-  assert.equal(saved.spinSoundType, "digital");
-  wheel.dom.btnPreviewSound.events.click();
-  assert.equal(notes[0].type, "square");
-  assert.equal(notes[0].gains[0], 0.15);
+  for (const [index, type] of ["pop", "laser", "chime", "arcade"].entries()) {
+    wheel.dom.soundTypeSelect.events.change({ target: { value: type } });
+    assert.equal(saved.spinSoundType, type);
+    wheel.dom.btnPreviewSound.events.click();
+    assert.equal(notes[index].gains[0], 0.15);
+  }
   wheel.dom.soundCheckbox.events.change({ target: { checked: false } });
   wheel.dom.btnPreviewSound.events.click();
-  assert.equal(notes.length, 1);
+  assert.equal(notes.length, 4);
   assert.match(notice, /Enable sound/);
   wheel.dom.soundCheckbox.events.change({ target: { checked: true } });
   wheel.dom.soundVolumeInput.events.input({ target: { value: "0" } });
   wheel.dom.btnPreviewSound.events.click();
-  assert.equal(notes.length, 1);
+  assert.equal(notes.length, 4);
 });
