@@ -481,6 +481,11 @@
     spinSpeed: wheel.spinSpeed || "normal",
     spinDuration: wheel.spinDuration || "medium",
     spinSound: wheel.spinSound !== undefined ? wheel.spinSound : true,
+    spinSoundVolume:
+      typeof wheel.spinSoundVolume === "number" &&
+      Number.isFinite(wheel.spinSoundVolume)
+        ? Math.max(0, Math.min(100, Math.round(wheel.spinSoundVolume)))
+        : 100,
     countdownEnabled: !!wheel.countdownEnabled,
     countdownSeconds: wheel.countdownSeconds || 60,
     confettiEnabled:

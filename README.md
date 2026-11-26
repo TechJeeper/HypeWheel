@@ -8,7 +8,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 
 - **Spin the wheel** — Enter names (one per line) and spin to pick a random winner
 - **Multiple wheels** — Run several wheels at once from the header
-- **Customize each wheel** — Colors, images, spin speed/duration, sound, and confetti
+- **Customize each wheel** — Colors, images, spin speed/duration, sound and volume, and confetti (slot mode uses the loudest enabled wheel's volume)
 - **Brand packs** — Save and reuse appearance presets across wheels
 - **Theater & OBS overlay** — Full-screen theater mode, or `?overlay=1` for a transparent Browser Source (Space = spin, R = remove, K = keep)
 - **Share links** — Copy a compressed `?w=` link for one or all wheels (Import/Export)
