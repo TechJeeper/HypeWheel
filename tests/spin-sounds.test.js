@@ -65,6 +65,100 @@ test("spin sounds have distinct playback, preserve classic, and respect volume",
   assert.deepEqual(notes[8].gains, [0.1, 0.01]);
 });
 
+test("wheel ticks are rate limited during dense spins and follow slower slice changes", () => {
+  const { context, notes } = setup();
+  let frame;
+  Object.assign(context, {
+    appState: {},
+    trackGoatCounterEvent() {},
+    getSecureRandomFloat: () => 0,
+    getSecureRandomInt: () => 0,
+    generateSeed: () => "seed",
+    positiveModulo: (value, modulus) => ((value % modulus) + modulus) % modulus,
+    easeOutQuart: (value) => 1 - (1 - value) ** 4,
+    requestAnimationFrame: (callback) => { frame = callback; },
+  });
+  const start = html.indexOf("      class WheelApp {");
+  const end = html.indexOf("      class SlotMachineApp {", start);
+  const Wheel = vm.runInContext(`${html.slice(start, end)}; WheelApp`, context);
+  const wheel = Object.create(Wheel.prototype);
+  Object.assign(wheel, {
+    entries: Array.from({ length: 300 }, (_, i) => `Entry ${i}`),
+    currentAngle: 0,
+    spinSpeed: "fast",
+    spinDuration: "short",
+    spinSound: true,
+    spinSoundType: "classic",
+    spinSoundVolume: 50,
+    dom: { seedInput: {} },
+    getWheelEntries() { return this.entries; },
+    updateUIState() {},
+    saveConfig() {},
+    draw() {},
+    showWinner() {},
+  });
+
+  wheel.spin();
+  const ticks = [];
+  const crossings = [];
+  let previousIndex = wheel.getWinningIndex(wheel.currentAngle);
+  for (let time = 1000; time <= 5000; time += 16) {
+    const previousNotes = notes.length;
+    frame(time);
+    const currentIndex = wheel.getWinningIndex(wheel.currentAngle);
+    if (currentIndex !== previousIndex) crossings.push(time);
+    if (notes.length > previousNotes) {
+      assert.notEqual(currentIndex, previousIndex);
+      ticks.push(time);
+    }
+    previousIndex = currentIndex;
+  }
+  assert.ok(crossings.length > ticks.length * 2);
+  assert.ok(ticks.length > 1);
+  for (let i = 1; i < ticks.length; i++) {
+    assert.ok(ticks[i] - ticks[i - 1] >= 160);
+  }
+  assert.equal(wheel.isSpinning, false);
+  assert.equal(wheel.winnerName, wheel.entries[wheel.getWinningIndex(wheel.currentAngle)]);
+
+  wheel.entries = wheel.entries.slice(0, 8);
+  wheel.currentAngle = 0;
+  wheel.spin();
+  const sparseTicks = [];
+  const sparseCrossings = [];
+  previousIndex = wheel.getWinningIndex(wheel.currentAngle);
+  for (let time = 6000; time <= 10000; time += 16) {
+    const previousNotes = notes.length;
+    frame(time);
+    const currentIndex = wheel.getWinningIndex(wheel.currentAngle);
+    if (currentIndex !== previousIndex) sparseCrossings.push(time);
+    if (notes.length > previousNotes) sparseTicks.push(time);
+    previousIndex = currentIndex;
+  }
+  assert.equal(sparseTicks[0], sparseCrossings[0]);
+  const slowCrossings = sparseCrossings.filter((time, index) =>
+    index > 0 && time - sparseCrossings[index - 1] >= 160,
+  );
+  assert.ok(slowCrossings.length > 0);
+  assert.ok(slowCrossings.every((time) => sparseTicks.includes(time)));
+
+  wheel.entries = Array.from({ length: 300 }, (_, i) => `Entry ${i}`);
+  wheel.currentAngle = 0;
+  wheel.spinSound = false;
+  wheel.spin();
+  const beforeMuted = notes.length;
+  frame(11000);
+  frame(11016);
+  assert.equal(notes.length, beforeMuted);
+  wheel.spinSound = true;
+  wheel.spinSoundVolume = 0;
+  frame(11032);
+  assert.equal(notes.length, beforeMuted);
+  wheel.spinSoundVolume = 50;
+  frame(11048);
+  assert.equal(notes.length, beforeMuted + 1);
+});
+
 test("wheel sound survives save, import and share; old data remains compatible", async () => {
   const { context, sounds } = setup();
   const start = html.indexOf("      class WheelApp {");

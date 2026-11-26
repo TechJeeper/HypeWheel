@@ -3750,6 +3750,7 @@
             startAngle + extraSpins * 2 * Math.PI + angleDelta;
 
           let startTime = null;
+          let lastTickTime = -Infinity;
           this.lastTickIndex = this.getWinningIndex(this.currentAngle);
 
           const animate = (time) => {
@@ -3766,8 +3767,16 @@
             const currentIndex = this.getWinningIndex(this.currentAngle);
             if (currentIndex !== this.lastTickIndex) {
               this.lastTickIndex = currentIndex;
-              if (this.spinSound) {
-                HypeSpinSounds.play(this.spinSoundType, this.spinSoundVolume / 100);
+              if (
+                this.spinSound &&
+                this.spinSoundVolume > 0 &&
+                time - lastTickTime >= 160
+              ) {
+                HypeSpinSounds.play(
+                  this.spinSoundType,
+                  this.spinSoundVolume / 100,
+                );
+                lastTickTime = time;
               }
             }
 
