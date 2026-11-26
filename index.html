@@ -100,6 +100,7 @@
       src="https://gc.zgo.at/count.js"
     ></script>
     <!-- Puter.js is loaded on demand by the AI list button (loadPuter) -->
+    <script src="js/spin-sounds.js"></script>
     <script src="js/share.js"></script>
     <script src="js/twitch-chat.js"></script>
     <style>
@@ -997,36 +998,6 @@
           ? Math.max(0, Math.min(100, Math.round(value)))
           : 100;
 
-      // Created on first tick so page load doesn't trigger autoplay warnings.
-      let audioCtx = null;
-      const playTickSound = (volume) => {
-        if (volume <= 0) return;
-        if (!audioCtx)
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(
-          400,
-          audioCtx.currentTime + 0.05,
-        );
-
-        gain.gain.setValueAtTime(0.3 * volume, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(
-          0.01 * volume,
-          audioCtx.currentTime + 0.05,
-        );
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.05);
-      };
-
       // --- CONSTANTS & UTILS ---
       const PALETTES = {
         rainbow: [
@@ -1238,6 +1209,7 @@
         spinDuration: "medium",
         spinSound: true,
         spinSoundVolume: 100,
+        spinSoundType: "classic",
         countdownEnabled: false,
         countdownSeconds: 60,
         confettiEnabled: true,
@@ -1414,6 +1386,7 @@
           this.spinSound =
             config.spinSound !== undefined ? config.spinSound : true;
           this.spinSoundVolume = normalizeSoundVolume(config.spinSoundVolume);
+          this.spinSoundType = HypeSpinSounds.normalize(config.spinSoundType);
           this.countdownEnabled = config.countdownEnabled || false;
           this.countdownSeconds = config.countdownSeconds || 60;
           this.confettiEnabled =
@@ -1775,6 +1748,7 @@
             conf.spinDuration = this.spinDuration;
             conf.spinSound = this.spinSound;
             conf.spinSoundVolume = this.spinSoundVolume;
+            conf.spinSoundType = this.spinSoundType;
             conf.countdownEnabled = this.countdownEnabled;
             conf.countdownSeconds = this.countdownSeconds;
             conf.confettiEnabled = this.confettiEnabled;
@@ -1951,6 +1925,15 @@
                                             <span class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Volume: <span class="sound-volume-value">${this.spinSoundVolume}%</span></span>
                                             <input type="range" class="sound-volume-input" min="0" max="100" step="1" value="${this.spinSoundVolume}">
                                         </label>
+                                        <label>
+                                            <span class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">Spin sound</span>
+                                            <select class="sound-type-select settings-control">
+                                                ${HypeSpinSounds.presets.map((preset) => `<option value="${preset.id}" ${this.spinSoundType === preset.id ? "selected" : ""}>${preset.label}</option>`).join("")}
+                                            </select>
+                                        </label>
+                                        <div class="flex items-end">
+                                            <button type="button" class="btn-preview-sound settings-control">Preview sound</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
@@ -2149,6 +2132,8 @@
             soundCheckbox: wrapper.querySelector(".sound-checkbox"),
             soundVolumeInput: wrapper.querySelector(".sound-volume-input"),
             soundVolumeValue: wrapper.querySelector(".sound-volume-value"),
+            soundTypeSelect: wrapper.querySelector(".sound-type-select"),
+            btnPreviewSound: wrapper.querySelector(".btn-preview-sound"),
             countdownCheckbox: wrapper.querySelector(".countdown-checkbox"),
             confettiCheckbox: wrapper.querySelector(".confetti-checkbox"),
             countdownInput: wrapper.querySelector(".countdown-input"),
@@ -2309,6 +2294,7 @@
             spinDuration: this.spinDuration,
             spinSound: this.spinSound,
             spinSoundVolume: this.spinSoundVolume,
+            spinSoundType: this.spinSoundType,
             countdownEnabled: this.countdownEnabled,
             countdownSeconds: this.countdownSeconds,
             confettiEnabled: this.confettiEnabled,
@@ -2408,6 +2394,9 @@
           if (wheel.spinSoundVolume !== undefined) {
             this.spinSoundVolume = normalizeSoundVolume(wheel.spinSoundVolume);
           }
+          if (wheel.spinSoundType !== undefined) {
+            this.spinSoundType = HypeSpinSounds.normalize(wheel.spinSoundType);
+          }
           this.countdownEnabled =
             wheel.countdownEnabled !== undefined
               ? wheel.countdownEnabled
@@ -2458,6 +2447,7 @@
           this.dom.soundCheckbox.checked = this.spinSound;
           this.dom.soundVolumeInput.value = this.spinSoundVolume;
           this.dom.soundVolumeValue.textContent = `${this.spinSoundVolume}%`;
+          this.dom.soundTypeSelect.value = this.spinSoundType;
           this.dom.countdownCheckbox.checked = this.countdownEnabled;
           this.dom.countdownInput.value = this.countdownSeconds;
           this.dom.layoutSelect.value = this.layout;
@@ -2717,6 +2707,17 @@
             this.spinSoundVolume = normalizeSoundVolume(Number(e.target.value));
             this.dom.soundVolumeValue.textContent = `${this.spinSoundVolume}%`;
             this.saveConfig();
+          });
+          this.dom.soundTypeSelect.addEventListener("change", (e) => {
+            this.spinSoundType = HypeSpinSounds.normalize(e.target.value);
+            this.saveConfig();
+          });
+          this.dom.btnPreviewSound.addEventListener("click", () => {
+            if (!this.spinSound || this.spinSoundVolume === 0) {
+              showToast("Enable sound and raise the volume to preview", "info");
+              return;
+            }
+            HypeSpinSounds.play(this.spinSoundType, this.spinSoundVolume / 100);
           });
           this.dom.countdownCheckbox.addEventListener("change", (e) => {
             this.countdownEnabled = e.target.checked;
@@ -3766,7 +3767,7 @@
             if (currentIndex !== this.lastTickIndex) {
               this.lastTickIndex = currentIndex;
               if (this.spinSound) {
-                playTickSound(this.spinSoundVolume / 100);
+                HypeSpinSounds.play(this.spinSoundType, this.spinSoundVolume / 100);
               }
             }
 
@@ -4064,41 +4065,18 @@
           this.dom.wrapper.remove();
         }
 
-        getSoundVolume() {
-          return (
-            Math.max(
-              0,
-              ...this.columns.map((col) =>
-                col.config.spinSound
-                  ? normalizeSoundVolume(col.config.spinSoundVolume)
-                  : 0,
-              ),
-            ) / 100
+        getSoundConfig() {
+          return this.columns.reduce(
+            (selected, col) => {
+              const volume = col.config.spinSound
+                ? normalizeSoundVolume(col.config.spinSoundVolume)
+                : 0;
+              return volume > selected.volume
+                ? { volume, type: HypeSpinSounds.normalize(col.config.spinSoundType) }
+                : selected;
+            },
+            { volume: 0, type: "classic" },
           );
-        }
-
-        playTickSound(volume) {
-          if (volume <= 0) return;
-          try {
-            const ac = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ac.createOscillator();
-            const gain = ac.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(800, ac.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(
-              400,
-              ac.currentTime + 0.05,
-            );
-            gain.gain.setValueAtTime(0.1 * volume, ac.currentTime);
-            gain.gain.exponentialRampToValueAtTime(
-              0.01 * volume,
-              ac.currentTime + 0.05,
-            );
-            osc.connect(gain);
-            gain.connect(ac.destination);
-            osc.start();
-            osc.stop(ac.currentTime + 0.05);
-          } catch (e) {}
         }
 
         playWinSound(volume) {
@@ -4167,8 +4145,10 @@
           const hasSound = this.columns.some((c) => c.config.spinSound);
           if (hasSound) {
             this.soundInterval = setInterval(() => {
-              if (this.isSpinning) this.playTickSound(this.getSoundVolume());
-              else clearInterval(this.soundInterval);
+              if (this.isSpinning) {
+                const sound = this.getSoundConfig();
+                HypeSpinSounds.play(sound.type, sound.volume / 100, 0.1);
+              } else clearInterval(this.soundInterval);
             }, 100);
           }
 
@@ -4223,7 +4203,7 @@
           }
 
           if (this.columns.some((c) => c.config.spinSound)) {
-            this.playWinSound(this.getSoundVolume());
+            this.playWinSound(this.getSoundConfig().volume / 100);
           }
 
           // Announce winners

@@ -8,7 +8,7 @@ Free, customizable spinning wheel for giveaways, classroom picks, and random nam
 
 - **Spin the wheel** — Enter names (one per line) and spin to pick a random winner
 - **Multiple wheels** — Run several wheels at once from the header
-- **Customize each wheel** — Colors, images, spin speed/duration, sound and volume, and confetti (slot mode uses the loudest enabled wheel's volume)
+- **Customize each wheel** — Colors, images, spin speed/duration, sound and volume, and confetti. Choose and preview Classic, Wood, Digital, or Bell spin sounds; slot mode uses the loudest enabled wheel's sound and volume (first wheel on ties).
 - **Brand packs** — Save and reuse appearance presets across wheels
 - **Theater & OBS overlay** — Full-screen theater mode, or `?overlay=1` for a transparent Browser Source (Space = spin, R = remove, K = keep)
 - **Share links** — Copy a compressed `?w=` link for one or all wheels (Import/Export)
@@ -53,6 +53,7 @@ Supported sources: X (Twitter), Facebook, Instagram, TikTok, Google Sheets.
 |------|-------------|
 | `index.html` | Main HypeWheel web app (single-page, static) |
 | `js/share.js` | Compress/encode share-link payloads |
+| `js/spin-sounds.js` | Synthesized spin sounds |
 | `js/twitch-chat.js` | Twitch IRC + Implicit OAuth for keyword joins / chat confirms |
 | `css/tailwind.css` | Prebuilt Tailwind CSS (`npm run build:css`) |
 | `logo.png` | Site logo (social previews); `logo-96.png` is the navbar size |

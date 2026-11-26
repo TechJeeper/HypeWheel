@@ -481,6 +481,7 @@
     spinSpeed: wheel.spinSpeed || "normal",
     spinDuration: wheel.spinDuration || "medium",
     spinSound: wheel.spinSound !== undefined ? wheel.spinSound : true,
+    spinSoundType: wheel.spinSoundType || "classic",
     spinSoundVolume:
       typeof wheel.spinSoundVolume === "number" &&
       Number.isFinite(wheel.spinSoundVolume)
