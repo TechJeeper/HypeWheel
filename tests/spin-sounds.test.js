@@ -116,8 +116,9 @@ test("wheel ticks are rate limited during dense spins and follow slower slice ch
   assert.ok(crossings.length > ticks.length * 2);
   assert.ok(ticks.length > 1);
   for (let i = 1; i < ticks.length; i++) {
-    assert.ok(ticks[i] - ticks[i - 1] >= 160);
+    assert.ok(ticks[i] - ticks[i - 1] >= 80);
   }
+  assert.ok(ticks.some((time, index) => index > 0 && time - ticks[index - 1] < 120));
   assert.equal(wheel.isSpinning, false);
   assert.equal(wheel.winnerName, wheel.entries[wheel.getWinningIndex(wheel.currentAngle)]);
 
@@ -137,7 +138,7 @@ test("wheel ticks are rate limited during dense spins and follow slower slice ch
   }
   assert.equal(sparseTicks[0], sparseCrossings[0]);
   const slowCrossings = sparseCrossings.filter((time, index) =>
-    index > 0 && time - sparseCrossings[index - 1] >= 160,
+    index > 0 && time - sparseCrossings[index - 1] >= 80,
   );
   assert.ok(slowCrossings.length > 0);
   assert.ok(slowCrossings.every((time) => sparseTicks.includes(time)));
