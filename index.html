@@ -712,6 +712,14 @@
               Remove older than
             </button>
           </div>
+          <div class="basis-full">
+            <div class="flex flex-wrap gap-2" role="group" aria-label="Choose a winner cutoff date">
+              <button type="button" class="winner-cutoff-preset px-3 py-1.5 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" data-days="1">1 day ago</button>
+              <button type="button" class="winner-cutoff-preset px-3 py-1.5 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" data-days="7">7 days ago</button>
+              <button type="button" class="winner-cutoff-preset px-3 py-1.5 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" data-days="30">30 days ago</button>
+            </div>
+            <p class="text-sm opacity-70 mt-1">Winners on the selected date are kept.</p>
+          </div>
           <button
             id="btn-clear-winners"
             class="px-4 py-2 rounded-lg font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-50"
@@ -4972,6 +4980,17 @@
             updateWinnersUI();
           }
         });
+
+      document.querySelectorAll(".winner-cutoff-preset").forEach((button) => {
+        button.addEventListener("click", () => {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - Number(button.dataset.days));
+          const year = cutoff.getFullYear();
+          const month = String(cutoff.getMonth() + 1).padStart(2, "0");
+          const day = String(cutoff.getDate()).padStart(2, "0");
+          document.getElementById("winner-cutoff-date").value = `${year}-${month}-${day}`;
+        });
+      });
 
       document
         .getElementById("btn-remove-old-winners")
